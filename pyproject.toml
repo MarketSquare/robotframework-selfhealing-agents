@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = "^3.12"
 dependencies = [
     "pydantic-ai",
-    "robotframework (>=7.1.0)"
+    "robotframework >=7.1"
 ]
 
 
@@ -20,7 +20,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 packages = [
-    { include = "src/RobotAid" }
+    { include = "RobotAid", from = "src" }
 ]
 
 [tool.poetry.group.dev.dependencies]    
