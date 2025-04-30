@@ -1,0 +1,31 @@
+[project]
+name = "robotframework-aid"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "MarketSquare - Robot Framework community"}
+]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = "^3.12"
+dependencies = [
+    "pydantic-ai",
+    "robotframework (>=7.1.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+packages = [
+    { include = "src/RobotAid" }
+]
+
+[tool.poetry.group.dev.dependencies]    
+pytest = "*"
+invoke = "*"
+coverage = "*"
+robotframework-stacktrace = "*"
+mkdocs-material = "*"
