@@ -4,9 +4,10 @@ from robot.libraries.BuiltIn import BuiltIn
 from robot.api import logger
 
 
-class HealingListener:
+class RobotAid:
     """Robot Framework listener that provides self-healing capabilities."""
     
+    ROBOT_LIBRARY_SCOPE = 'SUITE'
     ROBOT_LISTENER_API_VERSION = 3
     
     def __init__(self, enabled=True, max_retries=3, llm_provider=None):
