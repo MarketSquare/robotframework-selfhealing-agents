@@ -2,9 +2,10 @@
 
 from robot.libraries.BuiltIn import BuiltIn
 from robot.api import logger
+from robot import result, running
+from robot.api.interfaces import ListenerV3
 
-
-class RobotAid:
+class RobotAid(ListenerV3):
     """Robot Framework listener that provides self-healing capabilities."""
     
     ROBOT_LIBRARY_SCOPE = 'SUITE'
@@ -31,29 +32,29 @@ class RobotAid:
             return value.lower() in ('true', 'yes', 'y', '1', 'on')
         return bool(value)
     
-    def start_test(self, name, attrs):
+    def start_test(self, data: running.TestCase, result: result.TestCase):
         """Called when a test starts."""
         if not self.enabled:
             return
         
-        self.context['current_test'] = name
-        logger.debug(f"RobotAid: Monitoring test '{name}'")
+        self.context['current_test'] = data.name
+        logger.debug(f"RobotAid: Monitoring test '{data.name}'")
     
-    def end_keyword(self, name, attrs):
+    def end_keyword(self, data: running.Keyword, result: result.Keyword):
         """Called when a keyword finishes execution."""
         if not self.enabled:
             return
             
-        if attrs.get('status') == 'FAIL' and attrs.get('type') == 'Keyword':
-            logger.debug(f"RobotAid: Detected failure in keyword '{name}'")
+        if result.failed  and result.type == 'Keyword':
+            logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
             # This would be where healing logic is triggered
             # For now just log the detection
             
-    def end_test(self, name, attrs):
+    def end_test(self, data: running.TestCase, result: result.TestCase):
         """Called when a test ends."""
         if not self.enabled:
             return
             
-        if attrs.get('status') == 'FAIL':
-            logger.info(f"RobotAid: Test '{name}' failed - collecting information for healing")
+        if result.failed:
+            logger.info(f"RobotAid: Test '{data.name}' failed - collecting information for healing")
             # This would store information for post-execution healing
