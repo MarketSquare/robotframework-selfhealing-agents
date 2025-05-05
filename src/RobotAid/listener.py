@@ -4,6 +4,8 @@ from robot.libraries.BuiltIn import BuiltIn
 from robot.api import logger
 from robot import result, running
 from robot.api.interfaces import ListenerV3
+from self_healing_system.kickoff_self_healing import kickoff_healing
+
 
 class RobotAid(ListenerV3):
     """Robot Framework listener that provides self-healing capabilities."""
@@ -47,8 +49,9 @@ class RobotAid(ListenerV3):
             
         if result.failed  and result.type == 'Keyword':
             logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
-            # This would be where healing logic is triggered
-            # For now just log the detection
+            # for now, only a dummy healing process triggered with temporary arbitrary payload; context and further
+            # information will be implemented soon
+            kickoff_healing(llm_provider=self.llm_provider)
             
     def end_test(self, data: running.TestCase, result: result.TestCase):
         """Called when a test ends."""
