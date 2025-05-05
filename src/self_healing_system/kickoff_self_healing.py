@@ -5,9 +5,13 @@ from agents.locator_agent import LocatorAgent
 from agents.orchestrator_agent import OrchestratorAgent
 
 
-def kickoff_healing():
-    locator_agent: LocatorAgent = LocatorAgent()
-    orchestrator_agent: OrchestratorAgent = OrchestratorAgent(locator_agent)
+# - This is the core setup class to instantiate the multi-agent system and call the orchestrator - context missing.
+# - Also, the returned locators are not handled yet.
+# - Orchestrator agent is implemented for showcase reasons, not directly needed for MVP for locator fix.
+def kickoff_healing(llm_provider: str) -> None:
+    locator_agent: LocatorAgent = LocatorAgent(llm_provider=llm_provider)
+    orchestrator_agent: OrchestratorAgent = OrchestratorAgent(locator_agent=locator_agent,
+                                                              llm_provider=llm_provider)
 
     tmp_test_prompt: str = """
 Test Suite:
@@ -69,4 +73,4 @@ Timeout error due to locator not available.
 
 
 if __name__ == '__main__':
-    kickoff_healing()
+    kickoff_healing(llm_provider="azure")

@@ -1,46 +1,33 @@
-import os
 from typing import List
-from dotenv import load_dotenv
-from openai import AsyncAzureOpenAI
 from pydantic_ai import Agent
 from pydantic_ai.usage import UsageLimits
-from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.providers.azure import AzureProvider
+from pydantic_ai.agent import AgentRunResult
 
+from self_healing_system.clients.llm_client import get_model
 from self_healing_system.schemas import PromptPayload, LocatorSuggestionsResponse
 
 
-load_dotenv()
-azure_client: AsyncAzureOpenAI = AsyncAzureOpenAI(
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    api_version="2024-06-01",
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
-)
-
-
+# MVP LocatorAgent - prompt will be adjusted based on provided context.
 class LocatorAgent:
     """Produces locator alternatives.
 
     Attributes:
+        llm_provider (str): Provider for LLM defined by user.
         max_retries (int): Maximum number of request retries.
         usage_limits (UsageLimits): Usage token and request limits.
     """
     def __init__(
         self,
+        llm_provider: str,
         max_retries: int = 3,
         usage_limits: UsageLimits = UsageLimits(request_limit=5, total_tokens_limit=2000)
     ) -> None:
         self.max_retries: int = max_retries
         self.usage_limits: UsageLimits = usage_limits
 
-        model: OpenAIModel = OpenAIModel(
-            model_name="gpt-4o",
-            provider=AzureProvider(openai_client=azure_client)
-        )
-
         self.generation_agent: Agent[PromptPayload, LocatorSuggestionsResponse] = (
             Agent[PromptPayload, LocatorSuggestionsResponse](
-            model=model,
+            model=get_model(llm_provider=llm_provider),
             system_prompt=(
                 'Given failure_details, return JSON with `suggestions`: list of locators.'
             ),
@@ -57,7 +44,7 @@ class LocatorAgent:
         Returns:
             (List): Suggestions for fixed locators.
         """
-        gen_resp = await self.generation_agent.run(
+        gen_resp: AgentRunResult = await self.generation_agent.run(
             failure_details,
             usage_limits=self.usage_limits
         )

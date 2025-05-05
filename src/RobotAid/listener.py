@@ -51,7 +51,7 @@ class RobotAid(ListenerV3):
             logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
             # for now, only a dummy healing process triggered with temporary arbitrary payload; context and further
             # information will be implemented soon
-            kickoff_healing()
+            kickoff_healing(llm_provider=self.llm_provider)
             
     def end_test(self, data: running.TestCase, result: result.TestCase):
         """Called when a test ends."""

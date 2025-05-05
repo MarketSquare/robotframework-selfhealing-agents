@@ -2,6 +2,7 @@ from typing import List
 from pydantic import BaseModel, Field
 
 
+# Schemas are implemented but act as examples for now, will be adjusted to context.
 class PromptPayload(BaseModel):
     """Standard payload for healing operations.
 

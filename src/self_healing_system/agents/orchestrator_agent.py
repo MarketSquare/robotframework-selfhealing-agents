@@ -1,39 +1,26 @@
-import os
 from typing import List
-from dotenv import load_dotenv
-from openai import AsyncAzureOpenAI
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.providers.azure import AzureProvider
 
+from self_healing_system.clients.llm_client import get_model
 from self_healing_system.agents.locator_agent import LocatorAgent
 from self_healing_system.schemas import PromptPayload, LocatorHealingResponse
 
 
-load_dotenv()
-azure_client: AsyncAzureOpenAI = AsyncAzureOpenAI(
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    api_version="2024-06-01",
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
-)
-
-
+# MVP Orchestrator Agent - will be adjusted to context and when additional agents will be implemented.
 class OrchestratorAgent:
     """Routes raw failure text to the appropriate healing tool.
 
     Attributes:
-        locator_agent: LocatorAgent instance.
+        llm_provider (str): Provider for LLM defined by user.
+        locator_agent (LocatorAgent): LocatorAgent instance.
     """
-    def __init__(self, locator_agent: LocatorAgent) -> None:
+    def __init__(self, locator_agent: LocatorAgent, llm_provider: str) -> None:
         self.locator_agent: LocatorAgent = locator_agent
 
-        model: OpenAIModel = OpenAIModel(
-            model_name="gpt-4o",
-            provider=AzureProvider(openai_client=azure_client)
-        )
-
+        model: None | OpenAIModel | str = get_model(llm_provider)
         self.agent: Agent[PromptPayload, LocatorHealingResponse] = (
             Agent[PromptPayload, LocatorHealingResponse](
             model=model,
