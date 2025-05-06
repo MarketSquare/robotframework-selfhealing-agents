@@ -1,76 +1,31 @@
 import asyncio
+from robot import result
 
 from RobotAid.self_healing_system.schemas import LocatorHealingResponse
+from RobotAid.self_healing_system.robot_ctx_fetcher import RobotCtxRetriever
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
 
 
-# - This is the core setup class to instantiate the multi-agent system and call the orchestrator - context missing.
-# - Also, the returned locators are not handled yet.
+# - The returned locators are not handled yet.
 # - Orchestrator agent is implemented for showcase reasons, not directly needed for MVP for locator fix.
-def kickoff_healing(llm_provider: str) -> None:
-    locator_agent: LocatorAgent = LocatorAgent(llm_provider=llm_provider)
-    orchestrator_agent: OrchestratorAgent = OrchestratorAgent(locator_agent=locator_agent,
-                                                              llm_provider=llm_provider)
+class KickoffSelfHealing:
+    """Core class for kickoff the self-healing-system for broken robotframework tests."""
+    @staticmethod
+    def kickoff_healing(result: result.Keyword, llm_provider: str) -> None:
+        """Instantiates the multi-agent system, retrieves context and kicks off self-healing-system.
 
-    tmp_test_prompt: str = """
-Test Suite:
+        Args:
+            result (result.Keyword): Keyword and additional information passed by robotframework listener.
+            llm_provider (str): LLM provider to use; defined by user.
+        """
+        robot_ctx: dict = RobotCtxRetriever.get_context(result=result)
 
-*** Settings ***
-Library    Browser    timeout=5s
-Library    RobotAid
-Suite Setup    New Browser    browser=${BROWSER}    headless=${HEADLESS}
-Test Setup    New Context    viewport={'width': 1280, 'height': 720}
-Test Teardown    Close Context
-Suite Teardown    Close Browser    ALL
+        locator_agent: LocatorAgent = LocatorAgent(llm_provider=llm_provider)
+        orchestrator_agent: OrchestratorAgent = OrchestratorAgent(locator_agent=locator_agent,
+                                                                  llm_provider=llm_provider)
 
-*** Variables ***
-${BROWSER}    chromium
-${HEADLESS}    True
-
-*** Test Cases ***
-Login with valid credentials
-    New Page    https://www.saucedemo.com/
-    Fill Text    id=user    standard_user
-    Fill Text    id=pass    secret_sauce
-    Click    id=loginbutton
-    Get Url    ==    https://www.saucedemo.com/inventory.html
-
-Add Product To Cart
-    Login
-    Click    Sauce Labs Onesie >> Add To Cart
-    Get Text    shopping_cart    ==    1
-
-
-*** Keywords ***
-Login
-    New Page    https://www.saucedemo.com/
-    Fill Text    broken_locator    standard_user
-    Fill Text    css=input#password    secret_sauce
-    Click    css=input#login-button
-    Get Url    ==    https://www.saucedemo.com/inventory.html
-
-*** Variables ***
-broken_locator    css=input#user-naming
-
-
-HTML IDs found on website during failure:
-id=user
-id=pass
-css=input#password
-css=input#user-name
-
-Error message:
-Timeout error due to locator not available.
-    """
-
-    suggestions: LocatorHealingResponse = asyncio.run(
-        orchestrator_agent.run_async(
-            tmp_test_prompt
+        suggestions: LocatorHealingResponse = asyncio.run(
+            orchestrator_agent.run_async(robot_ctx=robot_ctx)
         )
-    )
-    print('Suggestions:', suggestions.suggestions)
-
-
-if __name__ == '__main__':
-    kickoff_healing(llm_provider="azure")
+        print('Suggestions:', suggestions.suggestions)

@@ -14,8 +14,8 @@ class OrchestratorAgent:
     """Routes raw failure text to the appropriate healing tool.
 
     Attributes:
-        llm_provider (str): Provider for LLM defined by user.
         locator_agent (LocatorAgent): LocatorAgent instance.
+        llm_provider (str): Provider for LLM defined by user.
     """
     def __init__(self, locator_agent: LocatorAgent, llm_provider: str) -> None:
         self.locator_agent: LocatorAgent = locator_agent
@@ -25,38 +25,39 @@ class OrchestratorAgent:
             Agent[PromptPayload, LocatorHealingResponse](
             model=model,
             system_prompt=(
-                'Based on failure_details, select and run the proper healing tool.',
-                'Use `locator_heal` for locator-related failures.'
+                "Based on `error_msg` and `html_ids`, select and run the `locator_heal` tool."
+                "You MUST call the tool. You are not allowed to create a response on your own."
             ),
             deps_type=PromptPayload,
             output_type=LocatorHealingResponse
         ))
 
-        @self.agent.tool
-        async def locator_heal(ctx: RunContext[str], failure_details: str) -> LocatorHealingResponse:
-            """Invoke LocatorAgent on raw failure details.
+        @self.agent.tool(name="locator_heal")
+        async def locator_heal(ctx: RunContext[PromptPayload]) -> LocatorHealingResponse:
+            """Invoke LocatorAgent on locator error.
 
             Args:
                 ctx (RunContext): PydanticAI tool context.
-                failure_details (str): Test suite failure details.
 
             Returns:
                 (LocatorHealingResponse): List of repaired locator suggestions.
             """
-            suggestions: List[str] = await self.locator_agent.heal_async(failure_details)
+            suggestions: List[str] = await self.locator_agent.heal_async(ctx=ctx)
             return LocatorHealingResponse(suggestions=suggestions)
 
-    async def run_async(self, failure_details: str) -> LocatorHealingResponse:
-        """Run orchestration on raw failure_details asynchronously.
+    async def run_async(self, robot_ctx: dict) -> LocatorHealingResponse:
+        """Run orchestration asynchronously.
 
         Args:
-            failure_details (str): Test suite failure details.
+            robot_ctx (dict): Contains context for the self-healing process of the LLM.
 
         Returns:
             (LocatorHealingResponse): List of repaired locators.
         """
+        payload: PromptPayload = PromptPayload(**robot_ctx)
         result: AgentRunResult = await self.agent.run(
-            failure_details,
+            payload.error_msg,
+            deps=payload,
             usage_limits=UsageLimits(request_limit=5, total_tokens_limit=2000)
         )
         return result.output
