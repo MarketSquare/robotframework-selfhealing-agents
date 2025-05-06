@@ -10,7 +10,8 @@ readme = "README.md"
 requires-python = "^3.12"
 dependencies = [
     "pydantic-ai",
-    "robotframework >=7.1"
+    "robotframework >=7.1",
+    "beautifulsoup4 >=4.13.4"
 ]
 
 
