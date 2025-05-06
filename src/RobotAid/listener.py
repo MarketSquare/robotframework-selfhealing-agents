@@ -1,10 +1,9 @@
 """Main Robot Framework listener for healing hooks."""
 
-from robot.libraries.BuiltIn import BuiltIn
 from robot.api import logger
 from robot import result, running
 from robot.api.interfaces import ListenerV3
-from self_healing_system.kickoff_self_healing import kickoff_healing
+from RobotAid.self_healing_system.kickoff_self_healing import kickoff_healing
 
 
 class RobotAid(ListenerV3):
@@ -13,7 +12,7 @@ class RobotAid(ListenerV3):
     ROBOT_LIBRARY_SCOPE = 'SUITE'
     ROBOT_LISTENER_API_VERSION = 3
     
-    def __init__(self, enabled=True, max_retries=3, llm_provider=None):
+    def __init__(self, enabled=True, max_retries=3, llm_provider="openai"):
         """Initialize the healing listener.
         
         Args:
@@ -46,8 +45,8 @@ class RobotAid(ListenerV3):
         """Called when a keyword finishes execution."""
         if not self.enabled:
             return
-            
-        if result.failed  and result.type == 'Keyword':
+
+        if result.failed  and result.type.strip().casefold() == 'keyword':
             logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
             # for now, only a dummy healing process triggered with temporary arbitrary payload; context and further
             # information will be implemented soon
