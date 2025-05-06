@@ -1,7 +1,7 @@
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.azure import AzureProvider
 
-from self_healing_system.clients.azure_client import AzureClient
+from RobotAid.self_healing_system.clients.azure_client import AzureClient
 
 
 # only a temporary method for handling different clients - especially since azure behaves differently in pydanticAI

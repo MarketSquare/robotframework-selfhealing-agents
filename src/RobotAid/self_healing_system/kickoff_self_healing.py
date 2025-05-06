@@ -1,8 +1,8 @@
 import asyncio
 
-from schemas import LocatorHealingResponse
-from agents.locator_agent import LocatorAgent
-from agents.orchestrator_agent import OrchestratorAgent
+from RobotAid.self_healing_system.schemas import LocatorHealingResponse
+from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
+from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
 
 
 # - This is the core setup class to instantiate the multi-agent system and call the orchestrator - context missing.

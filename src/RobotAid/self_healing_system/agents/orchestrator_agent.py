@@ -4,9 +4,9 @@ from pydantic_ai.usage import UsageLimits
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.models.openai import OpenAIModel
 
-from self_healing_system.clients.llm_client import get_model
-from self_healing_system.agents.locator_agent import LocatorAgent
-from self_healing_system.schemas import PromptPayload, LocatorHealingResponse
+from RobotAid.self_healing_system.clients.llm_client import get_model
+from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
+from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
 
 
 # MVP Orchestrator Agent - will be adjusted to context and when additional agents will be implemented.

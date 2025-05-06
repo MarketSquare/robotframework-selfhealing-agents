@@ -3,8 +3,8 @@ from pydantic_ai import Agent
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.agent import AgentRunResult
 
-from self_healing_system.clients.llm_client import get_model
-from self_healing_system.schemas import PromptPayload, LocatorSuggestionsResponse
+from RobotAid.self_healing_system.clients.llm_client import get_model
+from RobotAid.self_healing_system.schemas import PromptPayload, LocatorSuggestionsResponse
 
 
 # MVP LocatorAgent - prompt will be adjusted based on provided context.
