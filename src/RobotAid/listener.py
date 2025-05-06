@@ -3,7 +3,8 @@
 from robot.api import logger
 from robot import result, running
 from robot.api.interfaces import ListenerV3
-from RobotAid.self_healing_system.kickoff_self_healing import kickoff_healing
+
+from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
 
 
 class RobotAid(ListenerV3):
@@ -45,12 +46,9 @@ class RobotAid(ListenerV3):
         """Called when a keyword finishes execution."""
         if not self.enabled:
             return
-
         if result.failed  and result.type.strip().casefold() == 'keyword':
             logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
-            # for now, only a dummy healing process triggered with temporary arbitrary payload; context and further
-            # information will be implemented soon
-            kickoff_healing(llm_provider=self.llm_provider)
+            KickoffSelfHealing.kickoff_healing(result=result, llm_provider=self.llm_provider)
             
     def end_test(self, data: running.TestCase, result: result.TestCase):
         """Called when a test ends."""

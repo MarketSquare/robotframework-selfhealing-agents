@@ -7,9 +7,14 @@ class PromptPayload(BaseModel):
     """Standard payload for healing operations.
 
     Attributes:
-        failure_details (str): Test suite failure details.
+        robot_code_line (str): Formatted Robot Keyword object to string.
+        error_msg (str): Robotframework error message.
+        html_ids (list): List of html IDs present in Browser instance.
     """
-    failure_details: str = Field(...)
+    robot_code_line: str = Field(..., description="The raw Robot keyword call that failed")
+    error_msg: str = Field(..., description="The Robotframework error message")
+    html_ids: List[str] = Field(..., description="List of IDs found on the page on failure")
+
 
 class LocatorSuggestionsResponse(BaseModel):
     """Response from locator generation agent.
@@ -17,7 +22,8 @@ class LocatorSuggestionsResponse(BaseModel):
     Attributes:
         suggestions (List): Suggestions for fixed locators.
     """
-    suggestions: List[str] = Field(...)
+    suggestions: List[str] = Field(..., description='List of repaired locators suggestions')
+
 
 class LocatorHealingResponse(BaseModel):
     """Final healing output: a list of fixed locators.
@@ -25,4 +31,4 @@ class LocatorHealingResponse(BaseModel):
     Attributes:
         suggestions (List): Suggestions for fixed locators.
     """
-    suggestions: List[str] = Field(..., description='List of repaired locators')
+    suggestions: List[str] = Field(..., description='List of repaired locators suggestions')
