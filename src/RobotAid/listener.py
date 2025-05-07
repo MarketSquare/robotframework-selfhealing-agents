@@ -21,6 +21,7 @@ class RobotAid(ListenerV3):
             max_retries (int): Maximum number of retry attempts
             llm_provider (str, optional): LLM provider to use
         """
+        self.ROBOT_LIBRARY_LISTENER = self
         self.enabled = self._parse_boolean(enabled)
         self.max_retries = int(max_retries)
         self.llm_provider = llm_provider
