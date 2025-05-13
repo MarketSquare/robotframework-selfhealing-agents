@@ -3,6 +3,8 @@ from pydantic_ai import Agent, RunContext
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.agent import AgentRunResult
 
+from RobotAid.utils.app_settings import AppSettings
+from RobotAid.utils.client_settings import ClientSettings
 from RobotAid.self_healing_system.clients.llm_client import get_model
 from RobotAid.self_healing_system.schemas import PromptPayload, LocatorSuggestionsResponse
 
@@ -12,19 +14,23 @@ class LocatorAgent:
     """Produces alternatives for broken locator.
 
     Attributes:
-        llm_provider (str): Provider for LLM defined by user.
+        app_settings (AppSettings): Instance of AppSettings containing user defined app configuration.
+        client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
         usage_limits (UsageLimits): Usage token and request limits.
     """
     def __init__(
         self,
-        llm_provider: str,
+        app_settings: AppSettings,
+        client_settings: ClientSettings,
         usage_limits: UsageLimits = UsageLimits(request_limit=5, total_tokens_limit=2000)
     ) -> None:
         self.usage_limits: UsageLimits = usage_limits
 
         self.generation_agent: Agent[PromptPayload, LocatorSuggestionsResponse] = (
             Agent[PromptPayload, LocatorSuggestionsResponse](
-            model=get_model(llm_provider=llm_provider),
+            model=get_model(provider=app_settings.locator_agent.provider,
+                            model=app_settings.locator_agent.model,
+                            client_settings=client_settings),
             system_prompt=(
                 "You are an expert for healing broken robotframework locator.\n"
                 "You compare the locator in the 'robot_code_line' to the 'html_ids' found "
