@@ -2,11 +2,12 @@ from typing import List
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.agent import AgentRunResult
-from pydantic_ai.models.openai import OpenAIModel
 
+from RobotAid.utils.app_settings import AppSettings
 from RobotAid.self_healing_system.clients.llm_client import get_model
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
+from RobotAid.utils.client_settings import ClientSettings
 
 
 # MVP Orchestrator Agent - will be adjusted to context and when additional agents will be implemented.
@@ -14,16 +15,18 @@ class OrchestratorAgent:
     """Routes raw failure text to the appropriate healing tool.
 
     Attributes:
+        app_settings (AppSettings): Instance of AppSettings containing user defined app configuration.
+        client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
         locator_agent (LocatorAgent): LocatorAgent instance.
-        llm_provider (str): Provider for LLM defined by user.
     """
-    def __init__(self, locator_agent: LocatorAgent, llm_provider: str) -> None:
+    def __init__(self, app_settings: AppSettings, client_settings: ClientSettings, locator_agent: LocatorAgent) -> None:
         self.locator_agent: LocatorAgent = locator_agent
 
-        model: None | OpenAIModel | str = get_model(llm_provider)
         self.agent: Agent[PromptPayload, LocatorHealingResponse] = (
             Agent[PromptPayload, LocatorHealingResponse](
-            model=model,
+            model=get_model(provider=app_settings.orchestrator_agent.provider,
+                            model=app_settings.orchestrator_agent.model,
+                            client_settings=client_settings),
             system_prompt=(
                 "Based on `error_msg` and `html_ids`, select and run the `locator_heal` tool."
                 "You MUST call the tool. You are not allowed to create a response on your own."

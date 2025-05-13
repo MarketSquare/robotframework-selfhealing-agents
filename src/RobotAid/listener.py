@@ -1,9 +1,12 @@
 """Main Robot Framework listener for healing hooks."""
-
+import os
 from robot.api import logger
 from robot import result, running
 from robot.api.interfaces import ListenerV3
 
+from pathlib import Path
+from RobotAid.utils.app_settings import AppSettings
+from RobotAid.utils.client_settings import ClientSettings
 from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
 
 
@@ -13,19 +16,16 @@ class RobotAid(ListenerV3):
     ROBOT_LIBRARY_SCOPE = 'SUITE'
     ROBOT_LISTENER_API_VERSION = 3
     
-    def __init__(self, enabled=True, max_retries=3, llm_provider="openai"):
-        """Initialize the healing listener.
-        
-        Args:
-            enabled (bool): Whether healing is enabled
-            max_retries (int): Maximum number of retry attempts
-            llm_provider (str, optional): LLM provider to use
-        """
+    def __init__(self):
+        """Initialize the healing listener."""
+        config_base_dir: str = os.path.dirname(os.path.abspath(__file__))
+        config_path: Path = Path(config_base_dir) / "config.yaml"
+        self.app_settings = AppSettings.from_yaml(config_path)
+        self.client_settings = ClientSettings()
+
         self.ROBOT_LIBRARY_LISTENER = self
-        self.enabled = self._parse_boolean(enabled)
-        self.max_retries = int(max_retries)
-        self.llm_provider = llm_provider
         self.context = {}
+        self.enabled = self.app_settings.system.enabled
         logger.info(f"RobotAid initialized with healing={'enabled' if self.enabled else 'disabled'}")
         
     def _parse_boolean(self, value):
@@ -49,7 +49,9 @@ class RobotAid(ListenerV3):
             return
         if result.failed  and result.type.strip().casefold() == 'keyword':
             logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
-            KickoffSelfHealing.kickoff_healing(result=result, llm_provider=self.llm_provider)
+            KickoffSelfHealing.kickoff_healing(result=result,
+                                               app_settings=self.app_settings,
+                                               client_settings=self.client_settings)
             
     def end_test(self, data: running.TestCase, result: result.TestCase):
         """Called when a test ends."""

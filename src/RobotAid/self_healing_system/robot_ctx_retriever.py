@@ -11,7 +11,7 @@ class RobotCtxRetriever:
         """Returns context for self-healing process of the LLM.
 
         Args:
-            results (result.Keyword): Keyword and additional information passed by robotframework listener.
+            result (result.Keyword): Keyword and additional information passed by robotframework listener.
 
         Returns:
             robot_ctx (dict): Contains context for the self-healing process of the LLM.
@@ -30,7 +30,7 @@ class RobotCtxRetriever:
         """Turns a Robot Keyword result into an one‐liner string.
 
         Args:
-            results (result.Keyword): Keyword and additional information passed by robotframework listener.
+            result (result.Keyword): Keyword and additional information passed by robotframework listener.
 
         Returns:
             (str): Formatted Robot Keyword object to string.

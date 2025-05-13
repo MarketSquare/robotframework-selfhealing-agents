@@ -14,8 +14,8 @@ class AzureClient:
         """
         load_dotenv()
         return AsyncAzureOpenAI(
-            api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+            api_key=os.getenv("AZURE_API_KEY"),
             api_version="2024-06-01",
-            azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
+            azure_endpoint=os.getenv("AZURE_ENDPOINT")
         )
 

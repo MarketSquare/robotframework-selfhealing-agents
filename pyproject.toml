@@ -11,7 +11,8 @@ requires-python = "^3.12"
 dependencies = [
     "pydantic-ai",
     "robotframework >=7.1",
-    "beautifulsoup4 >=4.13.4"
+    "beautifulsoup4 >=4.13.4",
+    "pydantic-settings >=2.9.1"
 ]
 
 
