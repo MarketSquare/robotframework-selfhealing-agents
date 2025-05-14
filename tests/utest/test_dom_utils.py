@@ -1,6 +1,6 @@
 import Browser
 import pytest
-from RobotAid.self_healing_system.robot_dom_utils import RobotDomUtils
+from RobotAid.self_healing_system.dom_utils import RobotDomUtils
 
 @pytest.fixture()
 def browser(tmpdir):
