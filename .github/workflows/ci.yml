@@ -35,6 +35,7 @@ jobs:
     - name: Install dependencies
       run: |
         poetry install
+        poetry run pip install robotframework-browser
         poetry run rfbrowser init
         npx playwright install-deps
       if: steps.cache.outputs.cache-hit != 'true'
