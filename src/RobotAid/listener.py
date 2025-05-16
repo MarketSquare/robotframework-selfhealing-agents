@@ -16,11 +16,10 @@ class RobotAid(ListenerV3):
     ROBOT_LIBRARY_SCOPE = 'SUITE'
     ROBOT_LISTENER_API_VERSION = 3
     
-    def __init__(self):
+    def __init__(self, config_path: str | None = None):
         """Initialize the healing listener."""
-        config_base_dir: str = os.path.dirname(os.path.abspath(__file__))
-        config_path: Path = Path(config_base_dir) / "config.yaml"
-        self.app_settings = AppSettings.from_yaml(config_path)
+        resolved_path = Path(config_path) if config_path else Path(__file__).resolve().parent / "config.yaml"
+        self.app_settings = AppSettings.from_yaml(resolved_path)
         self.client_settings = ClientSettings()
 
         self.ROBOT_LIBRARY_LISTENER = self
