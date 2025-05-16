@@ -27,7 +27,7 @@ jobs:
     - name: Install and configure Poetry
       uses: snok/install-poetry@v1
       with:
-        version: 1.8.5
+        version: 2.1.2
         virtualenvs-create: true
         virtualenvs-in-project: false
         virtualenvs-path: ~/.virtualenvs
