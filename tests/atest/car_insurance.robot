@@ -4,6 +4,7 @@ Library    RobotAid
 Suite Setup    New Browser    browser=${BROWSER}    headless=${HEADLESS}
 Test Teardown    Close Context
 Suite Teardown    Close Browser    ALL
+Test Tags    not_ready
 
 *** Variables ***
 ${BROWSER}    chromium

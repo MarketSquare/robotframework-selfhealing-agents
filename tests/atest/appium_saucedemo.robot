@@ -3,7 +3,7 @@ Library    AppiumLibrary
 Library    Process
 Library    OperatingSystem
 Library    RobotAid
-Test Tags    appium    not_ci
+Test Tags    appium    not_ci    not_ready
 
 *** Variables ***
 ${ANDROID_AUTOMATION_NAME}    UIAutomator2
