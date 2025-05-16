@@ -18,6 +18,9 @@ class ClientSettings(BaseSettings):
     openai_api_key: Optional[str] = Field(
         None, env="OPENAI_API_KEY", description="OpenAI API key"
     )
+    base_url: Optional[str] = Field(
+        None, env="BASE_URL", description="Base URL endpoint"
+    )
 
     def __init__(self, **values: Any) -> None:
         super().__init__(**values)
