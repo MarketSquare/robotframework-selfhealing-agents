@@ -26,6 +26,6 @@ def get_model(provider: str, model: str, client_settings: ClientSettings) -> Non
     if provider == "openai":
         return OpenAIModel(
             model_name=model,
-            provider=OpenAIProvider(api_key=client_settings.openai_api_key)
+            provider=OpenAIProvider(base_url=client_settings.base_url, api_key=client_settings.openai_api_key)
         )
     return None
