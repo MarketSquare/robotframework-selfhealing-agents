@@ -37,6 +37,7 @@ def atests(context):
         "--loglevel=TRACE:DEBUG",
         "--listener RobotStackTracer",
         "-d results",
+        "--exclude not_ready",
         f"{ROOT}/tests/atest"
     ]
     global atests_completed_process
