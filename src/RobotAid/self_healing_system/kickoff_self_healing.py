@@ -18,7 +18,7 @@ class KickoffSelfHealing:
             result: result.Keyword,
             app_settings: AppSettings,
             client_settings: ClientSettings
-    ) -> None:
+    ) -> LocatorHealingResponse:
         """Instantiates the multi-agent system, retrieves context and kicks off self-healing-system.
 
         Args:
@@ -37,4 +37,4 @@ class KickoffSelfHealing:
         suggestions: LocatorHealingResponse = asyncio.run(
             orchestrator_agent.run_async(robot_ctx=robot_ctx)
         )
-        print('Suggestions:', suggestions.suggestions)
+        return suggestions

@@ -82,4 +82,4 @@ class AppSettings(BaseModel):
         try:
             return cls.model_validate(raw)
         except ValidationError as e:
-            raise ValidationError(f"Config validation error: {e}") from e
+            raise ValueError(f"Config validation error: {e}") from e
