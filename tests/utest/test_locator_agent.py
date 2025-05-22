@@ -8,11 +8,11 @@ from pydantic_ai.usage import UsageLimits
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
-from RobotAid.self_healing_system.schemas import PromptPayload, LocatorSuggestionsResponse
+from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
 
 
 class DummyAgentRunResult:
-    def __init__(self, output: LocatorSuggestionsResponse) -> None:
+    def __init__(self, output: LocatorHealingResponse) -> None:
         self.output = output
 
 
@@ -42,7 +42,7 @@ class StubAgent:
     ) -> DummyAgentRunResult:
         self.run_calls.append((prompt, deps, usage_limits))
         return DummyAgentRunResult(
-            output=LocatorSuggestionsResponse(suggestions=["loc1", "loc2", "loc3"])
+            output=LocatorHealingResponse(suggestions=["loc1", "loc2", "loc3"])
         )
 
 
@@ -80,9 +80,10 @@ def test_agent_initialization_with_custom_limits() -> None:
 
     gen = agent.generation_agent
     assert gen.model == "fake_model"
-    assert "expert for healing broken robotframework locator" in gen.system_prompt
+    assert ("You are a helpful assistant for fixing broken locators in the context of robotframework tests."
+            in gen.system_prompt)
     assert gen.deps_type is PromptPayload   # type: ignore
-    assert gen.output_type is LocatorSuggestionsResponse
+    assert gen.output_type is LocatorHealingResponse
     assert agent.usage_limits is custom_limits
 
 
@@ -110,11 +111,13 @@ def test_heal_async_uses_generation_agent_run() -> None:
 
     result = asyncio.new_event_loop().run_until_complete(agent.heal_async(ctx))     # type: ignore
 
-    assert result == ["loc1", "loc2", "loc3"]
+    assert result == LocatorHealingResponse(suggestions=["loc1", "loc2", "loc3"])
 
     run_calls = agent.generation_agent.run_calls    # type: ignore
     assert len(run_calls) == 1
     prompt_passed, deps_passed, usage_passed = run_calls[0]
-    assert prompt_passed == "Heal the broken locator found in the error message."
+    assert ((f"You are given a Robot Framework keyword that failed due to an inaccessible locator. "
+            f"Using the html_ids from the DOM at failure time, suggest 3 new locators as a list of strings.\n\n")
+            in prompt_passed)
     assert deps_passed is payload
     assert usage_passed == agent.usage_limits

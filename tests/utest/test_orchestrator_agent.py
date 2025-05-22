@@ -75,8 +75,8 @@ def make_client_settings() -> ClientSettings:
 
 def make_locator_agent() -> Any:
     class StubLocatorAgent:
-        async def heal_async(self, ctx: Any) -> list[str]:
-            return ["suggA", "suggB"]
+        async def heal_async(self, ctx: Any) -> LocatorHealingResponse:
+            return LocatorHealingResponse(suggestions=["suggA", "suggB"])
     return StubLocatorAgent()
 
 
@@ -123,7 +123,7 @@ def test_run_async_calls_agent_run_and_returns_output() -> None:
 
     assert len(orch.agent.run_calls) == 1   # type: ignore
     prompt, deps, usage = orch.agent.run_calls[0]   # type: ignore
-    assert prompt == "err"
+    assert prompt == "Please call the tool 'locator_heal'."
     assert isinstance(deps, PromptPayload)
     assert deps.error_msg == "err"
     assert deps.html_ids == ["i1"]
