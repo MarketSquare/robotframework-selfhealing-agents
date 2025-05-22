@@ -34,7 +34,8 @@ class KickoffSelfHealing:
                                                                   app_settings=app_settings,
                                                                   client_settings=client_settings)
 
-        suggestions: LocatorHealingResponse = asyncio.run(
+        response: LocatorHealingResponse = asyncio.run(
             orchestrator_agent.run_async(robot_ctx=robot_ctx)
         )
-        return suggestions
+        print(response)
+        return response
