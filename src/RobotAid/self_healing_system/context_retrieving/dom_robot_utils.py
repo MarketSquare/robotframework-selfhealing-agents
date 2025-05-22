@@ -1,3 +1,4 @@
+from typing import Optional
 from robot.libraries.BuiltIn import BuiltIn
 
 class RobotDomUtils:
@@ -6,7 +7,7 @@ class RobotDomUtils:
     It provides methods to check, extract and manipulate HTML elements.
     """
 
-    def __init__(self, library_instance=None):      #ToDo: Investigate type hint for library_instance
+    def __init__(self, library_instance: Optional[object] = None):      #ToDo: Investigate type hint for library_instance
         """
         Initializes the RobotDomUtils class.
 
@@ -38,4 +39,3 @@ class RobotDomUtils:
             bool: True if the locator is visible, False otherwise.
         """
         return 'visible' in self.library_instance.get_element_states(locator)
-    
