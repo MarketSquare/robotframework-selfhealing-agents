@@ -39,7 +39,8 @@ class KickoffSelfHealing:
                                                                   usage_limits=UsageLimits(request_limit=5, total_tokens_limit=4000)
                                                                   )
 
-        suggestions: LocatorHealingResponse = asyncio.run(
+        response: LocatorHealingResponse = asyncio.run(
             orchestrator_agent.run_async(robot_ctx=robot_ctx)
         )
-        return suggestions
+        print(response)
+        return response

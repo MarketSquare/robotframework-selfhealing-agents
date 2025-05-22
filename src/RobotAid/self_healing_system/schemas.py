@@ -16,15 +16,6 @@ class PromptPayload(BaseModel):
     html_ids: List[str] = Field(..., description="List of IDs found on the page on failure")
 
 
-class LocatorSuggestionsResponse(BaseModel):
-    """Response from locator generation agent.
-
-    Attributes:
-        suggestions (List): Suggestions for fixed locators.
-    """
-    suggestions: List[str] = Field(..., description='List of repaired locators suggestions')
-
-
 class LocatorHealingResponse(BaseModel):
     """Final healing output: a list of fixed locators.
 

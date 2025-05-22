@@ -6,7 +6,8 @@ from pydantic_ai.agent import AgentRunResult
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 from RobotAid.self_healing_system.clients.llm_client import get_model
-from RobotAid.self_healing_system.schemas import PromptPayload, LocatorSuggestionsResponse
+from RobotAid.self_healing_system.agents.prompts import PromptsLocator
+from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
 
 
 # MVP LocatorAgent - prompt will be adjusted based on provided context.
@@ -26,40 +27,28 @@ class LocatorAgent:
     ) -> None:
         self.usage_limits: UsageLimits = usage_limits
 
-        self.generation_agent: Agent[PromptPayload, LocatorSuggestionsResponse] = (
-            Agent[PromptPayload, LocatorSuggestionsResponse](
+        self.generation_agent: Agent[PromptPayload, LocatorHealingResponse] = (
+            Agent[PromptPayload, LocatorHealingResponse](
             model=get_model(provider=app_settings.locator_agent.provider,
                             model=app_settings.locator_agent.model,
                             client_settings=client_settings),
-            system_prompt=(
-                "You are an expert for healing broken robotframework locator.\n"
-                "You compare the locator in the 'robot_code_line' to the 'html_ids' found "
-                " and make **3** suggestions to fix the broken locator found in 'error_msg'.\n"
-                "Input: a dict with keys `robot_code_line`, `html_ids` and 'error_msg'.  \n"
-                "Example Output: **only** valid JSON matching this schema:\n"
-                "```\n"
-                "{\n"
-                '  "suggestions": ["example_locator1", "example_locator2"]\n'
-                "}\n"
-                "```\n"
-                "Do not emit any commentary, markdown or surrounding text."
-            ),
+            system_prompt=PromptsLocator.system_msg,
             deps_type=PromptPayload,
-            output_type=LocatorSuggestionsResponse
+            output_type=LocatorHealingResponse
         ))
 
-    async def heal_async(self, ctx: RunContext[PromptPayload]) -> List[str]:
+    async def heal_async(self, ctx: RunContext[PromptPayload]) -> LocatorHealingResponse:
         """Generates suggestions for fixing broken locator.
 
         Args:
             ctx (RunContext): PydanticAI context.
 
         Returns:
-            (List): Suggestions for fixed locators.
+            (LocatorHealingResponse): Suggestions for fixed locators.
         """
-        gen_resp: AgentRunResult = await self.generation_agent.run(
-            "Heal the broken locator found in the error message.",
+        response: AgentRunResult = await self.generation_agent.run(
+            PromptsLocator.get_user_msg(ctx=ctx),
             deps=ctx.deps,
             usage_limits=self.usage_limits
         )
-        return gen_resp.output.suggestions
+        return response.output
