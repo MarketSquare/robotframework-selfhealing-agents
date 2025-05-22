@@ -1,5 +1,6 @@
 import re
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag, NavigableString
+from typing import Any, List, Optional, Union
 
 class SoupDomUtils:
     """
@@ -12,7 +13,7 @@ class SoupDomUtils:
         return re.sub(r'\s+', ' ', text.strip())
 
     @staticmethod
-    def get_selector_count(soup, selector):
+    def get_selector_count(soup: BeautifulSoup, selector: str) -> int:
         try:
             elements = soup.select(selector)
             return len(elements)
@@ -20,7 +21,7 @@ class SoupDomUtils:
             return 0
     
     @staticmethod
-    def is_selector_unique(soup, selector):
+    def is_selector_unique(soup: BeautifulSoup, selector: str) -> bool:
         """Check if the CSS selector matches only one element."""
         try:
             elements = soup.select(selector)
@@ -29,7 +30,7 @@ class SoupDomUtils:
             return False
     
     @staticmethod
-    def is_selector_multiple(soup, selector):
+    def is_selector_multiple(soup: BeautifulSoup, selector: str) -> bool:
         """Check if the CSS selector matches multiple elements."""
         try:
             elements = soup.select(selector)
@@ -38,24 +39,23 @@ class SoupDomUtils:
             return False
 
     @staticmethod
-    def has_child_dialog_without_open(element):
+    def has_child_dialog_without_open(element: Tag) -> bool:
         """Check if any parent of the given element is a <dialog> without the 'open' attribute."""
         try:
-            dialog = [x for x in element.children if x.name == "dialog"]
+            dialog = [x for x in element.children if isinstance(x, Tag) and x.name == "dialog"]
             for d in dialog:
                 if not d.has_attr('open'):
                         return True
             return False
-        except:
+        except Exception:
             return True
 
-
     @staticmethod    
-    def is_headline(tag):
+    def is_headline(tag: Tag) -> bool:
         return tag.name in ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']
 
     @staticmethod
-    def is_div_in_li(tag):
+    def is_div_in_li(tag: Tag) -> bool:
         # Check if the tag is a div
         if tag.name != 'div':
             return False
@@ -65,27 +65,26 @@ class SoupDomUtils:
         return parent is not None
 
     @staticmethod
-    def is_p(tag):
+    def is_p(tag: Tag) -> bool:
         if tag.name == 'p':
             return True
         else:
             return False
 
     @staticmethod
-    def has_parent_dialog_without_open(element):
+    def has_parent_dialog_without_open(element: Tag) -> bool:
         """Check if any parent of the given element is a <dialog> without the 'open' attribute."""
         try:
-            dialog = [x for x in element.parents if x.name == "dialog"]
+            dialog = [x for x in element.parents if isinstance(x, Tag) and x.name == "dialog"]
             for d in dialog:
                 if not d.has_attr('open'):
                         return True
             return False
-        except:
+        except Exception:
             return True
 
     @staticmethod
-    # Function to check if an element is a leaf or the lowest of its type in a branch
-    def is_leaf_or_lowest(element):
+    def is_leaf_or_lowest(element: Tag) -> bool:
         # Check if the element has no child elements (leaf)
         if not element.find():
             return True
@@ -98,19 +97,29 @@ class SoupDomUtils:
         return False
 
     @staticmethod
-     # Function to check if an element directly contains text
-    def has_direct_text(tag):
+    def has_direct_text(tag: Tag) -> bool:
         # Check if the tag has any direct text (not in its children)
-        return tag.string and tag.string.strip() and not tag.find()
+        return tag.string is not None and tag.string.strip() and not tag.find()
 
     @staticmethod
-    def generate_unique_css_selector(element, soup, check_parents = True, check_siblings = True, check_children = True, check_text = True, only_return_unique_selectors=True, text_exclusions=[]):
-        steps = []
-        text_steps = []
+    def generate_unique_css_selector(
+        element: Tag,
+        soup: BeautifulSoup,
+        check_parents: bool = True,
+        check_siblings: bool = True,
+        check_children: bool = True,
+        check_text: bool = True,
+        only_return_unique_selectors: bool = True,
+        text_exclusions: Optional[List[str]] = None
+    ) -> Optional[str]:
+        steps: List[str] = []
+        text_steps: List[str] = []
         
-        element_contains_text = False
+        element_contains_text: bool = False
+        if text_exclusions is None:
+            text_exclusions = []
 
-        tag_selector = f"{element.name}"
+        tag_selector: str = f"{element.name}"
         steps.append(tag_selector)
     
         # Step 2: ID
@@ -146,8 +155,8 @@ class SoupDomUtils:
 
         if element.get('class'):
             filtered_classes = [x for x in element['class'] if "hidden" not in x]
-            class_list = []
-            class_selector = None
+            class_list: List[str] = []
+            class_selector: Optional[str] = None
             for single_class in filtered_classes:
                 class_list.append(single_class)
                 class_selector = "." + ".".join(class_list)
@@ -156,10 +165,9 @@ class SoupDomUtils:
             if class_selector:
                 steps.append(class_selector)
 
-
         if check_text:
-            text_selectors = []
-            selector_count = 0
+            text_selectors: List[str] = []
+            selector_count: int = 0
             # Step 4: Text Content
             if element.text.strip():
                 element_contains_text = True
@@ -176,8 +184,6 @@ class SoupDomUtils:
                         if text not in text_exclusions:
                             sanitized_text = SoupDomUtils.clean_text_for_selector(text)
                             text_selector = f':-soup-contains("{sanitized_text}")'
-                            # if is_selector_unique(soup, f"{element.name}{text_selector}"):
-                            #     return f"{element.name}{text_selector}"
                             text_selectors.append(text_selector)
 
                             selector_count = SoupDomUtils.get_selector_count(soup, f"{''.join(steps)}{''.join(text_selectors)}")
@@ -201,7 +207,6 @@ class SoupDomUtils:
                 ul_selector = f"{ul_parent_selector} > {''.join(steps)}"
                 if SoupDomUtils.is_selector_unique(soup, ul_selector):
                     return ul_selector 
-
 
         if check_siblings:
             # Step 7: Sibling Relationships
@@ -227,10 +232,10 @@ class SoupDomUtils:
                         return sibling_selector
         
         if check_parents:
-            parent_level = 0
-            max_level = 10
+            parent_level: int = 0
+            max_level: int = 10
             # Step 5: Parent and Sibling Relationships
-            parent_selectors = []
+            parent_selectors: List[str] = []
             for parent in element.parents:
                 if parent and not SoupDomUtils.has_child_dialog_without_open(parent) and parent.name != "[document]":
                     parent_level += 1
@@ -248,16 +253,88 @@ class SoupDomUtils:
                             elif SoupDomUtils.is_selector_unique(soup, parent_child_selector):
                                 return parent_child_selector
 
-
-
         if only_return_unique_selectors:
             if SoupDomUtils.is_selector_unique(soup, ''.join(steps)):
                 return ''.join(steps)
             else:
                 parent = element.find_parent()
-                siblings = parent.find_all(element.name)
+                siblings = parent.find_all(element.name) if parent else []
                 if len(siblings) > 1:
                     index = siblings.index(element) + 1
                     return f"{''.join(steps)}:nth-of-type({index})"
         else:
             return ''.join(steps)
+
+    @staticmethod
+    def has_display_none(tag):
+        style = tag.get('style', '')
+        return 'display: none' in style
+
+    @staticmethod
+    def get_simplified_dom_tree(source):
+        soup = BeautifulSoup(source, 'html.parser')
+
+        # Remove all <script> tags
+        for elem in soup.find_all('script'):
+            elem.decompose()
+
+
+        # Remove all <svg> tags
+        for elem in soup.find_all('svg'):
+            elem.decompose()
+
+        for elem in soup.find_all('source'):
+            elem.decompose()
+
+        for elem in soup.find_all('animatetransform'):
+            elem.decompose()
+
+        # for elem in soup.find_all('footer'):
+        #     elem.decompose()
+
+        for elem in soup.find_all('template'):
+            elem.decompose()
+
+        for elem in soup.find_all('head'):
+            elem.decompose()
+
+        for elem in soup.find_all('nav'):
+            elem.decompose()
+
+        # Find all elements with 'display: none'
+        hidden_elements = soup.find_all(SoupDomUtils().has_display_none)
+        # Remove these elements
+        for element in hidden_elements:
+            element.decompose()
+
+        # Find all elements with 'display: none'
+        hidden_elements = soup.find_all(attrs={"type": "hidden"})
+        # Remove these elements
+        for element in hidden_elements:
+            element.decompose()
+
+        for a_tag in soup.find_all('a'):
+            del a_tag['href']
+            del a_tag['class']
+            
+        for tag in soup.find_all(style=True):
+            del tag['style']
+
+        for section_tag in soup.find_all('section'):
+            del section_tag['class']
+
+        for picture_tag in soup.find_all('picture'):
+            del picture_tag['class']
+
+        for img_tag in soup.find_all('img'):
+            del img_tag['class']
+            del img_tag['alt']
+            del img_tag['src']
+
+        attributes_to_keep = ['id', 'class', 'value', 'name', 'type', 'placeholder', 'role']
+        for tag in soup.find_all(True):  # True finds all tags
+            for attr in list(tag.attrs):  # list() to avoid runtime error
+                if attr not in attributes_to_keep:
+                    del tag[attr]
+
+        return str(soup.body)
