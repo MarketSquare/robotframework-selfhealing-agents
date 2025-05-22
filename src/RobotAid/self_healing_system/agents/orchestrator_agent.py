@@ -19,9 +19,9 @@ class OrchestratorAgent:
         client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
         locator_agent (LocatorAgent): LocatorAgent instance.
     """
-    def __init__(self, app_settings: AppSettings, client_settings: ClientSettings, locator_agent: LocatorAgent) -> None:
+    def __init__(self, app_settings: AppSettings, client_settings: ClientSettings, locator_agent: LocatorAgent, usage_limits: UsageLimits = UsageLimits(request_limit=5, total_tokens_limit=2000)) -> None:
         self.locator_agent: LocatorAgent = locator_agent
-
+        self.usage_limits: UsageLimits = usage_limits
         self.agent: Agent[PromptPayload, LocatorHealingResponse] = (
             Agent[PromptPayload, LocatorHealingResponse](
             model=get_model(provider=app_settings.orchestrator_agent.provider,
@@ -61,6 +61,6 @@ class OrchestratorAgent:
         result: AgentRunResult = await self.agent.run(
             payload.error_msg,
             deps=payload,
-            usage_limits=UsageLimits(request_limit=5, total_tokens_limit=2000)
+            usage_limits=self.usage_limits
         )
         return result.output
