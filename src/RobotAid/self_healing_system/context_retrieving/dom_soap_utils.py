@@ -264,3 +264,77 @@ class SoupDomUtils:
                     return f"{''.join(steps)}:nth-of-type({index})"
         else:
             return ''.join(steps)
+
+    @staticmethod
+    def has_display_none(tag):
+        style = tag.get('style', '')
+        return 'display: none' in style
+
+    @staticmethod
+    def get_simplified_dom_tree(source):
+        soup = BeautifulSoup(source, 'html.parser')
+
+        # Remove all <script> tags
+        for elem in soup.find_all('script'):
+            elem.decompose()
+
+
+        # Remove all <svg> tags
+        for elem in soup.find_all('svg'):
+            elem.decompose()
+
+        for elem in soup.find_all('source'):
+            elem.decompose()
+
+        for elem in soup.find_all('animatetransform'):
+            elem.decompose()
+
+        # for elem in soup.find_all('footer'):
+        #     elem.decompose()
+
+        for elem in soup.find_all('template'):
+            elem.decompose()
+
+        for elem in soup.find_all('head'):
+            elem.decompose()
+
+        for elem in soup.find_all('nav'):
+            elem.decompose()
+
+        # Find all elements with 'display: none'
+        hidden_elements = soup.find_all(SoupDomUtils().has_display_none)
+        # Remove these elements
+        for element in hidden_elements:
+            element.decompose()
+
+        # Find all elements with 'display: none'
+        hidden_elements = soup.find_all(attrs={"type": "hidden"})
+        # Remove these elements
+        for element in hidden_elements:
+            element.decompose()
+
+        for a_tag in soup.find_all('a'):
+            del a_tag['href']
+            del a_tag['class']
+            
+        for tag in soup.find_all(style=True):
+            del tag['style']
+
+        for section_tag in soup.find_all('section'):
+            del section_tag['class']
+
+        for picture_tag in soup.find_all('picture'):
+            del picture_tag['class']
+
+        for img_tag in soup.find_all('img'):
+            del img_tag['class']
+            del img_tag['alt']
+            del img_tag['src']
+
+        attributes_to_keep = ['id', 'class', 'value', 'name', 'type', 'placeholder', 'role']
+        for tag in soup.find_all(True):  # True finds all tags
+            for attr in list(tag.attrs):  # list() to avoid runtime error
+                if attr not in attributes_to_keep:
+                    del tag[attr]
+
+        return str(soup.body)
