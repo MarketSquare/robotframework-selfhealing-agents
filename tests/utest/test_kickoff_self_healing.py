@@ -22,7 +22,7 @@ class DummyClientSettings:
 
 
 class DummyLocatorAgent:
-    def __init__(self, app_settings: Any, client_settings: Any) -> None:
+    def __init__(self, app_settings: Any, client_settings: Any, **kwargs) -> None:
         self.app_settings = app_settings
         self.client_settings = client_settings
 
@@ -45,14 +45,14 @@ def patch_dependencies(monkeypatch):
     )
     monkeypatch.setattr(
         "RobotAid.self_healing_system.kickoff_self_healing.LocatorAgent",
-        lambda app_settings, client_settings: DummyLocatorAgent(
+        lambda app_settings, client_settings, **kwargs: DummyLocatorAgent(
             app_settings=app_settings,
             client_settings=client_settings,
         ),
     )
     monkeypatch.setattr(
         "RobotAid.self_healing_system.kickoff_self_healing.OrchestratorAgent",
-        lambda locator_agent, app_settings, client_settings: DummyOrchestratorAgent(
+        lambda locator_agent, app_settings, client_settings, **kwargs: DummyOrchestratorAgent(
             locator_agent=locator_agent,
             app_settings=app_settings,
             client_settings=client_settings,
@@ -101,7 +101,7 @@ def test_kickoff_healing_passes_context_and_settings() -> None:
     monkeypatch.setattr(
         mod,
         "OrchestratorAgent",
-        lambda locator_agent, app_settings, client_settings: SpyOrchestrator(
+        lambda locator_agent, app_settings, client_settings, **kwargs: SpyOrchestrator(
             locator_agent=locator_agent,
             app_settings=app_settings,
             client_settings=client_settings,

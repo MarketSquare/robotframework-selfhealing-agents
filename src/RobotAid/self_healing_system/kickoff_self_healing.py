@@ -7,6 +7,7 @@ from RobotAid.self_healing_system.schemas import LocatorHealingResponse
 from RobotAid.self_healing_system.robot_ctx_retriever import RobotCtxRetriever
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
+from pydantic_ai.usage import UsageLimits
 
 
 # - The returned locators are not handled yet.
@@ -29,10 +30,14 @@ class KickoffSelfHealing:
         robot_ctx: dict = RobotCtxRetriever.get_context(result=result)
 
         locator_agent: LocatorAgent = LocatorAgent(app_settings=app_settings,
-                                                   client_settings=client_settings)
+                                                   client_settings=client_settings,
+                                                   usage_limits=UsageLimits(request_limit=5, total_tokens_limit=4000)
+                                                   )
         orchestrator_agent: OrchestratorAgent = OrchestratorAgent(locator_agent=locator_agent,
                                                                   app_settings=app_settings,
-                                                                  client_settings=client_settings)
+                                                                  client_settings=client_settings,
+                                                                  usage_limits=UsageLimits(request_limit=5, total_tokens_limit=4000)
+                                                                  )
 
         suggestions: LocatorHealingResponse = asyncio.run(
             orchestrator_agent.run_async(robot_ctx=robot_ctx)
