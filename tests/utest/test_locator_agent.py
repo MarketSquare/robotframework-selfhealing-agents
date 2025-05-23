@@ -105,7 +105,7 @@ def test_heal_async_uses_generation_agent_run() -> None:
     payload = PromptPayload(
         robot_code_line="Click Button id=btn",
         error_msg="NoSuchElementError",
-        html_ids=["btn", "submit", "cancel"],
+        dom_tree="btn-loc1 btn-loc2 btn-loc3"
     )
     ctx = SimpleNamespace(deps=payload)
 
@@ -117,7 +117,7 @@ def test_heal_async_uses_generation_agent_run() -> None:
     assert len(run_calls) == 1
     prompt_passed, deps_passed, usage_passed = run_calls[0]
     assert ((f"You are given a Robot Framework keyword that failed due to an inaccessible locator. "
-            f"Using the html_ids from the DOM at failure time, suggest 3 new locators as a list of strings.\n\n")
+            f"Using the elements in the DOM at failure time, suggest 3 new locators as a list of strings.\n\n")
             in prompt_passed)
     assert deps_passed is payload
     assert usage_passed == agent.usage_limits
