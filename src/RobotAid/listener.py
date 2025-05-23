@@ -1,10 +1,9 @@
 """Main Robot Framework listener for healing hooks."""
-import os
+from pathlib import Path
 from robot.api import logger
 from robot import result, running
 from robot.api.interfaces import ListenerV3
 
-from pathlib import Path
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
@@ -15,7 +14,7 @@ class RobotAid(ListenerV3):
     
     ROBOT_LIBRARY_SCOPE = 'SUITE'
     ROBOT_LISTENER_API_VERSION = 3
-    
+
     def __init__(self, config_path: str | None = None):
         """Initialize the healing listener."""
         resolved_path = Path(config_path) if config_path else Path(__file__).resolve().parent / "config.yaml"
@@ -51,12 +50,12 @@ class RobotAid(ListenerV3):
             KickoffSelfHealing.kickoff_healing(result=result,
                                                app_settings=self.app_settings,
                                                client_settings=self.client_settings)
-            
+
     def end_test(self, data: running.TestCase, result: result.TestCase):
         """Called when a test ends."""
         if not self.enabled:
             return
-            
+
         if result.failed:
             logger.info(f"RobotAid: Test '{data.name}' failed - collecting information for healing")
             # This would store information for post-execution healing
