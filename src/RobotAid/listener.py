@@ -7,6 +7,9 @@ from robot.api.interfaces import ListenerV3
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
+from RobotAid.self_healing_system.rerun import rerun_keyword_with_fixed_locator
+from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
+from robot.libraries.BuiltIn import BuiltIn
 
 
 class RobotAid(ListenerV3):
@@ -45,11 +48,19 @@ class RobotAid(ListenerV3):
         """Called when a keyword finishes execution."""
         if not self.enabled:
             return
-        if result.failed  and result.type.strip().casefold() == 'keyword':
+        if result.failed and result.owner == 'Browser':
             logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
-            KickoffSelfHealing.kickoff_healing(result=result,
+            healing_response: LocatorHealingResponse = KickoffSelfHealing.kickoff_healing(result=result,
                                                app_settings=self.app_settings,
                                                client_settings=self.client_settings)
+            for fixed_locator in healing_response.suggestions:
+                if result.assign:
+                    BuiltIn().set_local_variable(result.assign[0], fixed_locator)
+                return_value = rerun_keyword_with_fixed_locator(data, fixed_locator)
+                if return_value and result.assign:
+                    BuiltIn().set_local_variable(result.assign[0], return_value)
+                result.status = "PASS"
+                return return_value               
 
     def end_test(self, data: running.TestCase, result: result.TestCase):
         """Called when a test ends."""
