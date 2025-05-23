@@ -122,3 +122,4 @@ class RobotDomUtils:
             soup: BeautifulSoup = BeautifulSoup(self.library_instance.get_page_source(), 'html.parser')
 
         source: str = SoupDomUtils().get_simplified_dom_tree(str(soup.body))
+        return source

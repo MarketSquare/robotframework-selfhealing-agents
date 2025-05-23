@@ -94,7 +94,7 @@ def test_tool_registration_and_invocation() -> None:
     assert "locator_heal" in orch.agent.tools   # type: ignore
 
     tool_fn = orch.agent.tools["locator_heal"]  # type: ignore
-    payload = PromptPayload(robot_code_line="keyword call", error_msg="err", html_ids=["i1"])
+    payload = PromptPayload(robot_code_line="keyword call", error_msg="err", dom_tree="i1")
     ctx = SimpleNamespace(deps=payload)
     result = asyncio.new_event_loop().run_until_complete(tool_fn(ctx))
 
@@ -113,7 +113,7 @@ def test_run_async_calls_agent_run_and_returns_output() -> None:
         locator_agent=locator_agent,
     )
 
-    robot_ctx = {"robot_code_line": "keyword call", "error_msg": "err", "html_ids": ["i1"]}
+    robot_ctx = {"robot_code_line": "keyword call", "error_msg": "err", "dom_tree": "i1"}
     result = asyncio.new_event_loop().run_until_complete(
         orch.run_async(robot_ctx=robot_ctx)
     )
@@ -126,6 +126,6 @@ def test_run_async_calls_agent_run_and_returns_output() -> None:
     assert prompt == "Please call the tool 'locator_heal'."
     assert isinstance(deps, PromptPayload)
     assert deps.error_msg == "err"
-    assert deps.html_ids == ["i1"]
+    assert deps.dom_tree == "i1"
     assert hasattr(usage, "request_limit") and usage.request_limit == 5
     assert hasattr(usage, "total_tokens_limit") and usage.total_tokens_limit == 2000
