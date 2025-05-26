@@ -1,4 +1,3 @@
-from typing import List
 from pydantic import BaseModel, Field
 
 
@@ -13,12 +12,3 @@ class PromptPayload(BaseModel):
     robot_code_line: str = Field(..., description="The raw Robot keyword call that failed")
     error_msg: str = Field(..., description="The Robotframework error message")
     dom_tree: str = Field(..., description="DOM tree of website on test failure")
-
-
-class LocatorHealingResponse(BaseModel):
-    """Final healing output: a list of fixed locators.
-
-    Attributes:
-        suggestions (List): Suggestions for fixed locators.
-    """
-    suggestions: List[str] = Field(..., description='List of repaired locators suggestions')
