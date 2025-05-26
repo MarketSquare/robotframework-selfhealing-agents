@@ -3,7 +3,6 @@ from robot import result
 
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
-from RobotAid.self_healing_system.schemas import LocatorHealingResponse
 from RobotAid.self_healing_system.robot_ctx_retriever import RobotCtxRetriever
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
@@ -19,13 +18,16 @@ class KickoffSelfHealing:
             result: result.Keyword,
             app_settings: AppSettings,
             client_settings: ClientSettings
-    ) -> LocatorHealingResponse:
+    ) -> str:
         """Instantiates the multi-agent system, retrieves context and kicks off self-healing-system.
 
         Args:
             result (result.Keyword): Keyword and additional information passed by robotframework listener.
             app_settings (AppSettings): Instance of AppSettings containing user defined app configuration.
             client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
+
+        Returns:
+            response (str): Suggestion for healing the current robotframework test.
         """
         robot_ctx: dict = RobotCtxRetriever.get_context(result=result)
 
@@ -39,7 +41,7 @@ class KickoffSelfHealing:
                                                                   usage_limits=UsageLimits(request_limit=5, total_tokens_limit=4000)
                                                                   )
 
-        response: LocatorHealingResponse = asyncio.run(
+        response: str = asyncio.run(
             orchestrator_agent.run_async(robot_ctx=robot_ctx)
         )
         print(response)
