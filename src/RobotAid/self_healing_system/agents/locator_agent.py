@@ -4,9 +4,9 @@ from pydantic_ai.agent import AgentRunResult
 
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
+from RobotAid.self_healing_system.schemas import PromptPayload
 from RobotAid.self_healing_system.clients.llm_client import get_model
 from RobotAid.self_healing_system.agents.prompts import PromptsLocator
-from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
 
 
 # MVP LocatorAgent - prompt will be adjusted based on provided context.
@@ -26,24 +26,23 @@ class LocatorAgent:
     ) -> None:
         self.usage_limits: UsageLimits = usage_limits
 
-        self.generation_agent: Agent[PromptPayload, LocatorHealingResponse] = (
-            Agent[PromptPayload, LocatorHealingResponse](
+        self.generation_agent: Agent[PromptPayload, str] = (
+            Agent[PromptPayload, str](
             model=get_model(provider=app_settings.locator_agent.provider,
                             model=app_settings.locator_agent.model,
                             client_settings=client_settings),
             system_prompt=PromptsLocator.system_msg,
-            deps_type=PromptPayload,
-            output_type=LocatorHealingResponse
+            deps_type=PromptPayload
         ))
 
-    async def heal_async(self, ctx: RunContext[PromptPayload]) -> LocatorHealingResponse:
+    async def heal_async(self, ctx: RunContext[PromptPayload]) -> str:
         """Generates suggestions for fixing broken locator.
 
         Args:
             ctx (RunContext): PydanticAI context.
 
         Returns:
-            (LocatorHealingResponse): Suggestions for fixed locators.
+            (str): Repaired locator suggestion.
         """
         response: AgentRunResult = await self.generation_agent.run(
             PromptsLocator.get_user_msg(ctx=ctx),

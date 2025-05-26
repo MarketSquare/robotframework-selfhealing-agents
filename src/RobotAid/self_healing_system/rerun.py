@@ -1,8 +1,9 @@
-from robot.libraries.BuiltIn import BuiltIn
 from robot.api import logger
 from typing import Any, Optional
+from robot.libraries.BuiltIn import BuiltIn
 
-def rerun_keyword_with_fixed_locator(self: Any, data: Any, fixed_locator: Optional[str] = None) -> str:
+
+def rerun_keyword_with_fixed_locator(data: Any, fixed_locator: Optional[str] = None) -> str:
     if fixed_locator:
         data.args = list(data.args)
         data.args[0] = fixed_locator
