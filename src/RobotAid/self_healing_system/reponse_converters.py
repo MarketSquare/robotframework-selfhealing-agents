@@ -1,8 +1,8 @@
 import re
-from typing import Any, Generator
+from typing import Any
 from json import JSONDecoder, JSONDecodeError
 from robot.api import logger
-from RobotAid.self_healing_system.schemas import LocatorHealingResponse
+
 
 def extract_json_objects(text: str, decoder: JSONDecoder = JSONDecoder()) -> Any:
     """
@@ -60,6 +60,7 @@ def extract_json_objects(text: str, decoder: JSONDecoder = JSONDecoder()) -> Any
         return results[0]
     return results
 
+
 def convert_response_to_list(response: str) -> list:
     """Convert a JSON response string to a list of strings.
 
@@ -81,7 +82,8 @@ def convert_response_to_list(response: str) -> list:
     except Exception as e:
         logger.error(f"Error converting response to list: {e}")
         return []
-    
+
+
 def convert_response_to_dict(response: str) -> dict:
     """Convert a JSON response string to a dictionary.
 
@@ -101,21 +103,3 @@ def convert_response_to_dict(response: str) -> dict:
     except Exception as e:
         logger.error(f"Error converting response to dict: {e}")
         return {}
-
-def convert_to_locator_healing_response(response: str) -> LocatorHealingResponse:
-    """Convert a list of locators to a LocatorHealingResponse object.
-
-    Args:
-        response (str): The JSON response string.
-
-    Returns:
-        LocatorHealingResponse: A LocatorHealingResponse object.
-    """
-    try:
-        locators = convert_response_to_list(response)
-        if not locators:
-            return LocatorHealingResponse(suggestions=[])
-        return LocatorHealingResponse(suggestions=locators)
-    except Exception as e:
-        logger.error(f"Error converting response to LocatorHealingResponse: {e}")
-        return LocatorHealingResponse(locators=[])
