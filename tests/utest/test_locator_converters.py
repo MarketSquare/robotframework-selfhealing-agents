@@ -1,5 +1,5 @@
 from RobotAid.self_healing_system.reponse_converters import convert_response_to_list, convert_response_to_dict, extract_json_objects
-from RobotAid.self_healing_system.schemas import LocatorHealingResponse
+
 
 def test_convert_response_to_list() -> None:
     """Test the conversion of a response string to a list of strings."""
@@ -36,10 +36,3 @@ def test_convert_response_to_dict_invalid() -> None:
     response = '{"locator1": "value1", "locator2": "value2"'
     result = convert_response_to_dict(response)
     assert result == {}
-
-def test_convert_to_locator_healing_response() -> None:
-    """Test the conversion of a response string to a LocatorHealingResponse object."""
-    response = '[\"locator1\", \"locator2\", \"locator3\"]'
-    result = convert_response_to_list(response)
-    locator_healing_response = LocatorHealingResponse(suggestions=result)
-    assert locator_healing_response.suggestions == ["locator1", "locator2", "locator3"]

@@ -5,7 +5,6 @@ from typing import Any, cast
 
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
-from RobotAid.self_healing_system.schemas import LocatorHealingResponse
 from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
 
 
@@ -33,8 +32,8 @@ class DummyOrchestratorAgent:
         self.app_settings = app_settings
         self.client_settings = client_settings
 
-    async def run_async(self, robot_ctx: dict) -> LocatorHealingResponse:
-        return LocatorHealingResponse(suggestions=["fix1", "fix2"])
+    async def run_async(self, robot_ctx: dict) -> str:
+        return "fix1"
 
 
 @pytest.fixture(autouse=True)
@@ -76,8 +75,8 @@ def test_kickoff_healing_happy_path() -> None:
         client_settings=client,
     )
 
-    assert isinstance(response, LocatorHealingResponse)
-    assert response.suggestions == ["fix1", "fix2"]
+    assert isinstance(response, str)
+    assert response == "fix1"
 
 
 def test_kickoff_healing_passes_context_and_settings() -> None:
@@ -94,7 +93,7 @@ def test_kickoff_healing_passes_context_and_settings() -> None:
 
         async def run_async(self, robot_ctx):
             captured['robot_ctx'] = robot_ctx
-            return LocatorHealingResponse(suggestions=[])
+            return ""
 
     import RobotAid.self_healing_system.kickoff_self_healing as mod
     monkeypatch = pytest.MonkeyPatch()
@@ -120,6 +119,6 @@ def test_kickoff_healing_passes_context_and_settings() -> None:
     assert captured['robot_ctx'] == {"failed": True}
     assert captured['locator_agent'].app_settings is app
     assert captured['locator_agent'].client_settings is client
-    assert resp.suggestions == []
+    assert resp == ""
 
     monkeypatch.undo()
