@@ -6,11 +6,11 @@ from types import SimpleNamespace
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
-from RobotAid.self_healing_system.schemas import PromptPayload
+from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
 
 
 class DummyAgentRunResult:
-    def __init__(self, output: str) -> None:
+    def __init__(self, output: LocatorHealingResponse) -> None:
         self.output = output
 
 
@@ -24,12 +24,14 @@ class StubAgent:
         model: Any,
         system_prompt: str,
         deps_type: Any,
+        output_type: Any
     ) -> None:
         self.model = model
         self.system_prompt = system_prompt
         self.deps_type = deps_type
         self.tools = {}
         self.run_calls = []
+        self.output_type = output_type
 
     def tool(self, name: str) -> Any:
         def decorator(fn: Any) -> Any:
@@ -45,7 +47,7 @@ class StubAgent:
     ) -> DummyAgentRunResult:
         self.run_calls.append((prompt, deps, usage_limits))
         return DummyAgentRunResult(
-            output="out1"
+            output=LocatorHealingResponse(suggestions=["out1", "out2", "out3"])
         )
 
 
@@ -73,8 +75,8 @@ def make_client_settings() -> ClientSettings:
 
 def make_locator_agent() -> Any:
     class StubLocatorAgent:
-        async def heal_async(self, ctx: Any) -> str:
-            return "suggA"
+        async def heal_async(self, ctx: Any) -> LocatorHealingResponse:
+            return LocatorHealingResponse(suggestions=["suggA", "suggB", "suggC"])
     return StubLocatorAgent()
 
 
@@ -96,8 +98,8 @@ def test_tool_registration_and_invocation() -> None:
     ctx = SimpleNamespace(deps=payload)
     result = asyncio.new_event_loop().run_until_complete(tool_fn(ctx))
 
-    assert isinstance(result, str)
-    assert result == "suggA"
+    assert isinstance(result, LocatorHealingResponse)
+    assert result == LocatorHealingResponse(suggestions=["suggA", "suggB", "suggC"])
 
 
 def test_run_async_calls_agent_run_and_returns_output() -> None:
@@ -116,8 +118,8 @@ def test_run_async_calls_agent_run_and_returns_output() -> None:
         orch.run_async(robot_ctx=robot_ctx)
     )
 
-    assert isinstance(result, str)
-    assert result == "out1"
+    assert isinstance(result, LocatorHealingResponse)
+    assert result == LocatorHealingResponse(suggestions=["out1", "out2", "out3"])
 
     assert len(orch.agent.run_calls) == 1   # type: ignore
     prompt, deps, usage = orch.agent.run_calls[0]   # type: ignore
