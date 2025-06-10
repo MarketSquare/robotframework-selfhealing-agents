@@ -1,13 +1,13 @@
 import asyncio
 from robot import result
+from pydantic_ai.usage import UsageLimits
 
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
+from RobotAid.self_healing_system.schemas import LocatorHealingResponse
 from RobotAid.self_healing_system.robot_ctx_retriever import RobotCtxRetriever
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
-from pydantic_ai.usage import UsageLimits
-
 
 # - The returned locators are not handled yet.
 # - Orchestrator agent is implemented for showcase reasons, not directly needed for MVP for locator fix.
@@ -18,7 +18,7 @@ class KickoffSelfHealing:
             result: result.Keyword,
             app_settings: AppSettings,
             client_settings: ClientSettings
-    ) -> str:
+    ) -> LocatorHealingResponse:
         """Instantiates the multi-agent system, retrieves context and kicks off self-healing-system.
 
         Args:
@@ -27,7 +27,7 @@ class KickoffSelfHealing:
             client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
 
         Returns:
-            response (str): Suggestion for healing the current robotframework test.
+            response (LocatorHealingResponse): List of suggestions for healing the current robotframework test.
         """
         robot_ctx: dict = RobotCtxRetriever.get_context(result=result)
 
@@ -41,7 +41,7 @@ class KickoffSelfHealing:
                                                                   usage_limits=UsageLimits(request_limit=5, total_tokens_limit=4000)
                                                                   )
 
-        response: str = asyncio.run(
+        response: LocatorHealingResponse = asyncio.run(
             orchestrator_agent.run_async(robot_ctx=robot_ctx)
         )
         print(response)
