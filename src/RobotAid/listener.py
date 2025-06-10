@@ -6,6 +6,7 @@ from robot.api.interfaces import ListenerV3
 
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
+from RobotAid.self_healing_system.schemas import LocatorHealingResponse
 from RobotAid.self_healing_system.rerun import rerun_keyword_with_fixed_locator
 from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
 
@@ -27,6 +28,8 @@ class RobotAid(ListenerV3):
         self.enabled = self.app_settings.system.enabled
 
         self.keyword_try_ctr = 0
+        self.suggestions = None
+        self.generate_suggestions = True
         logger.info(f"RobotAid initialized with healing={'enabled' if self.enabled else 'disabled'}")
 
     def _parse_boolean(self, value):
@@ -50,14 +53,15 @@ class RobotAid(ListenerV3):
         if result.failed and result.owner == 'Browser':
             logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
             if self.keyword_try_ctr < self.app_settings.system.max_retries:
-                self.keyword_try_ctr += 1
-                locator_suggestion: str = KickoffSelfHealing.kickoff_healing(result=result,
-                                                                            app_settings=self.app_settings,
-                                                                            client_settings=self.client_settings)
-                rerun_keyword_with_fixed_locator(data, locator_suggestion)
+                if self.generate_suggestions:
+                    self._start_self_healing(result=result)
+                self._try_locator_suggestions(data=data)        # Note: failing suggestions immediately re-trigger
+                                                                #       end_keyword function
                 result.status = "PASS"
 
             self.keyword_try_ctr = 0
+            self.suggestions = None
+            self.generate_suggestions = True
             return
 
     def end_test(self, data: running.TestCase, result: result.TestCase):
@@ -68,3 +72,30 @@ class RobotAid(ListenerV3):
         if result.failed:
             logger.info(f"RobotAid: Test '{data.name}' failed - collecting information for healing")
             # This would store information for post-execution healing
+
+    def _start_self_healing(self, result: result.Keyword) -> None:
+        """Starts the self-healing process via pydanticAI agentic system. Sets class attributes for further processing.
+        """
+        locator_suggestions: LocatorHealingResponse = KickoffSelfHealing.kickoff_healing(
+            result=result,
+            app_settings=self.app_settings,
+            client_settings=self.client_settings
+        )
+        self.suggestions = locator_suggestions.suggestions
+        self.generate_suggestions = False
+        self.keyword_try_ctr += 1
+
+    def _try_locator_suggestions(self, data: running.Keyword) -> None:
+        """Reruns a locator suggestion that is stored in the class attribute list."""
+        current_suggestion = None
+        try:
+            current_suggestion = self.suggestions[0]
+            self.suggestions.pop(0)
+            if len(self.suggestions) == 0:
+                self.suggestions = None
+                self.generate_suggestions = True
+        except:
+            pass
+
+        if current_suggestion:
+            rerun_keyword_with_fixed_locator(data, current_suggestion)
