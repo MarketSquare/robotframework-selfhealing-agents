@@ -8,11 +8,11 @@ from pydantic_ai.usage import UsageLimits
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
-from RobotAid.self_healing_system.schemas import PromptPayload
+from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
 
 
 class DummyAgentRunResult:
-    def __init__(self, output: str) -> None:
+    def __init__(self, output: LocatorHealingResponse) -> None:
         self.output = output
 
 
@@ -26,11 +26,13 @@ class StubAgent:
         model: Any,
         system_prompt: str,
         deps_type: Any,
+        output_type: Any
     ) -> None:
         self.model = model
         self.system_prompt = system_prompt
         self.deps_type = deps_type
         self.run_calls: list[tuple[str, Any, Any]] = []
+        self.output_type: Any = output_type
 
     async def run(
         self,
@@ -40,7 +42,7 @@ class StubAgent:
     ) -> DummyAgentRunResult:
         self.run_calls.append((prompt, deps, usage_limits))
         return DummyAgentRunResult(
-            output="loc1"
+            output=LocatorHealingResponse(suggestions=["loc1", "loc2", "loc3"])
         )
 
 
@@ -108,14 +110,14 @@ def test_heal_async_uses_generation_agent_run() -> None:
 
     result = asyncio.new_event_loop().run_until_complete(agent.heal_async(ctx))     # type: ignore
 
-    assert result == "loc1"
+    assert result == LocatorHealingResponse(suggestions=["loc1", "loc2", "loc3"])
 
     run_calls = agent.generation_agent.run_calls    # type: ignore
     assert len(run_calls) == 1
     prompt_passed, deps_passed, usage_passed = run_calls[0]
     assert ((f"You are given a Robot Framework keyword that failed due to an inaccessible locator. "
-            f"Using the elements in the DOM at failure time, suggest 1 new locator. "
-            f"Only respond with the locator, do not give any additional information in any case.\n\n")
+            f"Using the elements in the DOM at failure time, suggest 3 new locators. "
+            f"Only respond with the locators, do not give any additional information in any case.\n\n")
             in prompt_passed)
     assert deps_passed is payload
     assert usage_passed == agent.usage_limits

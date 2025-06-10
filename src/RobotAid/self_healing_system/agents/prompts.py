@@ -23,8 +23,8 @@ class PromptsLocator:
         """
         return (
             f"You are given a Robot Framework keyword that failed due to an inaccessible locator. "
-            f"Using the elements in the DOM at failure time, suggest 1 new locator. "
-            f"Only respond with the locator, do not give any additional information in any case.\n\n"
+            f"Using the elements in the DOM at failure time, suggest 3 new locators. "
+            f"Only respond with the locators, do not give any additional information in any case.\n\n"
             f"Error message:\n{ctx.deps.error_msg}\n\n"
             f"Dom Tree:\n{ctx.deps.dom_tree}\n\n"
             f"Keyword call:\n{ctx.deps.robot_code_line}"
