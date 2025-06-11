@@ -66,13 +66,14 @@ def patch_dependencies(monkeypatch):
 
 def test_kickoff_healing_happy_path() -> None:
     dummy_result = cast(result.Keyword, DummyKeyword())
-    app = cast(AppSettings, DummyAppSettings())
-    client = cast(ClientSettings, DummyClientSettings())
+    dummy_app = cast(AppSettings, DummyAppSettings())
+    dummy_client = cast(ClientSettings, DummyClientSettings())
 
     response = KickoffSelfHealing.kickoff_healing(
         result=dummy_result,
-        app_settings=app,
-        client_settings=client,
+        app_settings=dummy_app,
+        client_settings=dummy_client,
+        tried_locator_memory=list()
     )
 
     assert isinstance(response, str)
@@ -103,7 +104,7 @@ def test_kickoff_healing_passes_context_and_settings() -> None:
         lambda locator_agent, app_settings, client_settings, **kwargs: SpyOrchestrator(
             locator_agent=locator_agent,
             app_settings=app_settings,
-            client_settings=client_settings,
+            client_settings=client_settings
         ),
     )
 
@@ -115,8 +116,9 @@ def test_kickoff_healing_passes_context_and_settings() -> None:
         result=dummy_result,
         app_settings=app,
         client_settings=client,
+        tried_locator_memory=list()
     )
-    assert captured['robot_ctx'] == {"failed": True}
+    assert captured['robot_ctx'] == {"failed": True, "tried_locator_memory": []}
     assert captured['locator_agent'].app_settings is app
     assert captured['locator_agent'].client_settings is client
     assert resp == ""
