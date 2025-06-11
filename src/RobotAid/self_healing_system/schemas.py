@@ -12,6 +12,7 @@ class PromptPayload(BaseModel):
     robot_code_line: str = Field(..., description="The raw Robot keyword call that failed")
     error_msg: str = Field(..., description="The Robotframework error message")
     dom_tree: str = Field(..., description="DOM tree of website on test failure")
+    tried_locator_memory: list = Field(..., description="List of tried locator suggestions that still failed.")
 
 
 class LocatorHealingResponse(BaseModel):

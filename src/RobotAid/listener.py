@@ -30,6 +30,7 @@ class RobotAid(ListenerV3):
         self.keyword_try_ctr = 0
         self.suggestions = None
         self.generate_suggestions = True
+        self.tried_locator_memory = list()
         logger.info(f"RobotAid initialized with healing={'enabled' if self.enabled else 'disabled'}")
 
     def _parse_boolean(self, value):
@@ -62,6 +63,7 @@ class RobotAid(ListenerV3):
             self.keyword_try_ctr = 0
             self.suggestions = None
             self.generate_suggestions = True
+            self.tried_locator_memory = list()
             return
 
     def end_test(self, data: running.TestCase, result: result.TestCase):
@@ -79,7 +81,8 @@ class RobotAid(ListenerV3):
         locator_suggestions: LocatorHealingResponse = KickoffSelfHealing.kickoff_healing(
             result=result,
             app_settings=self.app_settings,
-            client_settings=self.client_settings
+            client_settings=self.client_settings,
+            tried_locator_memory=self.tried_locator_memory
         )
         self.suggestions = locator_suggestions.suggestions
         self.generate_suggestions = False
@@ -98,4 +101,5 @@ class RobotAid(ListenerV3):
             pass
 
         if current_suggestion:
+            self.tried_locator_memory.append(current_suggestion)
             rerun_keyword_with_fixed_locator(data, current_suggestion)

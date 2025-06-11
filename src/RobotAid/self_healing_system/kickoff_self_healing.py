@@ -17,7 +17,8 @@ class KickoffSelfHealing:
     def kickoff_healing(
             result: result.Keyword,
             app_settings: AppSettings,
-            client_settings: ClientSettings
+            client_settings: ClientSettings,
+            tried_locator_memory: list
     ) -> LocatorHealingResponse:
         """Instantiates the multi-agent system, retrieves context and kicks off self-healing-system.
 
@@ -25,11 +26,13 @@ class KickoffSelfHealing:
             result (result.Keyword): Keyword and additional information passed by robotframework listener.
             app_settings (AppSettings): Instance of AppSettings containing user defined app configuration.
             client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
+            tried_locator_memory (list): Memory list of executed locator suggestions that still failed.
 
         Returns:
             response (LocatorHealingResponse): List of suggestions for healing the current robotframework test.
         """
         robot_ctx: dict = RobotCtxRetriever.get_context(result=result)
+        robot_ctx["tried_locator_memory"] = tried_locator_memory
 
         locator_agent: LocatorAgent = LocatorAgent(app_settings=app_settings,
                                                    client_settings=client_settings,
