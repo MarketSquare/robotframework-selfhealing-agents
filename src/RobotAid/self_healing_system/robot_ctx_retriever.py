@@ -22,6 +22,9 @@ class RobotCtxRetriever:
             "robot_code_line": robot_code_line,
             "error_msg": result.message,
             "dom_tree": dom_tree,
+            "keyword_name": result.name,
+            "keyword_args": result.args,
+            "failed_locator": result.args[0]
         }
         return robot_ctx
 
