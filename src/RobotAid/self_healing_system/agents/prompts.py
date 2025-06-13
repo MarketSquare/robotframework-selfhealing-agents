@@ -39,6 +39,8 @@ class PromptsLocator:
         "You are a xpath and css selector self-healing tool.\n"
         "You will provide a fixed_locator for a failed_locator.\n"
         "Using the elements in the DOM at failure time, suggest 3 new locators.\n"
+        "You are also given a list of tried locator suggestions memory that were tried but still failed. "
+        "Make sure you do not suggest a locator that is on that list. "
         "Keywords like 'Fill Text', 'Enter Text' or 'Press Keys'  are always related to 'input' or 'textarea' elements.\n"
         "Keywords like 'Click' are often  related to 'button','checkbox', 'a' or 'input' elements.\n"
         "Keywords like 'Select' or 'Deselect' are often related to 'select' elements.\n"
@@ -65,4 +67,5 @@ class PromptsLocator:
             f"Failed locator: `{ctx.deps.failed_locator}`\n\n"
             f"Keyword name: `{ctx.deps.keyword_name}`\n\n"            
             f"Dom Tree: ```{ctx.deps.dom_tree}```\n\n"
+            f"Tried Locator Suggestion Memory:\n{ctx.deps.tried_locator_memory}\n\n"
         )

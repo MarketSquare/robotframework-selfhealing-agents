@@ -5,10 +5,10 @@ from pydantic_ai import ModelRetry
 
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
-from RobotAid.self_healing_system.schemas import PromptPayload
 from RobotAid.self_healing_system.clients.llm_client import get_model
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.prompts import PromptsOrchestrator
+from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
 
 
 # MVP Orchestrator Agent - will be adjusted to context and when additional agents will be implemented.
@@ -29,32 +29,33 @@ class OrchestratorAgent:
                             model=app_settings.orchestrator_agent.model,
                             client_settings=client_settings),
             system_prompt=PromptsOrchestrator.system_msg,
-            deps_type=PromptPayload
+            deps_type=PromptPayload,
+            output_type=LocatorHealingResponse
         ))
 
         @self.agent.tool(name="locator_heal")
-        async def locator_heal(ctx: RunContext[PromptPayload]) -> str:
+        async def locator_heal(ctx: RunContext[PromptPayload]) -> LocatorHealingResponse:
             """Invoke LocatorAgent on locator error.
 
             Args:
                 ctx (RunContext): PydanticAI tool context.
 
             Returns:
-                (str): Repaired locator suggestion.
+                (LocatorHealingResponse): List of repaired locator suggestions.
             """
             try:
                 return await self.locator_agent.heal_async(ctx=ctx)
             except Exception as e:
                 raise ModelRetry(f"Locator healing failed: {str(e)}")
 
-    async def run_async(self, robot_ctx: dict) -> str:
+    async def run_async(self, robot_ctx: dict) -> LocatorHealingResponse:
         """Run orchestration asynchronously.
 
         Args:
             robot_ctx (dict): Contains context for the self-healing process of the LLM.
 
         Returns:
-            (str): Repaired locator suggestion.
+            (LocatorHealingResponse): List of repaired locator suggestions.
         """
         payload: PromptPayload = PromptPayload(**robot_ctx)
         response: AgentRunResult = await self.agent.run(

@@ -14,4 +14,13 @@ class PromptPayload(BaseModel):
     dom_tree: str = Field(..., description="DOM tree of website on test failure")
     keyword_name: str = Field(..., description="Name of the Robotframework keyword that failed")
     keyword_args: tuple = Field(..., description="Arguments of the Robotframework keyword that failed")
-    failed_locator: str = Field(..., description="Locator that failed in the Robotframework keyword")    
+    failed_locator: str = Field(..., description="Locator that failed in the Robotframework keyword")
+    tried_locator_memory: list = Field(..., description="List of tried locator suggestions that still failed.")
+
+class LocatorHealingResponse(BaseModel):
+    """Response schema for locator healing response of locator agent.
+
+    Attributes:
+        suggestions (list): Contains suggestions for fixing locator error.
+    """
+    suggestions: list = Field(..., description="Suggestions for fixing locator error.")

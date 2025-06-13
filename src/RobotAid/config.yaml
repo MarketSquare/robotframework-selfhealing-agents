@@ -4,8 +4,8 @@ system:
 
 orchestrator_agent:
   provider: "openai"
-  model: "gpt-4o"
+  model: "gpt-4o-mini"
 
 locator_agent:
   provider: "openai"
-  model: "gpt-4o"
+  model: "gpt-4o-mini"

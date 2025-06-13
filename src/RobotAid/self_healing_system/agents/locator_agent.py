@@ -5,11 +5,12 @@ from pydantic_ai import ModelRetry
 
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
-from RobotAid.self_healing_system.schemas import PromptPayload
 from RobotAid.self_healing_system.clients.llm_client import get_model
 from RobotAid.self_healing_system.agents.prompts import PromptsLocator
 from RobotAid.self_healing_system.reponse_converters import convert_response_to_list, convert_response_to_dict
-from RobotAid.self_healing_system.context_retrieving.dom_robot_utils import RobotDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_robot_utils import RobotDomUtils 
+from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
+
 
 # MVP LocatorAgent - prompt will be adjusted based on provided context.
 try:
@@ -39,7 +40,8 @@ class LocatorAgent:
                             model=app_settings.locator_agent.model,
                             client_settings=client_settings),
             system_prompt=PromptsLocator.system_msg,
-            deps_type=PromptPayload
+            deps_type=PromptPayload,
+            output_type=LocatorHealingResponse
         ))
         
         @self.generation_agent.output_validator
@@ -65,14 +67,14 @@ class LocatorAgent:
             except Exception as e:
                 raise ModelRetry(f"Invalid output format: {str(e)}. Expected format: {{'fixed_locators': ['locator1', 'locator2', ...]}}") from e
 
-    async def heal_async(self, ctx: RunContext[PromptPayload]) -> str:
+    async def heal_async(self, ctx: RunContext[PromptPayload]) -> LocatorHealingResponse:
         """Generates suggestions for fixing broken locator.
 
         Args:
             ctx (RunContext): PydanticAI context.
 
         Returns:
-            (str): Repaired locator suggestion.
+            (LocatorHealingResponse): List of repaired locator suggestions.
         """
         response: AgentRunResult = await self.generation_agent.run(
             PromptsLocator.get_user_msg(ctx=ctx),
