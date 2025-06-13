@@ -66,28 +66,3 @@ class PromptsLocator:
             f"Keyword name: `{ctx.deps.keyword_name}`\n\n"            
             f"Dom Tree: ```{ctx.deps.dom_tree}```\n\n"
         )
-
-class PromptsLocatorDecision:
-    system_msg: str = (
-        "You are a xpath and css selector self-healing tool for Robot Framework."
-        "You will select exactly one fixed_locator from a list of Locator Proposals."
-        'Respond only using the following json schema: {"fixed_locator": "locator"}.\n'
-        "NO COMMENTS. NO DESCRIPTIONS. NO ADDITIONAL INFORMATION."
-    )
-
-    @staticmethod
-    def get_user_msg(ctx: RunContext[PromptPayload], locator_list) -> str:
-        """Assembles user message (a.k.a. user prompt) based on context.
-
-        Args:
-            ctx (RunContext): PydanticAI context. Contains information about keyword failure.
-
-        Returns:
-            (str): Assembled user message (a.k.a. user prompt) based on context.
-        """
-        return (
-            f"Locator proposals: {locator_list}\n\n"
-            f"Error message: `{ctx.deps.error_msg}`\n\n"
-            f"Failed locator: `{ctx.deps.failed_locator}`\n\n"
-            f"Keyword name: `{ctx.deps.keyword_name}`\n\n"
-        )
