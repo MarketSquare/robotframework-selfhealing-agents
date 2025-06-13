@@ -8,6 +8,14 @@ from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
 from pydantic_ai.usage import UsageLimits
 
+import logfire
+
+try:
+    logfire.configure()
+    logfire.instrument_pydantic_ai()
+except ImportError:
+    print("Logfire is not installed. Skipping logfire configuration.")
+	
 
 # - The returned locators are not handled yet.
 # - Orchestrator agent is implemented for showcase reasons, not directly needed for MVP for locator fix.
@@ -33,12 +41,13 @@ class KickoffSelfHealing:
 
         locator_agent: LocatorAgent = LocatorAgent(app_settings=app_settings,
                                                    client_settings=client_settings,
-                                                   usage_limits=UsageLimits(request_limit=5, total_tokens_limit=4000)
+                                                   usage_limits=UsageLimits(request_limit=5, total_tokens_limit=8000)
                                                    )
+                                                                                   
         orchestrator_agent: OrchestratorAgent = OrchestratorAgent(locator_agent=locator_agent,
                                                                   app_settings=app_settings,
                                                                   client_settings=client_settings,
-                                                                  usage_limits=UsageLimits(request_limit=5, total_tokens_limit=4000)
+                                                                  usage_limits=UsageLimits(request_limit=5, total_tokens_limit=8000)
                                                                   )
 
         response: str = asyncio.run(
