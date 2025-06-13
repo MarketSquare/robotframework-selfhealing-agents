@@ -41,7 +41,7 @@ class LocatorAgent:
                             client_settings=client_settings),
             system_prompt=PromptsLocator.system_msg,
             deps_type=PromptPayload,
-            output_type=LocatorHealingResponse
+            output_type=str
         ))
         
         @self.generation_agent.output_validator
@@ -67,14 +67,14 @@ class LocatorAgent:
             except Exception as e:
                 raise ModelRetry(f"Invalid output format: {str(e)}. Expected format: {{'fixed_locators': ['locator1', 'locator2', ...]}}") from e
 
-    async def heal_async(self, ctx: RunContext[PromptPayload]) -> LocatorHealingResponse:
+    async def heal_async(self, ctx: RunContext[PromptPayload]) -> str:
         """Generates suggestions for fixing broken locator.
 
         Args:
             ctx (RunContext): PydanticAI context.
 
         Returns:
-            (LocatorHealingResponse): List of repaired locator suggestions.
+            (str): List of repaired locator suggestions.
         """
         response: AgentRunResult = await self.generation_agent.run(
             PromptsLocator.get_user_msg(ctx=ctx),

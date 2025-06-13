@@ -30,32 +30,32 @@ class OrchestratorAgent:
                             client_settings=client_settings),
             system_prompt=PromptsOrchestrator.system_msg,
             deps_type=PromptPayload,
-            output_type=LocatorHealingResponse
+            output_type=str
         ))
 
         @self.agent.tool(name="locator_heal")
-        async def locator_heal(ctx: RunContext[PromptPayload]) -> LocatorHealingResponse:
+        async def locator_heal(ctx: RunContext[PromptPayload]) -> str:
             """Invoke LocatorAgent on locator error.
 
             Args:
                 ctx (RunContext): PydanticAI tool context.
 
             Returns:
-                (LocatorHealingResponse): List of repaired locator suggestions.
+                (str): List of repaired locator suggestions.
             """
             try:
                 return await self.locator_agent.heal_async(ctx=ctx)
             except Exception as e:
                 raise ModelRetry(f"Locator healing failed: {str(e)}")
 
-    async def run_async(self, robot_ctx: dict) -> LocatorHealingResponse:
+    async def run_async(self, robot_ctx: dict) -> str:
         """Run orchestration asynchronously.
 
         Args:
             robot_ctx (dict): Contains context for the self-healing process of the LLM.
 
         Returns:
-            (LocatorHealingResponse): List of repaired locator suggestions.
+            (str): List of repaired locator suggestions.
         """
         payload: PromptPayload = PromptPayload(**robot_ctx)
         response: AgentRunResult = await self.agent.run(
