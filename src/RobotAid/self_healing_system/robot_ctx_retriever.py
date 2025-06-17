@@ -1,5 +1,6 @@
 from robot import result
 from robot.utils.misc import seq2str
+from robot.libraries.BuiltIn import BuiltIn
 
 from RobotAid.self_healing_system.context_retrieving.dom_robot_utils import RobotDomUtils
 
@@ -24,7 +25,7 @@ class RobotCtxRetriever:
             "dom_tree": dom_tree,
             "keyword_name": result.name,
             "keyword_args": result.args,
-            "failed_locator": result.args[0]
+            "failed_locator": BuiltIn().replace_variables(result.args[0])
         }
         return robot_ctx
 
