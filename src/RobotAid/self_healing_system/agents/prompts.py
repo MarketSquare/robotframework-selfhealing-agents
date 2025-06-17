@@ -4,14 +4,13 @@ from RobotAid.self_healing_system.schemas import PromptPayload
 
 class PromptsOrchestrator:
     system_msg: str = (
-        # "You fix a broken keyword in a robotframework test."
-        #                "If the keyword failed due to a broken locator, call the tool 'locator_heal' "                       
-        #             "If the tool locator_heal returns a valid locator (e.g., a valid XPath or CSS selector), do not call the tool again and return the locator as the final output."       
-                    "You fix a broken keyword in a Robot Framework test." 
-                    "If the keyword failed due to a broken locator, call the tool 'locator_heal'."
-                    "When the tool returns a string starting with 'xpath=' or 'css=', return **that exact string** as the final output."
-                    "Do not wrap it, do not explain it, do not quote it. Simply return the string. Do not call the tool again."
-                    "If the tool returns a string that does not start with 'xpath=' or 'css=' or if the tool returns an error, call the tool again."
+        "You are a Robot Framework locator healing orchestrator. "
+        "Call the 'locator_heal' tool exactly ONCE and return its response. "
+        "NEVER call the tool multiple times. "
+        "When the tool returns JSON containing 'suggestions', immediately return that JSON as your final answer. "
+        "Do not analyze, modify, or explain the response. "
+        "SUCCESS CONDITION: Any JSON response with format {\"suggestions\": [...]} is a complete success - return it immediately. "
+        "FAILURE CONDITION: Only retry if the tool throws an exception or returns non-JSON text."
     )
     user_msg: str = ("Please call the tool 'locator_heal'. Only respond with the message the tool gave you, do "
                      "not add any additional information in any case.")
@@ -26,11 +25,12 @@ class PromptsOrchestrator:
             (str): Assembled user message (a.k.a. user prompt) based on context.
         """
         return (
-            "Please call the tool 'locator_heal'. Only respond with the message the tool gave you, do "
+            "Please call the tool 'locator_heal'." 
+            "Only respond with the message the tool gave you, do "
             "not add any additional information or text in any case."
             # "Example responses: 'xpath=//div[@class=\"example\"]' or 'css=.example-class'"
 
-            # f"Failed locator:\n{ctx.failed_locator}\n\n"
+            f"Failed locator:\n{ctx.failed_locator}\n\n"
 
         )
 
@@ -47,8 +47,9 @@ class PromptsLocator:
         "Keywords like 'Check' or 'Uncheck' are often related to 'checkbox' elements.\n"
         "When the 'fixed_locator' is an xpath, always add a xpath= prefix to the locator.\n"
         "When the 'fixed_locator' is an css selector, always add a css= prefix to the locator.\n"
-        'Respond using the following json schema: {"fixed_locators": ["locator1", "locator2", "locator3", ... ]}.\n'
-        'Example: {"fixed_locators": ["css=input[id=\'my_id\']", "xpath=//*[contains(text(),\'Login\')]", "xpath=//label[contains(text(),\'Speeding\')]/..//input", "xpath=//*[contains(@class, \'submitBtn\')]", "css=button.class1.class2"]}\n'
+        "IMPORTANT: Respond ONLY with the JSON. Do not include any explanations, analysis, or additional text.\n"
+        "ONLY return the JSON in this exact format: {\"suggestions\": [\"locator1\", \"locator2\", \"locator3\"]}\n"
+        'Example response: {"suggestions": ["css=input[id=\'my_id\']", "xpath=//*[contains(text(),\'Login\')]", "xpath=//label[contains(text(),\'Speeding\')]/..//input"]}\n'
     )
 
     @staticmethod
