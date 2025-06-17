@@ -10,6 +10,7 @@ from RobotAid.self_healing_system.agents.prompts import PromptsLocator
 from RobotAid.self_healing_system.reponse_converters import convert_response_to_list, convert_response_to_dict
 from RobotAid.self_healing_system.context_retrieving.dom_robot_utils import RobotDomUtils 
 from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
+from RobotAid.self_healing_system.browser.utils import convert_locator_to_browser
 
 
 # MVP LocatorAgent - prompt will be adjusted based on provided context.
@@ -56,16 +57,20 @@ class LocatorAgent:
             """
             try:
                 locator_dict = convert_response_to_dict(output)
-                fixed_locators = locator_dict.get("fixed_locators", [])
+                fixed_locators = locator_dict.get("suggestions", [])
                 if not fixed_locators:
                     raise ModelRetry("No fixed locators found in the response.")
                 # Try each locator and return the first valid one
+                suggestions =[]
                 for locator in fixed_locators:
+                    locator = convert_locator_to_browser(locator)
                     if robot_dom_utility.is_locator_unique(locator):
-                        return locator
+                        suggestions.append(locator)
+                if suggestions:
+                    return LocatorHealingResponse(suggestions=suggestions).model_dump_json()
                 raise ModelRetry("None of the fixed locators are valid or unique.")
             except Exception as e:
-                raise ModelRetry(f"Invalid output format: {str(e)}. Expected format: {{'fixed_locators': ['locator1', 'locator2', ...]}}") from e
+                raise ModelRetry(f"Invalid output format: {str(e)}. Expected format: {{'suggestions': ['locator1', 'locator2', ...]}}") from e
 
     async def heal_async(self, ctx: RunContext[PromptPayload]) -> str:
         """Generates suggestions for fixing broken locator.
