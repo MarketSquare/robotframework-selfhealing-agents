@@ -10,6 +10,7 @@ from RobotAid.self_healing_system.agents.prompts import PromptsOrchestrator
 from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
 
 
+
 # MVP Orchestrator Agent - will be adjusted to context and when additional agents will be implemented.
 class OrchestratorAgent:
     """Routes raw failure text to the appropriate healing tool.
@@ -62,6 +63,34 @@ class OrchestratorAgent:
             PromptsOrchestrator.get_user_msg(payload),
             deps=payload,
             usage_limits=self.usage_limits,
-            model_settings={'temperature': 0.0}
+            model_settings={'temperature': 0.1, 'parallel_tool_calls': False}
         )
-        return response.output
+        return cleanup_response(response.output)
+
+def cleanup_response(response: str) -> str:
+    """Cleans up the response from the agent to ensure it is in the correct format.
+        e.g. if response starts with "The JSON response is " or <|python_tag|> or {"output": "{"suggestions": [...]}"}
+        Just returns the JSON part of the response.
+    
+    Args:
+        response (str): Raw response from the agent.
+
+    Returns:
+        LocatorHealingResponse: Parsed and validated response.
+    """
+    import re
+    if response.startswith("The JSON response is"):
+        response = response[len("The JSON response is"):].strip()
+    if response.startswith("<|python_tag|>"):
+        response = response[len("<|python_tag|>"):].strip()
+    if response.endswith("."):
+        response = response[:-1].strip()
+    # Handle nested JSON structure like {"output": "..."}
+    # Extract content from nested JSON structure like {"output": "..."}
+    nested_json_pattern = r'^\{"output":\s*"(.*)"\}$'
+    match = re.match(nested_json_pattern, response)
+    if match:
+        response = match.group(1)
+    return response
+
+
