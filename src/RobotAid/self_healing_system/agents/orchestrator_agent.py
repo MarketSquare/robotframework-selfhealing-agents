@@ -2,7 +2,6 @@ from pydantic_ai import Agent, RunContext
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai import ModelRetry
-
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 from RobotAid.self_healing_system.clients.llm_client import get_model
@@ -34,11 +33,12 @@ class OrchestratorAgent:
         ))
 
         @self.agent.tool(name="locator_heal")
-        async def locator_heal(ctx: RunContext[PromptPayload]) -> str:
+        async def locator_heal(ctx: RunContext[PromptPayload], broken_locator: str) -> str:
             """Invoke LocatorAgent on locator error.
 
             Args:
                 ctx (RunContext): PydanticAI tool context.
+                broken_locator (str): Locator that needs to be healed.
 
             Returns:
                 (str): List of repaired locator suggestions.
@@ -48,7 +48,7 @@ class OrchestratorAgent:
             except Exception as e:
                 raise ModelRetry(f"Locator healing failed: {str(e)}")
 
-    async def run_async(self, robot_ctx: dict) -> str:
+    async def run_async(self, robot_ctx: dict) -> str :
         """Run orchestration asynchronously.
 
         Args:
