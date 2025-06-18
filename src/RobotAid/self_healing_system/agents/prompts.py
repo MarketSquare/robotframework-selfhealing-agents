@@ -1,19 +1,21 @@
 from pydantic_ai import RunContext
 from RobotAid.self_healing_system.schemas import PromptPayload
-
+from RobotAid.self_healing_system.schemas import LocatorHealingResponse
 
 class PromptsOrchestrator:
     system_msg: str = (
-        "You are a Robot Framework locator healing orchestrator. "
-        "Call the 'locator_heal' tool exactly ONCE and return its response. "
-        "NEVER call the tool multiple times. "
-        "When the tool returns JSON containing 'suggestions', immediately return that JSON as your final answer. "
-        "Do not analyze, modify, or explain the response. "
-        "SUCCESS CONDITION: Any JSON response with format {\"suggestions\": [...]} is a complete success - return it immediately. "
-        "FAILURE CONDITION: Only retry if the tool throws an exception or returns non-JSON text."
+        "You are a Robot Framework smart recovery tool and a JSON passthrough machine. Your only job is to return the exact, raw JSON output from a tool.\n"
+        
+        "The following tools are available to you:\n"
+        "- get_healed_locators: This tool provides locator suggestions for a broken locator.\n\n"
+        
+        "Your task is to call a tool ONCE and return its response in pure JSON format.\n"
+        "Your output must be a character-for-character copy of the tool's output.\n"
+        "DO NOT describe what you did. DO NOT explain the result. DO NOT add any text before or after the JSON.\n\n"
+        "NEVER return the tool call format like {\"name\": \"tool_name\", \"parameters\": {...}}.\n"
+        "ALWAYS return the tool's actual response which looks like {\"suggestions\": [...]}.\n"
     )
-    user_msg: str = ("Please call the tool 'locator_heal'. Only respond with the message the tool gave you, do "
-                     "not add any additional information in any case.")
+    user_msg: str = ("Return pure JSON. No explanations.")
     @staticmethod
     def get_user_msg(ctx: PromptPayload) -> str:
         """Assembles user message (a.k.a. user prompt) based on context.
@@ -22,16 +24,18 @@ class PromptsOrchestrator:
             ctx (RunContext): PydanticAI context. Contains information about keyword failure.
 
         Returns:
-            (str): Assembled user message (a.k.a. user prompt) based on context.
-        """
+            (str): Assembled user message (a.k.a. user prompt) based on context.        """
         return (
-            "Please call the tool 'locator_heal'." 
-            "Only respond with the message the tool gave you, do "
-            "not add any additional information or text in any case."
-            # "Example responses: 'xpath=//div[@class=\"example\"]' or 'css=.example-class'"
+             f"Call the 'get_healed_locators' tool for the broken locator: `{ctx.failed_locator}`.\n"
 
-            f"Failed locator:\n{ctx.failed_locator}\n\n"
 
+            # "Call the 'get_healed_locators' tool ONCE and return the result as pure JSON.\n"
+            # "OUTPUT REQUIREMENT: Return ONLY the tool's response.\n"
+            # "DO NOT describe, explain, or add any text.\n"
+            # "STOP after you receive the tool's response.\n"
+            # "Expected format: {\"suggestions\":[\"locator1\", \"locator2\", \"locator3\"]}"
+            # f"Use the 'get_healed_locators' tool ONCE for the failed locator: ```{ctx.failed_locator}``` \n"
+            # "After getting the result, return ONLY the tool output in pure JSON format and then STOP. \n"
         )
 
 class PromptsLocator:
