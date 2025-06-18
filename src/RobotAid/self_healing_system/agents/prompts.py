@@ -9,11 +9,11 @@ class PromptsOrchestrator:
         "The following tools are available to you:\n"
         "- get_healed_locators: This tool provides locator suggestions for a broken locator.\n\n"
         
-        "Your task is to call a tool ONCE and return its response in pure JSON format.\n"
-        "Your output must be a character-for-character copy of the tool's output.\n"
-        "DO NOT describe what you did. DO NOT explain the result. DO NOT add any text before or after the JSON.\n\n"
-        "NEVER return the tool call format like {\"name\": \"tool_name\", \"parameters\": {...}}.\n"
-        "ALWAYS return the tool's actual response which looks like {\"suggestions\": [...]}.\n"
+        # "Your task is to call a tool ONCE and return its response in pure JSON format.\n"
+        # "Your output must be a character-for-character copy of the tool's output.\n"
+        # "DO NOT describe what you did. DO NOT explain the result. DO NOT add any text before or after the JSON.\n\n"
+        # "NEVER return the tool call format like {\"name\": \"tool_name\", \"parameters\": {...}}.\n"
+        # "ALWAYS return the tool's actual response which looks like {\"suggestions\": [...]}.\n"
     )
     user_msg: str = ("Return pure JSON. No explanations.")
     @staticmethod
