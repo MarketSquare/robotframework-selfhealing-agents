@@ -30,24 +30,27 @@ class OrchestratorAgent:
                             client_settings=client_settings),
             system_prompt=PromptsOrchestrator.system_msg,
             deps_type=PromptPayload,
-            output_type=str
+            output_type=[ self.get_healed_locators, str]
         ))
 
-        @self.agent.tool(name="locator_heal")
-        async def locator_heal(ctx: RunContext[PromptPayload], broken_locator: str) -> str:
-            """Invoke LocatorAgent on locator error.
+    async def get_healed_locators(self, ctx: RunContext[PromptPayload], broken_locator: str) -> str:
+        """Get a list of healed locator suggestions for a broken locator.
 
-            Args:
-                ctx (RunContext): PydanticAI tool context.
-                broken_locator (str): Locator that needs to be healed.
+        Args:
+            ctx (RunContext): PydanticAI tool context.
+            broken_locator (str): Locator that needs to be healed.
 
-            Returns:
-                (str): List of repaired locator suggestions.
-            """
-            try:
-                return await self.locator_agent.heal_async(ctx=ctx)
-            except Exception as e:
-                raise ModelRetry(f"Locator healing failed: {str(e)}")
+        Returns:
+            (str): List of repaired locator suggestions in JSON format.
+
+        Example:
+            >>> get_healed_locators(ctx, broken_locator="#btn-login")
+            '{"suggestions": ["#btn-login-fixed", "input[type=\'submit\']", "css=.btn-login"]}'
+        """
+        try:
+            return await self.locator_agent.heal_async(ctx=ctx)
+        except Exception as e:
+            raise ModelRetry(f"Locator healing failed: {str(e)}")
 
     async def run_async(self, robot_ctx: dict) -> str :
         """Run orchestration asynchronously.
@@ -91,6 +94,6 @@ def cleanup_response(response: str) -> str:
     match = re.match(nested_json_pattern, response)
     if match:
         response = match.group(1)
+        # Replace \\"
+        response = response.replace('\\"', '"')
     return response
-
-
