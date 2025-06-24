@@ -6,6 +6,7 @@ from typing import Any, cast
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
+from RobotAid.self_healing_system.schemas import LocatorHealingResponse
 
 
 class DummyKeyword:
@@ -33,7 +34,7 @@ class DummyOrchestratorAgent:
         self.client_settings = client_settings
 
     async def run_async(self, robot_ctx: dict) -> str:
-        return "fix1"
+        return "{\"suggestions\": [\"fix1\", \"fix2\", \"fix3\"]}"
 
 
 @pytest.fixture(autouse=True)
@@ -76,8 +77,8 @@ def test_kickoff_healing_happy_path() -> None:
         tried_locator_memory=list()
     )
 
-    assert isinstance(response, str)
-    assert response == "fix1"
+    assert isinstance(response, LocatorHealingResponse)
+    assert response == LocatorHealingResponse(suggestions=['fix1', 'fix2', 'fix3'])
 
 
 def test_kickoff_healing_passes_context_and_settings() -> None:
