@@ -95,7 +95,7 @@ def test_kickoff_healing_passes_context_and_settings() -> None:
 
         async def run_async(self, robot_ctx):
             captured['robot_ctx'] = robot_ctx
-            return ""
+            return "{\"suggestions\": [\"fix1\", \"fix2\", \"fix3\"]}"
 
     import RobotAid.self_healing_system.kickoff_self_healing as mod
     monkeypatch = pytest.MonkeyPatch()
@@ -122,6 +122,6 @@ def test_kickoff_healing_passes_context_and_settings() -> None:
     assert captured['robot_ctx'] == {"failed": True, "tried_locator_memory": []}
     assert captured['locator_agent'].app_settings is app
     assert captured['locator_agent'].client_settings is client
-    assert resp == ""
+    assert resp == LocatorHealingResponse(suggestions=['fix1', 'fix2', 'fix3'])
 
     monkeypatch.undo()
