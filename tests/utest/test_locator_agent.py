@@ -44,6 +44,9 @@ class StubAgent:
         return DummyAgentRunResult(
             output=LocatorHealingResponse(suggestions=["loc1", "loc2", "loc3"])
         )
+    
+    def output_validator(self, output: Any) -> Any:
+        return output
 
 
 @pytest.fixture(autouse=True)
@@ -80,8 +83,8 @@ def test_agent_initialization_with_custom_limits() -> None:
 
     gen = agent.generation_agent
     assert gen.model == "fake_model"
-    assert ("You are a helpful assistant for fixing broken locators in the context of robotframework tests."
-            in gen.system_prompt)
+    assert ("You are a xpath and css selector self-healing tool."
+            in str(gen.system_prompt))
     assert gen.deps_type is PromptPayload   # type: ignore
     assert agent.usage_limits is custom_limits
 
@@ -105,8 +108,11 @@ def test_heal_async_uses_generation_agent_run() -> None:
         robot_code_line="Click Button id=btn",
         error_msg="NoSuchElementError",
         dom_tree="btn-loc1 btn-loc2 btn-loc3",
-        tried_locator_memory=[]
-    )
+        tried_locator_memory=[],
+        keyword_name="Click Button",
+        keyword_args=tuple(("id=btn")),
+        failed_locator="id=btn"
+        )
     ctx = SimpleNamespace(deps=payload)
 
     result = asyncio.new_event_loop().run_until_complete(agent.heal_async(ctx))     # type: ignore
