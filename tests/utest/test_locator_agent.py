@@ -39,6 +39,7 @@ class StubAgent:
         prompt: str,
         deps: Any,
         usage_limits: Any,
+        model_settings: Any = None
     ) -> DummyAgentRunResult:
         self.run_calls.append((prompt, deps, usage_limits))
         return DummyAgentRunResult(
@@ -122,11 +123,13 @@ def test_heal_async_uses_generation_agent_run() -> None:
     run_calls = agent.generation_agent.run_calls    # type: ignore
     assert len(run_calls) == 1
     prompt_passed, deps_passed, usage_passed = run_calls[0]
-    assert ((f"You are given a Robot Framework keyword that failed due to an inaccessible locator. "
-            f"Using the elements in the DOM at failure time, suggest 3 new locators. "
-            f"You are also given a list of tried locator suggestions memory that were tried but still failed. "
-            f"Make sure you do not suggest a locator that is on that list. "
-            f"Note: Only respond with the locators, do not give any additional information in any case.\n\n")
+    assert (
+        (f"Error message: `{payload.error_msg}`\n\n"
+         f"Failed locator: `{payload.failed_locator}`\n\n"
+         f"Keyword name: `{payload.keyword_name}`\n\n"
+         f"Dom Tree: ```{payload.dom_tree}```\n\n"
+         f"Tried Locator Suggestion Memory:\n{payload.tried_locator_memory}\n\n"
+            )
             in prompt_passed)
     assert deps_passed is payload
     assert usage_passed == agent.usage_limits
