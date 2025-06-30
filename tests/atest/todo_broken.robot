@@ -1,6 +1,6 @@
 *** Settings ***
 Library    Browser    timeout=5s
-Library    RobotAid
+Library    RobotAid    config_path=${CURDIR}/config_test.yaml
 Suite Setup    New Browser    browser=${BROWSER}    headless=${HEADLESS}
 Test Setup    New Context    viewport={'width': 1280, 'height': 720}
 Test Teardown    Close Context
