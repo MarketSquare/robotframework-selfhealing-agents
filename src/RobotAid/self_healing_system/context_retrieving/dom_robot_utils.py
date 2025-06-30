@@ -28,7 +28,10 @@ class RobotDomUtils:
         Returns:
             bool: True if the locator is unique, False otherwise.
         """
-        return self.library_instance.get_element_count(locator) == 1
+        try:
+            return self.library_instance.get_element_count(locator) == 1
+        except Exception as e:
+            return False
     
     def is_locator_visible(self, locator: str) -> bool:
         """
