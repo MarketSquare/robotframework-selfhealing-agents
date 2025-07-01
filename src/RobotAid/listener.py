@@ -51,7 +51,8 @@ class RobotAid(ListenerV3):
         """Called when a keyword finishes execution."""
         if not self.enabled:
             return
-        if result.failed and result.owner == 'Browser':
+        # ToDo: Implement a more robust way to start self-healing
+        if result.failed and result.owner in ['Browser', 'SeleniumLibrary', 'AppiumLibrary']:
             logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
             if self.keyword_try_ctr < self.app_settings.system.max_retries:
                 if self.generate_suggestions:
