@@ -45,12 +45,6 @@ class PromptsLocator:
         "Using the elements in the DOM at failure time, suggest 3 new locators.\n"
         "You are also given a list of tried locator suggestions memory that were tried but still failed. "
         "Make sure you do not suggest a locator that is on that list. "
-        "Keywords like 'Fill Text', 'Enter Text' or 'Press Keys'  are always related to 'input' or 'textarea' elements.\n"
-        "Keywords like 'Click' are often  related to 'button','checkbox', 'a' or 'input' elements.\n"
-        "Keywords like 'Select' or 'Deselect' are often related to 'select' elements.\n"
-        "Keywords like 'Check' or 'Uncheck' are often related to 'checkbox' elements.\n"
-        "When the 'fixed_locator' is an xpath, always add a xpath= prefix to the locator.\n"
-        "When the 'fixed_locator' is an css selector, always add a css= prefix to the locator.\n"
         "IMPORTANT: Respond ONLY with the JSON. Do not include any explanations, analysis, or additional text.\n"
         "ONLY return the JSON in this exact format: {\"suggestions\": [\"locator1\", \"locator2\", \"locator3\"]}\n"
         'Example response: {"suggestions": ["css=input[id=\'my_id\']", "xpath=//*[contains(text(),\'Login\')]", "xpath=//label[contains(text(),\'Speeding\')]/..//input"]}\n'
