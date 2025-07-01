@@ -2,76 +2,74 @@ from pydantic_ai import Agent, RunContext
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai import ModelRetry
+from typing import Optional, Union
 
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
-from RobotAid.self_healing_system.clients.llm_client import get_model
-from RobotAid.self_healing_system.agents.prompts import PromptsLocator
-from RobotAid.self_healing_system.reponse_converters import convert_response_to_list, convert_response_to_dict
-from RobotAid.self_healing_system.context_retrieving.dom_robot_utils import RobotDomUtils 
-from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
-from RobotAid.self_healing_system.browser.utils import convert_locator_to_browser
+from RobotAid.self_healing_system.agents.locator_agent_factory import (
+    LocatorAgentFactory, 
+    LocatorAgentType
+)
+from RobotAid.self_healing_system.agents.base_locator_agent import BaseLocatorAgent
+from RobotAid.self_healing_system.schemas import PromptPayload
 
 
-# MVP LocatorAgent - prompt will be adjusted based on provided context.
-try:
-    robot_dom_utility = RobotDomUtils()
-except:
-    print("RobotDomUtils is not installed. Skipping robot DOM utility initialization.")
-    robot_dom_utility = None
 class LocatorAgent:
-    """Produces alternatives for broken locator.
-
+    """Legacy LocatorAgent class for backward compatibility.
+    
+    This class maintains backward compatibility while providing access to the new
+    agent flavor system. It automatically detects the appropriate agent type or
+    allows explicit specification.
+    
+    For new code, consider using LocatorAgentFactory directly for better control
+    over agent selection.
+    
     Attributes:
+        _agent (BaseLocatorAgent): The underlying specific agent implementation.
         app_settings (AppSettings): Instance of AppSettings containing user defined app configuration.
         client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
         usage_limits (UsageLimits): Usage token and request limits.
     """
+    
     def __init__(
         self,
         app_settings: AppSettings,
         client_settings: ClientSettings,
-        usage_limits: UsageLimits = UsageLimits(request_limit=5, total_tokens_limit=2000)
+        usage_limits: UsageLimits = UsageLimits(request_limit=5, total_tokens_limit=2000),
+        agent_type: Optional[Union[LocatorAgentType, str]] = None,
+        dom_utility: Optional[object] = None
     ) -> None:
-        self.usage_limits: UsageLimits = usage_limits
-
-        self.generation_agent: Agent[PromptPayload, str] = (
-            Agent[PromptPayload, str](
-            model=get_model(provider=app_settings.locator_agent.provider,
-                            model=app_settings.locator_agent.model,
-                            client_settings=client_settings),
-            system_prompt=PromptsLocator.system_msg,
-            deps_type=PromptPayload,
-            output_type=str
-        ))
+        """Initialize the LocatorAgent.
         
-        @self.generation_agent.output_validator
-        def validate_output(self, output: str) -> str:
-            """Validates the output of the locator agent.
-
-            Args:
-                output (str): Output from the locator agent.
-
-            Returns:
-                (str): Validated output.
-            """
-            try:
-                locator_dict = convert_response_to_dict(output)
-                fixed_locators = locator_dict.get("suggestions", [])
-                if not fixed_locators:
-                    raise ModelRetry("No fixed locators found in the response.")
-                # Try each locator and return the first valid one
-                suggestions =[]
-                for locator in fixed_locators:
-                    locator = convert_locator_to_browser(locator)
-                    if robot_dom_utility.is_locator_unique(locator):
-                        suggestions.append(locator)
-                if suggestions:
-                    return LocatorHealingResponse(suggestions=suggestions).model_dump_json()
-                raise ModelRetry("None of the fixed locators are valid or unique.")
-            except Exception as e:
-                raise ModelRetry(f"Invalid output format: {str(e)}. Expected format: {{'suggestions': ['locator1', 'locator2', ...]}}") from e
-
+        Args:
+            app_settings: Instance of AppSettings containing user defined app configuration.
+            client_settings: Instance of ClientSettings containing user defined client configuration.
+            usage_limits: Usage token and request limits.
+            agent_type: Optional agent type. If None, will auto-detect based on available libraries.
+            dom_utility: Optional DOM utility instance for the specific library.
+        """
+        self.app_settings = app_settings
+        self.client_settings = client_settings
+        self.usage_limits = usage_limits
+        
+        if agent_type is None:
+            # Auto-detect agent type for backward compatibility
+            self._agent = LocatorAgentFactory.create_auto_detected_agent(
+                app_settings=app_settings,
+                client_settings=client_settings,
+                usage_limits=usage_limits,
+                dom_utility=dom_utility
+            )
+        else:
+            # Use specified agent type
+            self._agent = LocatorAgentFactory.create_agent(
+                agent_type=agent_type,
+                app_settings=app_settings,
+                client_settings=client_settings,
+                usage_limits=usage_limits,
+                dom_utility=dom_utility
+            )
+    
     async def heal_async(self, ctx: RunContext[PromptPayload]) -> str:
         """Generates suggestions for fixing broken locator.
 
@@ -81,10 +79,29 @@ class LocatorAgent:
         Returns:
             (str): List of repaired locator suggestions.
         """
-        response: AgentRunResult = await self.generation_agent.run(
-            PromptsLocator.get_user_msg(ctx=ctx),
-            deps=ctx.deps,
-            usage_limits=self.usage_limits,
-            model_settings={'temperature': 0.1}
-        )
-        return response.output
+        return await self._agent.heal_async(ctx)
+    
+    @property
+    def generation_agent(self) -> Agent[PromptPayload, str]:
+        """Get the underlying generation agent for compatibility.
+        
+        Returns:
+            Agent[PromptPayload, str]: The underlying PydanticAI agent.
+        """
+        return self._agent.generation_agent
+    
+    def get_agent_type(self) -> str:
+        """Get the type of the underlying agent.
+        
+        Returns:
+            str: The agent type identifier.
+        """
+        return self._agent.get_agent_type()
+    
+    def get_underlying_agent(self) -> BaseLocatorAgent:
+        """Get the underlying specific agent implementation.
+        
+        Returns:
+            BaseLocatorAgent: The underlying agent implementation.
+        """
+        return self._agent
