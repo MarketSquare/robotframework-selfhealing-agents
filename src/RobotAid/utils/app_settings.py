@@ -1,7 +1,9 @@
 from __future__ import annotations
-import yaml
+
 from pathlib import Path
-from pydantic import BaseModel, Field, ValidationError, ConfigDict
+
+import yaml
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 
 class SystemSettings(BaseModel):

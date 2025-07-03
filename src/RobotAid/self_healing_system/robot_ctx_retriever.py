@@ -1,10 +1,13 @@
-from robot import result
-from robot.utils.misc import seq2str
-from robot.libraries.BuiltIn import BuiltIn
 from typing import Optional
 
-from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import DomUtilityFactory
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
+from robot import result
+from robot.libraries.BuiltIn import BuiltIn
+from robot.utils.misc import seq2str
+
+from RobotAid.self_healing_system.context_retrieving.base_dom_utils import \
+    BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import \
+    DomUtilityFactory
 
 
 class RobotCtxRetriever:

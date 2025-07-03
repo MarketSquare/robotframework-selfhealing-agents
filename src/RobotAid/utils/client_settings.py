@@ -1,8 +1,8 @@
+from typing import Any, Optional
+
+from dotenv import find_dotenv, load_dotenv
 from pydantic import Field
 from pydantic_settings import BaseSettings
-from typing import Any, Optional
-from dotenv import load_dotenv, find_dotenv
-
 
 load_dotenv(find_dotenv(), override=True)
 

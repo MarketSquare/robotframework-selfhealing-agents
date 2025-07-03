@@ -1,8 +1,12 @@
 from typing import Optional
-from robot.libraries.BuiltIn import BuiltIn
+
 from bs4 import BeautifulSoup
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
+from robot.libraries.BuiltIn import BuiltIn
+
+from RobotAid.self_healing_system.context_retrieving.base_dom_utils import \
+    BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import \
+    SoupDomUtils
 
 
 class BrowserDomUtils(BaseDomUtils):

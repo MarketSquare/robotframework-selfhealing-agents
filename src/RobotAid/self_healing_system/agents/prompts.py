@@ -1,21 +1,21 @@
 from pydantic_ai import RunContext
+
 from RobotAid.self_healing_system.schemas import PromptPayload
-from RobotAid.self_healing_system.schemas import LocatorHealingResponse
+
 
 class PromptsOrchestrator:
     system_msg: str = (
         "You are a Robot Framework smart recovery tool and a JSON passthrough machine. Your only job is to return the exact, raw JSON output from a tool.\n"
-        
         "The following tools are available to you:\n"
         "- get_healed_locators: This tool provides locator suggestions for a broken locator.\n\n"
-        
         # "Your task is to call a tool ONCE and return its response in pure JSON format.\n"
         # "Your output must be a character-for-character copy of the tool's output.\n"
         # "DO NOT describe what you did. DO NOT explain the result. DO NOT add any text before or after the JSON.\n\n"
         # "NEVER return the tool call format like {\"name\": \"tool_name\", \"parameters\": {...}}.\n"
         # "ALWAYS return the tool's actual response which looks like {\"suggestions\": [...]}.\n"
     )
-    user_msg: str = ("Return pure JSON. No explanations.")
+    user_msg: str = "Return pure JSON. No explanations."
+
     @staticmethod
     def get_user_msg(ctx: PromptPayload) -> str:
         """Assembles user message (a.k.a. user prompt) based on context.
@@ -24,11 +24,9 @@ class PromptsOrchestrator:
             ctx (RunContext): PydanticAI context. Contains information about keyword failure.
 
         Returns:
-            (str): Assembled user message (a.k.a. user prompt) based on context.        """
+            (str): Assembled user message (a.k.a. user prompt) based on context."""
         return (
-             f"Call the 'get_healed_locators' tool for the broken locator: `{ctx.failed_locator}`.\n"
-
-
+            f"Call the 'get_healed_locators' tool for the broken locator: `{ctx.failed_locator}`.\n"
             # "Call the 'get_healed_locators' tool ONCE and return the result as pure JSON.\n"
             # "OUTPUT REQUIREMENT: Return ONLY the tool's response.\n"
             # "DO NOT describe, explain, or add any text.\n"
@@ -38,6 +36,7 @@ class PromptsOrchestrator:
             # "After getting the result, return ONLY the tool output in pure JSON format and then STOP. \n"
         )
 
+
 class PromptsLocator:
     system_msg: str = (
         "You are a xpath and css selector self-healing tool.\n"
@@ -46,7 +45,7 @@ class PromptsLocator:
         "You are also given a list of tried locator suggestions memory that were tried but still failed. "
         "Make sure you do not suggest a locator that is on that list. "
         "IMPORTANT: Respond ONLY with the JSON. Do not include any explanations, analysis, or additional text.\n"
-        "ONLY return the JSON in this exact format: {\"suggestions\": [\"locator1\", \"locator2\", \"locator3\"]}\n"
+        'ONLY return the JSON in this exact format: {"suggestions": ["locator1", "locator2", "locator3"]}\n'
         'Example response: {"suggestions": ["css=input[id=\'my_id\']", "xpath=//*[contains(text(),\'Login\')]", "xpath=//label[contains(text(),\'Speeding\')]/..//input"]}\n'
     )
 
@@ -61,10 +60,9 @@ class PromptsLocator:
             (str): Assembled user message (a.k.a. user prompt) based on context.
         """
         return (
-            
             f"Error message: `{ctx.deps.error_msg}`\n\n"
             f"Failed locator: `{ctx.deps.failed_locator}`\n\n"
-            f"Keyword name: `{ctx.deps.keyword_name}`\n\n"            
+            f"Keyword name: `{ctx.deps.keyword_name}`\n\n"
             f"Dom Tree: ```{ctx.deps.dom_tree}```\n\n"
             f"Tried Locator Suggestion Memory:\n{ctx.deps.tried_locator_memory}\n\n"
         )

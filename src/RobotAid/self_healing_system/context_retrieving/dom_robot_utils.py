@@ -1,7 +1,10 @@
 from typing import Optional
-from robot.libraries.BuiltIn import BuiltIn
+
 from bs4 import BeautifulSoup
+from robot.libraries.BuiltIn import BuiltIn
+
 from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
+
 
 class RobotDomUtils:
     """
@@ -9,14 +12,18 @@ class RobotDomUtils:
     It provides methods to check, extract and manipulate HTML elements.
     """
 
-    def __init__(self, library_instance: Optional[object] = None):      #ToDo: Investigate type hint for library_instance
+    def __init__(
+        self, library_instance: Optional[object] = None
+    ):  # ToDo: Investigate type hint for library_instance
         """
         Initializes the RobotDomUtils class.
 
         Args:
             library_instance: An instance of the Robot Framework library to interact with.
         """
-        self.library_instance = library_instance or BuiltIn().get_library_instance('Browser')
+        self.library_instance = library_instance or BuiltIn().get_library_instance(
+            "Browser"
+        )
 
     def is_locator_unique(self, locator: str) -> bool:
         """
@@ -30,9 +37,9 @@ class RobotDomUtils:
         """
         try:
             return self.library_instance.get_element_count(locator) == 1
-        except Exception as e:
+        except Exception:
             return False
-    
+
     def is_locator_visible(self, locator: str) -> bool:
         """
         Checks if the given locator is visible in the DOM.
@@ -43,8 +50,8 @@ class RobotDomUtils:
         Returns:
             bool: True if the locator is visible, False otherwise.
         """
-        return 'visible' in self.library_instance.get_element_states(locator)
-    
+        return "visible" in self.library_instance.get_element_states(locator)
+
     def get_dom_tree(self) -> str:
         """
         Retrieves the DOM tree of the current page.
@@ -105,24 +112,29 @@ class RobotDomUtils:
         return fullHTML;
             }
         """
-        
+
         shadowdom_exist_script: str = """ () => {      
         return Array.from(document.querySelectorAll('*')).some(el => el.shadowRoot);
         }
         """
 
         try:
-            shadowdom_exists: bool = self.library_instance.evaluate_javascript(None, shadowdom_exist_script)
+            shadowdom_exists: bool = self.library_instance.evaluate_javascript(
+                None, shadowdom_exist_script
+            )
             if shadowdom_exists:
                 soup: BeautifulSoup = BeautifulSoup(
-                self.library_instance.evaluate_javascript(None, 
-                script),
-                'html.parser'
-            )
+                    self.library_instance.evaluate_javascript(None, script),
+                    "html.parser",
+                )
             else:
-                soup: BeautifulSoup = BeautifulSoup(self.library_instance.get_page_source(), 'html.parser')
+                soup: BeautifulSoup = BeautifulSoup(
+                    self.library_instance.get_page_source(), "html.parser"
+                )
         except:
-            soup: BeautifulSoup = BeautifulSoup(self.library_instance.get_page_source(), 'html.parser')
+            soup: BeautifulSoup = BeautifulSoup(
+                self.library_instance.get_page_source(), "html.parser"
+            )
 
         source: str = SoupDomUtils().get_simplified_dom_tree(str(soup.body))
         return source

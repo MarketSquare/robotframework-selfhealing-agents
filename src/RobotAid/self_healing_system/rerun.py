@@ -1,5 +1,6 @@
-from robot.api import logger
 from typing import Any, Optional
+
+from robot.api import logger
 from robot.libraries.BuiltIn import BuiltIn
 
 

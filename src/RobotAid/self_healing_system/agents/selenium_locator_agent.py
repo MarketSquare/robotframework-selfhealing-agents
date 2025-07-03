@@ -1,11 +1,16 @@
 from typing import Optional
+
+from pydantic_ai.usage import UsageLimits
+
+from RobotAid.self_healing_system.agents.base_locator_agent import \
+    BaseLocatorAgent
+from RobotAid.self_healing_system.agents.prompts import PromptsLocator
+from RobotAid.self_healing_system.context_retrieving.base_dom_utils import \
+    BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import (
+    DomUtilityFactory, DomUtilityType)
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
-from RobotAid.self_healing_system.agents.base_locator_agent import BaseLocatorAgent
-from RobotAid.self_healing_system.agents.prompts import PromptsLocator
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import DomUtilityFactory, DomUtilityType
-from pydantic_ai.usage import UsageLimits
 
 
 def convert_locator_to_selenium(locator: str) -> str:
