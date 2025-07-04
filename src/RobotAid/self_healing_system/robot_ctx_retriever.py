@@ -1,31 +1,50 @@
-from robot import result
-from robot.utils.misc import seq2str
-from robot.libraries.BuiltIn import BuiltIn
+from typing import Optional
 
-from RobotAid.self_healing_system.context_retrieving.dom_robot_utils import RobotDomUtils
+from robot import result
+from robot.libraries.BuiltIn import BuiltIn
+from robot.utils.misc import seq2str
+
+from RobotAid.self_healing_system.context_retrieving.base_dom_utils import \
+    BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import \
+    DomUtilityFactory
 
 
 class RobotCtxRetriever:
     """Retrieves context for the self-healing process of the LLM."""
+    
     @staticmethod
-    def get_context(result: result.Keyword) -> dict:
+    def get_context(
+        result: result.Keyword, 
+        dom_utility: Optional[BaseDomUtils] = None
+    ) -> dict:
         """Returns context for self-healing process of the LLM.
 
         Args:
             result (result.Keyword): Keyword and additional information passed by robotframework listener.
+            dom_utility (BaseDomUtils, optional): Library-specific DOM utility. If not provided,
+                                                 it will be auto-detected based on the keyword result.
 
         Returns:
             robot_ctx (dict): Contains context for the self-healing process of the LLM.
         """
         robot_code_line: str = RobotCtxRetriever._format_keyword_call(result)
-        dom_tree: str = RobotDomUtils().get_dom_tree()
+        
+        # Use provided DOM utility or create one based on the keyword result
+        if dom_utility is None:
+            utility_type = DomUtilityFactory.detect_library_from_keyword_result(result)
+            dom_utility = DomUtilityFactory.create_dom_utility(utility_type)
+        
+        dom_tree: str = dom_utility.get_dom_tree()
+        
         robot_ctx: dict = {
             "robot_code_line": robot_code_line,
             "error_msg": result.message,
             "dom_tree": dom_tree,
             "keyword_name": result.name,
             "keyword_args": result.args,
-            "failed_locator": BuiltIn().replace_variables(result.args[0])
+            "failed_locator": BuiltIn().replace_variables(result.args[0]),
+            "library_type": dom_utility.get_library_type()
         }
         return robot_ctx
 

@@ -52,12 +52,14 @@ class StubAgent:
 
 @pytest.fixture(autouse=True)
 def patch_agent_and_model(monkeypatch):
+    # Mock the Agent class in the base locator agent
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.agents.locator_agent.Agent",
+        "RobotAid.self_healing_system.agents.base_locator_agent.Agent",
         StubAgent,
     )
+    # Mock get_model in the base locator agent
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.agents.locator_agent.get_model",
+        "RobotAid.self_healing_system.agents.base_locator_agent.get_model",
         lambda provider, model, client_settings: "fake_model",
     )
 
