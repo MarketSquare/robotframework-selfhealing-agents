@@ -94,7 +94,7 @@ class RobotAid(ListenerV3):
 
     def _start_self_healing(self, result: result.Keyword) -> None:
         """Starts the self-healing process via pydanticAI agentic system. Sets class attributes for further processing."""
-        locator_suggestions: LocatorHealingResponse = (
+        locator_suggestions: LocatorHealingResponse | str = (
             KickoffSelfHealing.kickoff_healing(
                 result=result,
                 app_settings=self.app_settings,
@@ -102,9 +102,11 @@ class RobotAid(ListenerV3):
                 tried_locator_memory=self.tried_locator_memory,
             )
         )
-        self.suggestions = locator_suggestions.suggestions
-        self.generate_suggestions = False
-        self.keyword_try_ctr += 1
+        # Only proceed with healing, if response type is LocatorHealingResponse
+        if isinstance(locator_suggestions, LocatorHealingResponse):
+            self.suggestions = locator_suggestions.suggestions
+            self.generate_suggestions = False
+            self.keyword_try_ctr += 1
 
     def _try_locator_suggestions(self, data: running.Keyword) -> None:
         """Reruns a locator suggestion that is stored in the class attribute list."""
