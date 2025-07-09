@@ -5,7 +5,7 @@ from pydantic_ai.usage import UsageLimits
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.prompts import PromptsOrchestrator
 from RobotAid.self_healing_system.clients.llm_client import get_model
-from RobotAid.self_healing_system.schemas import PromptPayload
+from RobotAid.self_healing_system.schemas import LocatorHealingResponse, PromptPayload
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 
@@ -63,7 +63,7 @@ class OrchestratorAgent:
         except Exception as e:
             raise ModelRetry(f"Locator healing failed: {str(e)}")
 
-    async def run_async(self, robot_ctx: dict) -> str:
+    async def run_async(self, robot_ctx: dict) -> str | LocatorHealingResponse:
         """Run orchestration asynchronously.
 
         Args:
@@ -79,7 +79,7 @@ class OrchestratorAgent:
             usage_limits=self.usage_limits,
             model_settings={"temperature": 0.1, "parallel_tool_calls": False},
         )
-        return cleanup_response(response.output)
+        return response.output
 
 
 def cleanup_response(response: str) -> str:

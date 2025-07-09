@@ -48,7 +48,9 @@ class BaseLocatorAgent(ABC):
         )
 
         @self.generation_agent.output_validator
-        def validate_output(ctx: RunContext[PromptPayload], output: str) -> str:
+        def validate_output(
+            ctx: RunContext[PromptPayload], output: str
+        ) -> LocatorHealingResponse:
             """Validates the output of the locator agent.
 
             Args:
@@ -71,16 +73,16 @@ class BaseLocatorAgent(ABC):
                         suggestions.append(processed_locator)
 
                 if suggestions:
-                    return LocatorHealingResponse(
-                        suggestions=suggestions
-                    ).model_dump_json()
+                    return LocatorHealingResponse(suggestions=suggestions)
                 raise ModelRetry("None of the fixed locators are valid or unique.")
             except Exception as e:
                 raise ModelRetry(
                     f"Invalid output format: {str(e)}. Expected format: {{'suggestions': ['locator1', 'locator2', ...]}}"
                 ) from e
 
-    async def heal_async(self, ctx: RunContext[PromptPayload]) -> str:
+    async def heal_async(
+        self, ctx: RunContext[PromptPayload]
+    ) -> LocatorHealingResponse:
         """Generates suggestions for fixing broken locator.
 
         Args:
@@ -95,6 +97,10 @@ class BaseLocatorAgent(ABC):
             usage_limits=self.usage_limits,
             model_settings={"temperature": 0.1},
         )
+        if not isinstance(response.output, LocatorHealingResponse):
+            raise ModelRetry(
+                "Locator healing response is not of type LocatorHealingResponse."
+            )
         return response.output
 
     @abstractmethod
