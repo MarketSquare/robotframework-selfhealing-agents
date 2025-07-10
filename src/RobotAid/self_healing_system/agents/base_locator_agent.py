@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
-
 from pydantic_ai import Agent, ModelRetry, RunContext
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.usage import UsageLimits
 
 from RobotAid.self_healing_system.agents.prompts import PromptsLocator
 from RobotAid.self_healing_system.clients.llm_client import get_model
-from RobotAid.self_healing_system.reponse_converters import convert_response_to_dict
+from RobotAid.utils.reponse_converters import convert_response_to_dict
 from RobotAid.self_healing_system.schemas import LocatorHealingResponse, PromptPayload
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
