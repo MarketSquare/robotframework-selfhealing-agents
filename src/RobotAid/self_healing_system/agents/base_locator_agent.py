@@ -34,7 +34,6 @@ class BaseLocatorAgent(ABC):
         self.app_settings = app_settings
         self.client_settings = client_settings
 
-        # Initialize the generation agent with the appropriate system prompt
         self.generation_agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
             model=get_model(
                 provider=app_settings.locator_agent.provider,
@@ -64,7 +63,6 @@ class BaseLocatorAgent(ABC):
                 if not fixed_locators:
                     raise ModelRetry("No fixed locators found in the response.")
 
-                # Process and validate locators using flavor-specific logic
                 suggestions = []
                 for locator in fixed_locators:
                     processed_locator = self._process_locator(locator)

@@ -66,7 +66,6 @@ class LocatorAgentFactory:
         # Normalize agent type to enum
         agent_type = LocatorAgentFactory._normalize_agent_type(agent_type)
 
-        # Create DOM utility if not provided
         if dom_utility is None:
             dom_utility_type = LocatorAgentFactory._agent_type_to_dom_type(agent_type)
             try:
@@ -146,7 +145,6 @@ class LocatorAgentFactory:
         Returns:
             list[str]: List of supported agent type strings.
         """
-        # Only return actually implemented agent types
         supported_types = [
             LocatorAgentType.BROWSER.value,
             LocatorAgentType.SELENIUM.value,
@@ -168,7 +166,6 @@ class LocatorAgentFactory:
             dom_type = DomUtilityFactory._auto_detect_utility_type()
             return LocatorAgentType(dom_type.value)
         except Exception:
-            # Default to Browser if detection fails
             return LocatorAgentType.BROWSER
 
     @staticmethod

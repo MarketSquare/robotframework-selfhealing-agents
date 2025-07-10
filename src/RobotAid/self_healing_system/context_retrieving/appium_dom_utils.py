@@ -93,7 +93,6 @@ class AppiumDomUtils(BaseDomUtils):
             return "<hierarchy>AppiumLibrary not available</hierarchy>"
             
         try:
-            # Get page source using AppiumLibrary
             if hasattr(self.library_instance, 'get_source'):
                 page_source = getattr(self.library_instance, 'get_source')()
             elif hasattr(self.library_instance, 'get_page_source'):

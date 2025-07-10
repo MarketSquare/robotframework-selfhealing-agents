@@ -47,7 +47,6 @@ class DomUtilityFactory:
         Raises:
             ValueError: If the utility type is not supported.
         """
-        # Auto-detect utility type if not provided
         if utility_type is None:
             utility_type = DomUtilityFactory._auto_detect_utility_type()
         
@@ -58,7 +57,6 @@ class DomUtilityFactory:
             except ValueError:
                 raise ValueError(f"Unsupported DOM utility type: {utility_type}")
         
-        # Create the appropriate utility instance
         if utility_type == DomUtilityType.BROWSER:
             return BrowserDomUtils(library_instance)
         elif utility_type == DomUtilityType.SELENIUM:
@@ -87,14 +85,12 @@ class DomUtilityFactory:
         except Exception:
             pass
         
-        # Check for SeleniumLibrary
         try:
             builtin.get_library_instance('SeleniumLibrary')
             return DomUtilityType.SELENIUM
         except Exception:
             pass
         
-        # Check for AppiumLibrary
         try:
             builtin.get_library_instance('AppiumLibrary')
             return DomUtilityType.APPIUM

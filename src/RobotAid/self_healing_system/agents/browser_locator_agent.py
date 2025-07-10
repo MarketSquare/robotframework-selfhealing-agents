@@ -29,7 +29,6 @@ class BrowserLocatorAgent(BaseLocatorAgent):
         usage_limits: UsageLimits = UsageLimits(request_limit=5, total_tokens_limit=2000),
         dom_utility: Optional[BaseDomUtils] = None
     ) -> None:
-        # Initialize DOM utility for Browser library using the factory
         if dom_utility is None:
             try:
                 self.dom_utility = DomUtilityFactory.create_dom_utility(DomUtilityType.BROWSER)

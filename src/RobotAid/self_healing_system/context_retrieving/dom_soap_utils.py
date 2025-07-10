@@ -61,11 +61,9 @@ class SoupDomUtils:
 
     @staticmethod
     def is_div_in_li(tag: Tag) -> bool:
-        # Check if the tag is a div
         if tag.name != "div":
             return False
 
-        # Check if the parent of the tag is an li
         parent = tag.find_parent("li")
         return parent is not None
 
@@ -373,11 +371,9 @@ class SoupDomUtils:
     def get_simplified_dom_tree(source):
         soup = BeautifulSoup(source, "html.parser")
 
-        # Remove all <script> tags
         for elem in soup.find_all("script"):
             elem.decompose()
 
-        # Remove all <svg> tags
         for elem in soup.find_all("svg"):
             elem.decompose()
 
@@ -401,13 +397,11 @@ class SoupDomUtils:
 
         # Find all elements with 'display: none'
         hidden_elements = soup.find_all(SoupDomUtils().has_display_none)
-        # Remove these elements
         for element in hidden_elements:
             element.decompose()
 
         # Find all elements with 'display: none'
         hidden_elements = soup.find_all(attrs={"type": "hidden"})
-        # Remove these elements
         for element in hidden_elements:
             element.decompose()
 

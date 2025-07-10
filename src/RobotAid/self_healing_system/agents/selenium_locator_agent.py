@@ -24,17 +24,12 @@ def convert_locator_to_selenium(locator: str) -> str:
     """
     locator = locator.strip()
     
-    # Remove Browser library prefixes and convert to Selenium format
     if locator.startswith("css="):
         locator = "css:" + locator[4:]
     elif locator.startswith("xpath="):
         locator = "xpath:" + locator[6:]
     
-    # Convert Browser library specific selectors to Selenium equivalents
-    # Replace :has-text() with :contains() for Selenium
     locator = locator.replace(":has-text", ":contains")
-    
-    # Replace :text() with text() for Selenium XPath
     locator = locator.replace(":text(", "text()=")
     
     return locator
@@ -54,7 +49,6 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
         usage_limits: UsageLimits = UsageLimits(request_limit=5, total_tokens_limit=2000),
         dom_utility: Optional[BaseDomUtils] = None
     ) -> None:
-        # Initialize DOM utility for Selenium library using the factory
         if dom_utility is None:
             try:
                 self.dom_utility = DomUtilityFactory.create_dom_utility(DomUtilityType.SELENIUM)
