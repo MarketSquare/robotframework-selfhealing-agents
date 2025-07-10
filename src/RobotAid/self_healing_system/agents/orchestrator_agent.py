@@ -55,7 +55,7 @@ class OrchestratorAgent:
             (str): List of repaired locator suggestions in JSON format.
 
         Example:
-            >>> get_healed_locators(ctx, broken_locator="#btn-login")
+            get_healed_locators(ctx, broken_locator="#btn-login")
             '{"suggestions": ["#btn-login-fixed", "input[type=\'submit\']", "css=.btn-login"]}'
         """
         try:
