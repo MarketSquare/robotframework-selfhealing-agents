@@ -1,6 +1,7 @@
 import os
 import re
 import html
+import difflib
 from pathlib import Path
 from typing import Any, List, Tuple, Set, Optional
 from robot.api.parsing import get_model, ModelTransformer
@@ -31,7 +32,7 @@ class ReportGenerator:
         """
         self._generate_action_log(report_info)
         self._generate_healed_test_suites(report_info)
-        self._generate_diff_file(report_info)
+        self._generate_diff_files(report_info)
 
     def _generate_action_log(self, report_info: List[ReportData]) -> None:
         """Writes an HTML table summarizing each locator healing event.
@@ -71,11 +72,53 @@ class ReportGenerator:
         except OSError as e:
             raise RuntimeError(f"Failed to write action log to {output_path}") from e
 
+    def _generate_diff_files(self, report_info: List[ReportData]) -> None:
+        """Generates side-by-side HTML diffs for each test suite.
+
+        Args:
+            report_info (List[ReportData]): Data about each healing event.
+        """
+        suite_paths: Set[str] = {entry.suite_abs_path for entry in report_info}
+        for suite_path in suite_paths:
+            suite_name = Path(suite_path).stem
+            original_file = Path(suite_path)
+            healed_file = self.reports_dir / f"{suite_name}.robot"
+
+            try:
+                original_lines = original_file.read_text(encoding="utf-8").splitlines()
+                healed_lines = healed_file.read_text(encoding="utf-8").splitlines()
+            except OSError as e:
+                raise RuntimeError(f"Failed to read files for diff: {original_file} or {healed_file}") from e
+
+            diff_generator = difflib.HtmlDiff(tabsize=4, wrapcolumn=80)
+            html_diff = diff_generator.make_file(
+                original_lines,
+                healed_lines,
+                fromdesc="Original",
+                todesc="Healed"
+            )
+
+            # Inject CSS to highlight entire lines and suppress intraline highlights
+            custom_css = (
+                "<style>"
+                "td.diff_add{background-color:#dfd;}"
+                "td.diff_sub{background-color:#fdd;}"
+                "span.diff_chg{background:none;}"
+                "</style>"
+            )
+            html_diff = html_diff.replace("</head>", f"{custom_css}</head>", 1)
+
+            diff_path = self.reports_dir / f"{suite_name}_diff.html"
+            try:
+                diff_path.write_text(html_diff, encoding="utf-8")
+            except OSError as e:
+                raise RuntimeError(f"Failed to write diff file to {diff_path}") from e
+
     def _generate_healed_test_suites(self, report_info: List[ReportData]) -> None:
         """Applies healed locators to each Robot Framework test suite and saves it.
 
         Args:
-            report_info (List[ReportData]): Data about each healing event.
+            report_info (List[ReportData]): Data about each healed locator.
         """
         paths: Set[str] = {entry.suite_abs_path for entry in report_info}
         for suite_path in paths:
@@ -83,14 +126,11 @@ class ReportGenerator:
             model = get_model(suite_path)
             replacements = self._get_replacements_for_suite(report_info, test_suite_name)
             LocatorReplacer(replacements).visit(model)
-            output_file = self.reports_dir / f"{test_suite_name}.robot"
+            output_file = self.reports_dir / f"{test_suite_name}"
             try:
                 model.save(output_file)
             except OSError as e:
                 raise RuntimeError(f"Failed to save healed test suite to {output_file}") from e
-
-    def _generate_diff_file(self, report_info: List[ReportData]) -> None:
-        ...
 
     @staticmethod
     def _get_replacements_for_suite(report_info: List[ReportData], test_suite_name: str) -> List[Tuple[str, str]]:
