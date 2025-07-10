@@ -31,6 +31,24 @@ class SeleniumDomUtils(BaseDomUtils):
 
         super().__init__(library_instance)
 
+    def is_locator_valid(self, locator: str) -> bool:
+        """Check if the locator is valid using Selenium library methods.
+
+        Args:
+            locator (str): The locator to check.
+
+        Returns:
+            bool: True if the locator is valid, False otherwise.
+        """
+        if self.library_instance is None:
+            return True
+        try:
+            # Use dynamic attribute access to handle different SeleniumLibrary versions
+            getattr(self.library_instance, "get_webelement")(locator)
+            return True
+        except Exception:
+            return False
+
     def is_locator_unique(self, locator: str) -> bool:
         """Check if the locator is unique using Selenium library methods.
 
@@ -46,7 +64,7 @@ class SeleniumDomUtils(BaseDomUtils):
         try:
             # Use dynamic attribute access to handle different SeleniumLibrary versions
             elements = getattr(self.library_instance, "get_webelements")(locator)
-            return len(elements) > 0
+            return len(elements) == 1
         except Exception:
             return False
 
