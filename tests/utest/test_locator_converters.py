@@ -1,4 +1,4 @@
-from RobotAid.self_healing_system.reponse_converters import convert_response_to_list, convert_response_to_dict, extract_json_objects
+from RobotAid.utils.reponse_converters import convert_response_to_list, convert_response_to_dict
 
 
 def test_convert_response_to_list() -> None:
