@@ -107,6 +107,5 @@ def cleanup_response(response: str) -> str:
     match = re.match(nested_json_pattern, response)
     if match:
         response = match.group(1)
-        # Replace \\"
         response = response.replace('\\"', '"')
     return response

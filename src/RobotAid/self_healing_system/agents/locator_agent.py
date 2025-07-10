@@ -61,7 +61,6 @@ class LocatorAgent:
                 dom_utility=dom_utility,
             )
         else:
-            # Use specified agent type
             self._agent = LocatorAgentFactory.create_agent(
                 agent_type=agent_type,
                 app_settings=app_settings,

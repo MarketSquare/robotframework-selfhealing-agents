@@ -21,7 +21,6 @@ except ImportError:
     print("Logfire is not installed. Skipping logfire configuration.")
 	
 
-# - The returned locators are not handled yet.
 # - Orchestrator agent is implemented for showcase reasons, not directly needed for MVP for locator fix.
 class KickoffSelfHealing:
     """Core class for kickoff the self-healing-system for broken robotframework tests."""
@@ -71,9 +70,7 @@ class KickoffSelfHealing:
             dom_utility=dom_utility,
             agent_type=agent_type
         )
-        
 
-                                                                                   
         orchestrator_agent: OrchestratorAgent = OrchestratorAgent(locator_agent=locator_agent,
                                                                   app_settings=app_settings,
                                                                   client_settings=client_settings,

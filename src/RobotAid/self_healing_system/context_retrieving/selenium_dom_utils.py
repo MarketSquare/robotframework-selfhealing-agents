@@ -79,7 +79,6 @@ class SeleniumDomUtils(BaseDomUtils):
             return "<html><body>SeleniumLibrary not available</body></html>"
             
         try:
-            # Get page source using SeleniumLibrary
             page_source = getattr(self.library_instance, 'get_source')()
             
             soup: BeautifulSoup = BeautifulSoup(page_source, 'html.parser')

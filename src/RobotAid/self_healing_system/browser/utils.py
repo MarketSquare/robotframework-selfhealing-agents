@@ -21,11 +21,8 @@ def convert_locator_to_browser(locator: str) -> str:
     elif locator.startswith("xpath:"):
         locator = "xpath=" + locator[6:]
 
-    # Replace :contains with :has-text
     locator = locator.replace(":contains", ":has-text")
-    # Replace :-soup-contains-own with :text
     locator = locator.replace(":-soup-contains-own", ":text")
-    # Replace :-soup-contains with :has-text
     locator = locator.replace(":-soup-contains", ":has-text")
 
     return locator

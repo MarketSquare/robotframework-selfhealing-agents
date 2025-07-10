@@ -98,7 +98,6 @@ class ReportGenerator:
                 todesc="Healed"
             )
 
-            # Inject CSS to highlight entire lines and suppress intraline highlights
             custom_css = (
                 "<style>"
                 "td.diff_add{background-color:#dfd;}"
