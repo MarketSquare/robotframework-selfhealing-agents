@@ -3,7 +3,6 @@ Library    SeleniumLibrary
 Library    RobotAid    config_path=${CURDIR}/../config_test.yaml
 Test Setup    Open Browser    browser=headlesschrome
 Test Teardown    Close All Browsers
-Test Tags    not_ready
 
 *** Variables ***
 ${BROWSER}    chromium
