@@ -15,9 +15,9 @@ class OrchestratorAgent:
     """Routes raw failure text to the appropriate healing tool.
 
     Attributes:
-        app_settings (AppSettings): Instance of AppSettings containing user defined app configuration.
-        client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
-        locator_agent (LocatorAgent): LocatorAgent instance.
+        app_settings: Instance of AppSettings containing user defined app configuration.
+        client_settings: Instance of ClientSettings containing user defined client configuration.
+        locator_agent: LocatorAgent instance.
     """
 
     def __init__(
@@ -29,6 +29,15 @@ class OrchestratorAgent:
             request_limit=5, total_tokens_limit=2000
         ),
     ) -> None:
+        """Initialize the OrchestratorAgent.
+
+        Args:
+            app_settings: Application settings containing configuration.
+            client_settings: Client settings for LLM connection.
+            locator_agent: LocatorAgent instance for handling locator healing.
+            usage_limits: Token and request limits for the agent. Defaults to
+                UsageLimits with request_limit=5 and total_tokens_limit=2000.
+        """
         self.locator_agent: LocatorAgent = locator_agent
         self.usage_limits: UsageLimits = usage_limits
         self.agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
@@ -48,11 +57,14 @@ class OrchestratorAgent:
         """Get a list of healed locator suggestions for a broken locator.
 
         Args:
-            ctx (RunContext): PydanticAI tool context.
-            broken_locator (str): Locator that needs to be healed.
+            ctx: PydanticAI tool context.
+            broken_locator: Locator that needs to be healed.
 
         Returns:
-            (str): List of repaired locator suggestions in JSON format.
+            List of repaired locator suggestions in JSON format.
+
+        Raises:
+            ModelRetry: If locator healing fails.
 
         Example:
             get_healed_locators(ctx, broken_locator="#btn-login")
@@ -67,10 +79,10 @@ class OrchestratorAgent:
         """Run orchestration asynchronously.
 
         Args:
-            robot_ctx (dict): Contains context for the self-healing process of the LLM.
+            robot_ctx: Contains context for the self-healing process of the LLM.
 
         Returns:
-            (str): List of repaired locator suggestions.
+            List of repaired locator suggestions.
         """
         payload: PromptPayload = PromptPayload(**robot_ctx)
         response: AgentRunResult = await self.agent.run(
@@ -84,14 +96,16 @@ class OrchestratorAgent:
 
 def cleanup_response(response: str) -> str:
     """Cleans up the response from the agent to ensure it is in the correct format.
-        e.g. if response starts with "The JSON response is " or <|python_tag|> or {"output": "{"suggestions": [...]}"}
-        Just returns the JSON part of the response.
+
+    Handles various response formats like responses starting with "The JSON response is"
+    or "<|python_tag|>" or nested JSON structures like {"output": "{"suggestions": [...]}"}
+    and returns just the JSON part of the response.
 
     Args:
-        response (str): Raw response from the agent.
+        response: Raw response from the agent.
 
     Returns:
-        LocatorHealingResponse: Parsed and validated response.
+        Parsed and cleaned response string.
     """
     import re
 

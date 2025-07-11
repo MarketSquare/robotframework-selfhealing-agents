@@ -1,18 +1,15 @@
+import difflib
+import html
 import os
 import re
-import html
-import difflib
 from pathlib import Path
-from typing import Any, List, Tuple, Set, Optional
-from robot.api.parsing import get_model, ModelTransformer
+from typing import Any, List, Optional, Set, Tuple
 
+from robot.api.parsing import ModelTransformer, get_model
 
 from RobotAid.self_healing_system.reports.report_data import ReportData
 
-
-LOCATOR_PATTERN = re.compile(
-    r'^(?:id|xpath|css|name|link|dom|jquery)=', re.IGNORECASE
-)
+LOCATOR_PATTERN = re.compile(r"^(?:id|xpath|css|name|link|dom|jquery)=", re.IGNORECASE)
 
 
 class ReportGenerator:
@@ -88,14 +85,13 @@ class ReportGenerator:
                 original_lines = original_file.read_text(encoding="utf-8").splitlines()
                 healed_lines = healed_file.read_text(encoding="utf-8").splitlines()
             except OSError as e:
-                raise RuntimeError(f"Failed to read files for diff: {original_file} or {healed_file}") from e
+                raise RuntimeError(
+                    f"Failed to read files for diff: {original_file} or {healed_file}"
+                ) from e
 
             diff_generator = difflib.HtmlDiff(tabsize=4, wrapcolumn=80)
             html_diff = diff_generator.make_file(
-                original_lines,
-                healed_lines,
-                fromdesc="Original",
-                todesc="Healed"
+                original_lines, healed_lines, fromdesc="Original", todesc="Healed"
             )
 
             custom_css = (
@@ -123,16 +119,22 @@ class ReportGenerator:
         for suite_path in paths:
             test_suite_name = Path(suite_path).name
             model = get_model(suite_path)
-            replacements = self._get_replacements_for_suite(report_info, test_suite_name)
+            replacements = self._get_replacements_for_suite(
+                report_info, test_suite_name
+            )
             LocatorReplacer(replacements).visit(model)
             output_file = self.reports_dir / f"{test_suite_name}"
             try:
                 model.save(output_file)
             except OSError as e:
-                raise RuntimeError(f"Failed to save healed test suite to {output_file}") from e
+                raise RuntimeError(
+                    f"Failed to save healed test suite to {output_file}"
+                ) from e
 
     @staticmethod
-    def _get_replacements_for_suite(report_info: List[ReportData], test_suite_name: str) -> List[Tuple[str, str]]:
+    def _get_replacements_for_suite(
+        report_info: List[ReportData], test_suite_name: str
+    ) -> List[Tuple[str, str]]:
         """Builds a mapping of original to healed locators for a given suite.
 
         Args:
@@ -143,11 +145,13 @@ class ReportGenerator:
             (List[Tuple[str, str]]): Pairs of (original_locator, healed_locator).
         """
         entries = [
-            entry for entry in report_info
-            if entry.test_suite == test_suite_name
+            entry for entry in report_info if entry.test_suite == test_suite_name
         ]
         return [
-            (ReportGenerator._extract_locator(entry.keyword_args), entry.healed_locator or "")
+            (
+                ReportGenerator._extract_locator(entry.keyword_args),
+                entry.healed_locator or "",
+            )
             for entry in entries
         ]
 
@@ -161,7 +165,9 @@ class ReportGenerator:
         Returns:
             (Optional[str]): The original locator string, or first arg if none match.
         """
-        locator = next((arg for arg in keyword_args if ReportGenerator.is_locator(arg)), None)
+        locator = next(
+            (arg for arg in keyword_args if ReportGenerator.is_locator(arg)), None
+        )
         return locator or (keyword_args[0] if keyword_args else None)
 
     @staticmethod
@@ -174,7 +180,9 @@ class ReportGenerator:
         Returns:
             bool: True if it matches locator patterns.
         """
-        return bool(LOCATOR_PATTERN.match(arg) or arg.startswith("//") or arg.startswith("./"))
+        return bool(
+            LOCATOR_PATTERN.match(arg) or arg.startswith("//") or arg.startswith("./")
+        )
 
 
 class LocatorReplacer(ModelTransformer):

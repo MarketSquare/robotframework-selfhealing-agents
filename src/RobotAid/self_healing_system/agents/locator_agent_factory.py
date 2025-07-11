@@ -55,7 +55,7 @@ class LocatorAgentFactory:
                         automatically based on agent type.
 
         Returns:
-            BaseLocatorAgent: An instance of the requested locator agent type.
+            An instance of the requested locator agent type.
 
         Raises:
             ValueError: If the agent type is not supported.
@@ -106,7 +106,7 @@ class LocatorAgentFactory:
             agent_type: The agent type to normalize.
 
         Returns:
-            LocatorAgentType: The normalized agent type.
+            The normalized agent type.
 
         Raises:
             ValueError: If the agent type cannot be normalized.
@@ -134,7 +134,7 @@ class LocatorAgentFactory:
             agent_type: The locator agent type.
 
         Returns:
-            DomUtilityType: The corresponding DOM utility type.
+            The corresponding DOM utility type.
         """
         return DomUtilityType(agent_type.value)
 
@@ -143,7 +143,7 @@ class LocatorAgentFactory:
         """Get a list of supported agent types.
 
         Returns:
-            list[str]: List of supported agent type strings.
+            List of supported agent type strings.
         """
         supported_types = [
             LocatorAgentType.BROWSER.value,
@@ -160,7 +160,7 @@ class LocatorAgentFactory:
         consistency across the system.
 
         Returns:
-            LocatorAgentType: The detected agent type.
+            The detected agent type.
         """
         try:
             dom_type = DomUtilityFactory._auto_detect_utility_type()
@@ -176,7 +176,7 @@ class LocatorAgentFactory:
             result: Robot Framework keyword result object with an 'owner' attribute.
 
         Returns:
-            LocatorAgentType: The detected agent type, or None if not detected.
+            The detected agent type, or None if not detected.
         """
         dom_type = DomUtilityFactory.detect_library_from_keyword_result(result)
         if dom_type is None:
@@ -203,7 +203,7 @@ class LocatorAgentFactory:
                         automatically based on detected type.
 
         Returns:
-            BaseLocatorAgent: An instance of the auto-detected locator agent type.
+            An instance of the auto-detected locator agent type.
         """
         agent_type = LocatorAgentFactory.detect_agent_type()
         return LocatorAgentFactory.create_agent(
@@ -236,7 +236,7 @@ class LocatorAgentFactory:
                         automatically based on detected type.
 
         Returns:
-            BaseLocatorAgent: An instance of the detected locator agent type.
+            An instance of the detected locator agent type.
         """
         agent_type = LocatorAgentFactory.detect_agent_type_from_keyword_result(result)
         if agent_type is None:

@@ -7,12 +7,12 @@ from robot.api import logger
 from robot.api.interfaces import ListenerV3
 
 from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
+from RobotAid.self_healing_system.reports.report_data import ReportData
+from RobotAid.self_healing_system.reports.report_generator import ReportGenerator
 from RobotAid.self_healing_system.rerun import rerun_keyword_with_fixed_locator
 from RobotAid.self_healing_system.schemas import LocatorHealingResponse
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
-from RobotAid.self_healing_system.reports.report_generator import ReportGenerator
-from RobotAid.self_healing_system.reports.report_data import ReportData
 
 
 class RobotAid(ListenerV3):
@@ -76,14 +76,14 @@ class RobotAid(ListenerV3):
                 self._try_locator_suggestions(
                     data=data
                 )  # Note: failing suggestions immediately re-trigger
-                   #       end_keyword function
+                #       end_keyword function
                 result.status = "PASS"
 
             self._append_report_info(
                 data=pre_healing_process_data,
                 healed_locator=self.tried_locator_memory[-1],
                 tried_locator_memory=self.tried_locator_memory,
-                status_healed=result.status
+                status_healed=result.status,
             )
             self.keyword_try_ctr = 0
             self.suggestions = None
@@ -137,7 +137,13 @@ class RobotAid(ListenerV3):
             self.tried_locator_memory.append(current_suggestion)
             rerun_keyword_with_fixed_locator(data, current_suggestion)
 
-    def _append_report_info(self, data: running.Keyword, healed_locator: str, tried_locator_memory: list, status_healed: str):
+    def _append_report_info(
+        self,
+        data: running.Keyword,
+        healed_locator: str,
+        tried_locator_memory: list,
+        status_healed: str,
+    ):
         self.report_info.append(
             ReportData(
                 test_suite=data.source.parts[-1],
@@ -145,7 +151,9 @@ class RobotAid(ListenerV3):
                 test_name=data.parent.name,
                 keyword=data.name,
                 keyword_args=data.args,
-                healed_locator=healed_locator if status_healed == "PASS" else "Locator not healed.",
-                tried_locators=tried_locator_memory
+                healed_locator=healed_locator
+                if status_healed == "PASS"
+                else "Locator not healed.",
+                tried_locators=tried_locator_memory,
             )
         )

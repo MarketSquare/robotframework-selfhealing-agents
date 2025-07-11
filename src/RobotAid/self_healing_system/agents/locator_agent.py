@@ -1,4 +1,5 @@
 from typing import Optional, Union
+
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.usage import UsageLimits
 
@@ -23,10 +24,10 @@ class LocatorAgent:
     over agent selection.
 
     Attributes:
-        _agent (BaseLocatorAgent): The underlying specific agent implementation.
-        app_settings (AppSettings): Instance of AppSettings containing user defined app configuration.
-        client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
-        usage_limits (UsageLimits): Usage token and request limits.
+        _agent: The underlying specific agent implementation.
+        app_settings: Instance of AppSettings containing user defined app configuration.
+        client_settings: Instance of ClientSettings containing user defined client configuration.
+        usage_limits: Usage token and request limits.
     """
 
     def __init__(
@@ -73,10 +74,10 @@ class LocatorAgent:
         """Generates suggestions for fixing broken locator.
 
         Args:
-            ctx (RunContext): PydanticAI context.
+            ctx: PydanticAI context.
 
         Returns:
-            (str): List of repaired locator suggestions.
+            List of repaired locator suggestions.
         """
         return await self._agent.heal_async(ctx)
 
@@ -85,7 +86,7 @@ class LocatorAgent:
         """Get the underlying generation agent for compatibility.
 
         Returns:
-            Agent[PromptPayload, str]: The underlying PydanticAI agent.
+            The underlying PydanticAI agent.
         """
         return self._agent.generation_agent
 
@@ -93,7 +94,7 @@ class LocatorAgent:
         """Get the type of the underlying agent.
 
         Returns:
-            str: The agent type identifier.
+            The agent type identifier.
         """
         return self._agent.get_agent_type()
 
@@ -101,6 +102,7 @@ class LocatorAgent:
         """Get the underlying specific agent implementation.
 
         Returns:
-            BaseLocatorAgent: The underlying agent implementation.
+            The underlying agent implementation.
         """
+        return self._agent
         return self._agent

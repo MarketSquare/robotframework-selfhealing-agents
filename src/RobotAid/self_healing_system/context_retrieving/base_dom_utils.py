@@ -22,10 +22,10 @@ class BaseDomUtils(ABC):
         """Check if the given locator is valid in the DOM.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is valid, False otherwise.
+            True if the locator is valid, False otherwise.
         """
         pass
 
@@ -34,10 +34,10 @@ class BaseDomUtils(ABC):
         """Check if the given locator is unique in the DOM.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is unique, False otherwise.
+            True if the locator is unique, False otherwise.
         """
         pass
 
@@ -46,10 +46,10 @@ class BaseDomUtils(ABC):
         """Check if the given locator is visible in the DOM.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is visible, False otherwise.
+            True if the locator is visible, False otherwise.
         """
         pass
 
@@ -58,7 +58,7 @@ class BaseDomUtils(ABC):
         """Retrieve the DOM tree of the current page.
 
         Returns:
-            str: The DOM tree as a string.
+            The DOM tree as a string.
         """
         pass
 
@@ -67,6 +67,6 @@ class BaseDomUtils(ABC):
         """Get the library type identifier.
 
         Returns:
-            str: The library type (e.g., 'browser', 'selenium', 'appium').
+            The library type (e.g., 'browser', 'selenium', 'appium').
         """
         pass

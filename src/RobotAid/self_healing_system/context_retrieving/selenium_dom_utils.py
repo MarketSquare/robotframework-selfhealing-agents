@@ -35,10 +35,10 @@ class SeleniumDomUtils(BaseDomUtils):
         """Check if the locator is valid using Selenium library methods.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is valid, False otherwise.
+            True if the locator is valid, False otherwise.
         """
         if self.library_instance is None:
             return True
@@ -53,10 +53,10 @@ class SeleniumDomUtils(BaseDomUtils):
         """Check if the locator is unique using Selenium library methods.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is unique, False otherwise.
+            True if the locator is unique, False otherwise.
         """
         if self.library_instance is None:
             return True  # Skip validation if library is not available
@@ -72,10 +72,10 @@ class SeleniumDomUtils(BaseDomUtils):
         """Check if the locator is visible using Selenium library methods.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is visible, False otherwise.
+            True if the locator is visible, False otherwise.
         """
         if self.library_instance is None:
             return True  # Skip validation if library is not available
@@ -97,10 +97,12 @@ class SeleniumDomUtils(BaseDomUtils):
             return "<html><body>SeleniumLibrary not available</body></html>"
 
         try:
-            page_source = getattr(self.library_instance, 'get_source')()
-            
-            soup: BeautifulSoup = BeautifulSoup(page_source, 'html.parser')
-            source: str = SoupDomUtils().get_simplified_dom_tree(str(soup.body) if soup.body else str(soup))
+            page_source = getattr(self.library_instance, "get_source")()
+
+            soup: BeautifulSoup = BeautifulSoup(page_source, "html.parser")
+            source: str = SoupDomUtils().get_simplified_dom_tree(
+                str(soup.body) if soup.body else str(soup)
+            )
             return source
 
         except Exception as e:
