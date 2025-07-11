@@ -22,24 +22,24 @@ Open Insurance Application
 Enter Vehicle Data for Automobile
     Click Element    div.main-navigation >> "Automobile"
     Set Selenium Timeout    1
-    Select From List By Label    Make    Audi
-    Input Text    Engine Performance    110
-    Input Text    Date of Manufacture    06/12/1980
-    Select From List By Label    Number of Seats    5
-    Select From List By Label    Fuel Type    Petrol    
-    Input Text    List Price    30000
-    Input Text   License Plate Number    DEF1234
-    Input Text   Annual Mileage   10000
+    Select From List By Label    Brand    Audi
+    Input Text    engine    110
+    Input Text    manufactoringdate    06/12/1980
+    Select From List By Label    seats    5
+    Select From List By Label    fueltype    Petrol    
+    Input Text    price    30000
+    Input Text   licenseplate    DEF1234
+    Input Text   mileage   10000
 
 Check Entered Vehicle Data
-    List Selection Should Be   Make    Audi
-    Textfield Should Contain    Engine Performance    110
-    Textfield Should Contain    Date of Manufacture    06/12/1980
-    List Selection Should Be    Number of Seats    5
-    List Selection Should Be    Fuel Type    Petrol    
-    Textfield Should Contain    List Price    30000
-    Textfield Should Contain    License Plate Number    DEF1234
-    Textfield Should Contain    Annual Mileage   10000
+    List Selection Should Be   Brand    Audi
+    Textfield Should Contain    engine    110
+    Textfield Should Contain    manufactoringdate    06/12/1980
+    List Selection Should Be    seats    5
+    List Selection Should Be    fueltype    Petrol    
+    Textfield Should Contain    price    30000
+    Textfield Should Contain    licenseplate    DEF1234
+    Textfield Should Contain    mileage   10000
     
 Enter Insurant Data
     [Arguments]    ${firstname}=Max    ${lastname}=Mustermann
