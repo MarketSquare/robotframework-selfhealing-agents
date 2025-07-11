@@ -1,14 +1,11 @@
 *** Settings ***
-Library    Browser    timeout=5s
+Library    SeleniumLibrary
 Library    RobotAid    config_path=${CURDIR}/../config_test.yaml
-Suite Setup    New Browser    browser=${BROWSER}    headless=${HEADLESS}
-Test Setup    New Context    viewport={'width': 1280, 'height': 720}
-Test Teardown    Close Context
-Suite Teardown    Close Browser    ALL
+Test Setup    Open Browser    browser=${BROWSER}
+Test Teardown    Close All Browsers
 
 *** Variables ***
-${BROWSER}    chromium
-${HEADLESS}    True
+${BROWSER}    headlesschrome
 
 *** Test Cases ***
 Add Two ToDos And Check Items
@@ -39,14 +36,15 @@ Add Two ToDo And Mark ToDos
 
 *** Keywords ***
 ToDo App is open
-    New Page    https://todomvc.com/examples/react/dist/
+    Set Window Size    1280    720
+    Go To    https://todomvc.com/examples/react/dist/
 
 I Add A New ToDo "${todo}"   
-    Fill Text  .todo  ${todo}
-    Press Keys  .todo  Enter
+    Input Text  .todo  ${todo}
+    Press Keys  .todo  RETURN
     
 Open ToDos should show "${text}"
-    Get Text    span.todo-count    ==    ${text}
+    Element Text Should Be    span.todo-count    ${text}
 
 I Mark ToDo "${todo}"
-    Click    input.toggle >> "${todo}" 
+    Click Element    input.toggle >> "${todo}" 
