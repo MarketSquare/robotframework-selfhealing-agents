@@ -5,10 +5,6 @@ from pydantic_ai.usage import UsageLimits
 from RobotAid.self_healing_system.agents.base_locator_agent import BaseLocatorAgent
 from RobotAid.self_healing_system.agents.prompts import PromptsLocator
 from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import (
-    DomUtilityFactory,
-    DomUtilityType,
-)
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 
@@ -56,21 +52,7 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
         ),
         dom_utility: Optional[BaseDomUtils] = None,
     ) -> None:
-        # Initialize DOM utility for Selenium library using the factory
-        if dom_utility is None:
-            try:
-                self.dom_utility = DomUtilityFactory.create_dom_utility(
-                    DomUtilityType.SELENIUM
-                )
-            except Exception as e:
-                print(
-                    f"SeleniumDomUtils initialization failed: {e}. Skipping DOM utility initialization."
-                )
-                self.dom_utility = None
-        else:
-            self.dom_utility = dom_utility
-
-        super().__init__(app_settings, client_settings, usage_limits)
+        super().__init__(app_settings, client_settings, usage_limits, dom_utility)
 
     def _get_system_prompt(self) -> str:
         """Get the Selenium library specific system prompt."""
