@@ -19,18 +19,11 @@ def convert_locator_to_selenium(locator: str) -> str:
         str: The converted locator compatible with Selenium library.
     """
     locator = locator.strip()
-
-    # Remove Browser library prefixes and convert to Selenium format
     if locator.startswith("css="):
         locator = "css:" + locator[4:]
     elif locator.startswith("xpath="):
         locator = "xpath:" + locator[6:]
-
-    # Convert Browser library specific selectors to Selenium equivalents
-    # Replace :has-text() with :contains() for Selenium
     locator = locator.replace(":has-text", ":contains")
-
-    # Replace :text() with text() for Selenium XPath
     locator = locator.replace(":text(", "text()=")
 
     return locator

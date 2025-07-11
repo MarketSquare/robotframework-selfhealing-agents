@@ -43,7 +43,6 @@ class BaseLocatorAgent(ABC):
         self._provided_dom_utility = dom_utility
         self._dom_utility: Optional[BaseDomUtils] = None
 
-        # Initialize the generation agent with the appropriate system prompt
         self.generation_agent: Agent[PromptPayload, LocatorHealingResponse] = Agent[
             PromptPayload, LocatorHealingResponse
         ](
@@ -81,7 +80,6 @@ class BaseLocatorAgent(ABC):
                 if not fixed_locators:
                     raise ModelRetry("No fixed locators found in the response.")
 
-                # Process and validate locators using flavor-specific logic
                 suggestions = [self._process_locator(x) for x in fixed_locators]
                 suggestions = self._sort_locators(suggestions)
 
