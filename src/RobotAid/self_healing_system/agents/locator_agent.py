@@ -105,4 +105,14 @@ class LocatorAgent:
             The underlying agent implementation.
         """
         return self._agent
-        return self._agent
+
+    def is_failed_locator_error(self, message: str) -> bool:
+        """Check if the locator error is due to a failed locator.
+
+        Args:
+            message: The error message to check.
+
+        Returns:
+            True if the error is due to a failed locator, False otherwise.
+        """
+        return self._agent.is_failed_locator_error(message)

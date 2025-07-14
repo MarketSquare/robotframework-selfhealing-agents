@@ -37,3 +37,13 @@ class LocatorHealingResponse(BaseModel):
     """
 
     suggestions: list = Field(..., description="Suggestions for fixing locator error.")
+
+
+class NoHealingNeededResponse(BaseModel):
+    """Response schema for cases where no healing is needed.
+
+    Attributes:
+        message: Message indicating no healing is needed.
+    """
+
+    message: str = Field(..., description="Message indicating no healing is needed.")

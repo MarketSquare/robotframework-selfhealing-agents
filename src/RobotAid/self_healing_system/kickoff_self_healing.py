@@ -9,7 +9,10 @@ from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import 
     DomUtilityFactory,
 )
 from RobotAid.self_healing_system.robot_ctx_retriever import RobotCtxRetriever
-from RobotAid.self_healing_system.schemas import LocatorHealingResponse
+from RobotAid.self_healing_system.schemas import (
+    LocatorHealingResponse,
+    NoHealingNeededResponse,
+)
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 
@@ -54,7 +57,7 @@ class KickoffSelfHealing:
         app_settings: AppSettings,
         client_settings: ClientSettings,
         tried_locator_memory: list,
-    ) -> LocatorHealingResponse | str:
+    ) -> LocatorHealingResponse | str | NoHealingNeededResponse:
         """Instantiates the multi-agent system, retrieves context and kicks off self-healing-system.
 
         Args:

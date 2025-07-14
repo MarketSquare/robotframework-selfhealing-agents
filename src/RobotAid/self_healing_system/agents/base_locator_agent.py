@@ -225,3 +225,16 @@ class BaseLocatorAgent(ABC):
         return sorted(
             valid_locators, key=lambda x: self._is_locator_unique(x), reverse=True
         )
+
+    @staticmethod
+    @abstractmethod
+    def is_failed_locator_error(message: str) -> bool:
+        """Check if the locator error is due to a failed locator.
+
+        Args:
+            message: The error message to check.
+
+        Returns:
+            True if the error is due to a failed locator, False otherwise.
+        """
+        pass

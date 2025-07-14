@@ -111,3 +111,17 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
             The string identifier for the selenium agent type.
         """
         return "selenium"
+
+    @staticmethod
+    def is_failed_locator_error(message: str) -> bool:
+        """Check if the locator error is due to a failed locator.
+
+        Args:
+            message: The error message to check.
+
+        Returns:
+            True if the error is due to a failed locator, False otherwise.
+        """
+        return (
+            "element with locator" in message.lower() and "not found" in message.lower()
+        )
