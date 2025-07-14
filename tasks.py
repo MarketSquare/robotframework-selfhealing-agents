@@ -42,7 +42,7 @@ def atests(context):
         "-d results",
         "--prerebotmodifier utilities.xom.XUnitOut:results/xunit.xml",
         "--exclude not_ci",
-        f"{ROOT}/tests/atest/browser {ROOT}/tests/atest/selenium",
+        f"{ROOT}/tests/atest",
     ]
     global atests_completed_process
     atests_completed_process = subprocess.run(" ".join(cmd), shell=True, check=False)

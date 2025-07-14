@@ -74,7 +74,7 @@ class XUnitOut(SuiteVisitor):
         self._utc_offset = None
 
     def start_suite(self, suite):
-        if suite.parent is None or suite.has_tests:
+        if suite.parent is None or suite.tests:
             """When suite is started writes testsuite/testsuites element's start tag and attributes."""
             stats = suite.statistics  # Accessing property only once.
             attrs = {
@@ -100,7 +100,7 @@ class XUnitOut(SuiteVisitor):
 
     def end_suite(self, suite):
         """When suite is ended, writes properties and end tag for testsuite/testsuites."""
-        if suite.parent is None or suite.has_tests:
+        if suite.parent is None or suite.tests:
             if suite.metadata or suite.doc or REPORT_UTC_TIME_OFFSET:
                 self._writer.start("properties")
                 if suite.doc:
