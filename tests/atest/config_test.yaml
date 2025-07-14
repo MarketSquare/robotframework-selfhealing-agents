@@ -4,7 +4,7 @@ system:
 
 orchestrator_agent:
   provider: "openai"
-  model: "llama-3.3-70b-Instruct"
+  model: "meta-llama/Llama-3.3-70B-Instruct"
 #  model: "llama-3.3-70b-versatile"
 #  model: "meta-llama/llama-4-scout-17b-16e-instruct"
 #  model: "models/gemini-2.5-flash"
@@ -12,7 +12,7 @@ orchestrator_agent:
 
 locator_agent:
   provider: "openai"
-  model: "llama-3.3-70b-Instruct"
+  model: "meta-llama/Llama-3.3-70B-Instruct"
 #  model: "llama-3.3-70b-versatile"
 #  model: "meta-llama/llama-4-scout-17b-16e-instruct"
 #  model: "models/gemini-2.0-flash-lite"
