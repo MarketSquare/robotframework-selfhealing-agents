@@ -92,3 +92,15 @@ class BrowserLocatorAgent(BaseLocatorAgent):
             The string identifier for the browser agent type.
         """
         return "browser"
+
+    @staticmethod
+    def is_failed_locator_error(message: str) -> bool:
+        """Check if the locator error is due to a failed locator.
+
+        Args:
+            message: The error message to check.
+
+        Returns:
+            True if the error is due to a failed locator, False otherwise.
+        """
+        return "did not match any elements" in message.lower()
