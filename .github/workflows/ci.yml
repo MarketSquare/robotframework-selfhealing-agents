@@ -19,7 +19,6 @@ jobs:
       AZURE_API_KEY: ${{ secrets.AZURE_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       BASE_URL: ${{ vars.BASE_URL }}
-      AZURE_ENDPOINT: ${{ vars.AZURE_ENDPOINT }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
