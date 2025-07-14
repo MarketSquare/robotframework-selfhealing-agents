@@ -78,7 +78,7 @@ class XUnitOut(SuiteVisitor):
             """When suite is started writes testsuite/testsuites element's start tag and attributes."""
             stats = suite.statistics  # Accessing property only once.
             attrs = {
-                "name": suite.name,
+                "name": suite.full_name,
                 "tests": f"{stats.total}",
                 # No meaningful data available from suite for `errors`.
                 "errors": "0",
@@ -133,7 +133,7 @@ class XUnitOut(SuiteVisitor):
     def visit_test(self, test):
         """Writes testcase element"""
         attrs = {
-            "classname": test.parent.longname,
+            "classname": test.parent.full_name,
             "name": test.name,
             "time": self._time_as_seconds(test.elapsedtime),
             # * Define Custom test attributes here:
