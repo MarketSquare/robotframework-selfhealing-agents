@@ -21,3 +21,7 @@ Login with valid credentials
     Fill Text    id=tell_me_more    More information
     Select Options By    id=user_continent    label    Africa
     Click    id=i_do_nothing
+
+Not a broken locator error
+    New Page    https://automationintesting.com/selenium/testpage/
+    Run Keyword And Expect Error    Text 'First name\\n' (str) should be 'Incorrect Label' (str)    Get Text    label >> text=First Name    ==    Incorrect Label
