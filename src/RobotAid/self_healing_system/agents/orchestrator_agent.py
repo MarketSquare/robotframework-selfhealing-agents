@@ -5,7 +5,11 @@ from pydantic_ai.usage import UsageLimits
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.prompts import PromptsOrchestrator
 from RobotAid.self_healing_system.clients.llm_client import get_model
-from RobotAid.self_healing_system.schemas import LocatorHealingResponse, PromptPayload
+from RobotAid.self_healing_system.schemas import (
+    LocatorHealingResponse,
+    NoHealingNeededResponse,
+    PromptPayload,
+)
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 
@@ -75,7 +79,9 @@ class OrchestratorAgent:
         except Exception as e:
             raise ModelRetry(f"Locator healing failed: {str(e)}")
 
-    async def run_async(self, robot_ctx: dict) -> str | LocatorHealingResponse:
+    async def run_async(
+        self, robot_ctx: dict
+    ) -> str | LocatorHealingResponse | NoHealingNeededResponse:
         """Run orchestration asynchronously.
 
         Args:
@@ -85,6 +91,11 @@ class OrchestratorAgent:
             List of repaired locator suggestions.
         """
         payload: PromptPayload = PromptPayload(**robot_ctx)
+
+        # Only run the agent in case of a locator error
+        if not self.locator_agent.is_failed_locator_error(payload.error_msg):
+            return NoHealingNeededResponse(message=payload.error_msg)
+
         response: AgentRunResult = await self.agent.run(
             PromptsOrchestrator.get_user_msg(payload),
             deps=payload,
@@ -92,34 +103,3 @@ class OrchestratorAgent:
             model_settings={"temperature": 0.1, "parallel_tool_calls": False},
         )
         return response.output
-
-
-def cleanup_response(response: str) -> str:
-    """Cleans up the response from the agent to ensure it is in the correct format.
-
-    Handles various response formats like responses starting with "The JSON response is"
-    or "<|python_tag|>" or nested JSON structures like {"output": "{"suggestions": [...]}"}
-    and returns just the JSON part of the response.
-
-    Args:
-        response: Raw response from the agent.
-
-    Returns:
-        Parsed and cleaned response string.
-    """
-    import re
-
-    if response.startswith("The JSON response is"):
-        response = response[len("The JSON response is") :].strip()
-    if response.startswith("<|python_tag|>"):
-        response = response[len("<|python_tag|>") :].strip()
-    if response.endswith("."):
-        response = response[:-1].strip()
-    # Handle nested JSON structure like {"output": "..."}
-    # Extract content from nested JSON structure like {"output": "..."}
-    nested_json_pattern = r'^\{"output":\s*"(.*)"\}$'
-    match = re.match(nested_json_pattern, response)
-    if match:
-        response = match.group(1)
-        response = response.replace('\\"', '"')
-    return response
