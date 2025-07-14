@@ -53,9 +53,8 @@ Example code modification points are denoted with `# *` comment lines in the cod
 
 # * import platform  # Used for testsuite hostname attribute.
 import time
-
 from robot.api import SuiteVisitor
-from robot.utils import XmlWriter, secs_to_timestamp, timestamp_to_secs
+from robot.utils import XmlWriter, timestamp_to_secs, secs_to_timestamp
 
 # Configuration flags:
 # Root node to <testsuites> when multiple suites in a test run.
@@ -87,7 +86,7 @@ class XUnitOut(SuiteVisitor):
                  # * Define custom suite attributes here:
                  # * 'hostname': platform.uname().node,
                  }
-        if ROOT_NODE_PLURAL and suite.suites:
+        if ROOT_NODE_PLURAL and suite.parent is None and suite.suites:
             # * Define custom attributes for <testsuites> element here:
             # See JUnit team's xds:
             # https://github.com/junit-team/junit5/blob/main/platform-tests/src/test/resources/jenkins-junit.xsd
@@ -111,7 +110,9 @@ class XUnitOut(SuiteVisitor):
                                      'name': 'utc-offset', 'value': str(self._utc_offset)})
             self._writer.end('properties')
         if ROOT_NODE_PLURAL:
-            if suite.suites:
+            if suite.parent is not None:
+                self._writer.end('testsuite')
+            elif suite.suites:
                 # handling root node and it has sub-suites.
                 self._writer.end('testsuites')
             else:
@@ -155,4 +156,4 @@ class XUnitOut(SuiteVisitor):
                 self._utc_offset = offset
             utc = timestamp_to_secs(stime) + offset
             stime = secs_to_timestamp(utc)
-        return f'{stime[:4]}-{stime[4:6]}-{stime[6:8]}T{stime[9:]}{padding}'        return f'{stime[:4]}-{stime[4:6]}-{stime[6:8]}T{stime[9:]}{padding}'
+        return f'{stime[:4]}-{stime[4:6]}-{stime[6:8]}T{stime[9:]}{padding}'
