@@ -111,10 +111,10 @@ class AppiumDomUtils(BaseDomUtils):
             return "<hierarchy>AppiumLibrary not available</hierarchy>"
 
         try:
-            if hasattr(self.library_instance, 'get_source'):
-                page_source = getattr(self.library_instance, 'get_source')()
-            elif hasattr(self.library_instance, 'get_page_source'):
-                page_source = getattr(self.library_instance, 'get_page_source')()
+            if hasattr(self.library_instance, "get_source"):
+                page_source = getattr(self.library_instance, "get_source")()
+            elif hasattr(self.library_instance, "get_page_source"):
+                page_source = getattr(self.library_instance, "get_page_source")()
             else:
                 # Try to get the driver and get page source directly
                 driver = getattr(self.library_instance, "_current_application", None)

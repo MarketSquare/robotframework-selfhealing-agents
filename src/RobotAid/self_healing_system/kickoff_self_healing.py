@@ -17,6 +17,14 @@ try:
     import logfire
 
     def scrubbing_callback(m: logfire.ScrubMatch):
+        """Callback function for scrubbing sensitive data in logfire.
+
+        Args:
+            m: ScrubMatch object containing pattern match information.
+
+        Returns:
+            The value if specific patterns match, None otherwise.
+        """
         if (
             m.path == ("attributes", "all_messages_events", 0, "content")
             and m.pattern_match.group(0) == "Password"
@@ -50,13 +58,13 @@ class KickoffSelfHealing:
         """Instantiates the multi-agent system, retrieves context and kicks off self-healing-system.
 
         Args:
-            result (result.Keyword): Keyword and additional information passed by robotframework listener.
-            app_settings (AppSettings): Instance of AppSettings containing user defined app configuration.
-            client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
-            tried_locator_memory (list): Memory list of executed locator suggestions that still failed.
+            result: Keyword and additional information passed by robotframework listener.
+            app_settings: Instance of AppSettings containing user defined app configuration.
+            client_settings: Instance of ClientSettings containing user defined client configuration.
+            tried_locator_memory: Memory list of executed locator suggestions that still failed.
 
         Returns:
-            response (LocatorHealingResponse): List of suggestions for healing the current robotframework test.
+            List of suggestions for healing the current robotframework test.
         """
 
         # Get result.owner to determine agent_type and dom_utility

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ReportData(BaseModel):
@@ -13,6 +13,7 @@ class ReportData(BaseModel):
         healed_locator (str): Healed Locator.
         tried_locators (list): List of tried but failed locators.
     """
+
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     test_suite: str = Field(..., description="Name of the test suite.")

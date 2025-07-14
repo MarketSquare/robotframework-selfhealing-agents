@@ -26,14 +26,13 @@ class RobotDomUtils:
         )
 
     def is_locator_unique(self, locator: str) -> bool:
-        """
-        Checks if the given locator is unique in the DOM.
+        """Checks if the given locator is unique in the DOM.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is unique, False otherwise.
+            True if the locator is unique, False otherwise.
         """
         try:
             return self.library_instance.get_element_count(locator) == 1
@@ -41,14 +40,13 @@ class RobotDomUtils:
             return False
 
     def is_locator_visible(self, locator: str) -> bool:
-        """
-        Checks if the given locator is visible in the DOM.
+        """Checks if the given locator is visible in the DOM.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is visible, False otherwise.
+            True if the locator is visible, False otherwise.
         """
         return "visible" in self.library_instance.get_element_states(locator)
 
