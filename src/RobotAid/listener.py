@@ -5,6 +5,7 @@ from pathlib import Path
 from robot import result, running
 from robot.api import logger
 from robot.api.interfaces import ListenerV3
+from robot.libraries.BuiltIn import BuiltIn
 
 from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
 from RobotAid.self_healing_system.reports.report_data import ReportData
@@ -78,12 +79,14 @@ class RobotAid(ListenerV3):
             if self.keyword_try_ctr < self.app_settings.system.max_retries:
                 if self.generate_suggestions:
                     self._start_self_healing(result=result)
-                self._try_locator_suggestions(
+                return_value = self._try_locator_suggestions(
                     data=data
                 )  # Note: failing suggestions immediately re-trigger
                 #       end_keyword function
 
                 if self.is_keyword_healed:
+                    if return_value and result.assign:
+                        BuiltIn().set_local_variable(result.assign[0], return_value)
                     result.status = "PASS"  # ToDo: Check what happens if there are no suggestions. Will it always pass?
 
                     self._append_report_info(
@@ -148,8 +151,9 @@ class RobotAid(ListenerV3):
 
         if current_suggestion:
             self.tried_locator_memory.append(current_suggestion)
-            rerun_keyword_with_fixed_locator(data, current_suggestion)
+            return_value = rerun_keyword_with_fixed_locator(data, current_suggestion)
             self.is_keyword_healed = True
+            return return_value
 
     def _append_report_info(
         self,
