@@ -1,7 +1,8 @@
+import inspect
 import pathlib
 import subprocess
+
 from invoke import task
-import inspect
 
 if not hasattr(inspect, 'getargspec'):
     inspect.getargspec = inspect.getfullargspec
@@ -39,7 +40,7 @@ def atests(context):
         "-d results",
         "--prerebotmodifier utilities.xom.XUnitOut:results/xunit.xml",
         "--exclude not_ci",
-        f"{ROOT}/tests/atest"
+        f"{ROOT}/tests/atest/browser {ROOT}/tests/atest/selenium"
     ]
     global atests_completed_process
     atests_completed_process = subprocess.run(" ".join(cmd), shell=True, check=False)
@@ -56,4 +57,4 @@ def tests(context):
 def coverage_report(context):
     subprocess.run("coverage combine", shell=True, check=False)
     subprocess.run("coverage report", shell=True, check=False)
-    subprocess.run("coverage html -d results/htmlcov", shell=True, check=False)
+    subprocess.run("coverage html -d results/htmlcov", shell=True, check=False)    subprocess.run("coverage html -d results/htmlcov", shell=True, check=False)
