@@ -103,4 +103,6 @@ class BrowserLocatorAgent(BaseLocatorAgent):
         Returns:
             True if the error is due to a failed locator, False otherwise.
         """
-        return "did not match any elements" in message.lower()
+        return ("waiting for" in message or "Element is not an" in message) and (
+            "waiting for element to be" not in message
+        )
