@@ -25,3 +25,9 @@ Login with valid credentials
 Not a broken locator error
     New Page    https://automationintesting.com/selenium/testpage/
     Run Keyword And Expect Error    Text 'First name\\n' (str) should be 'Incorrect Label' (str)    Get Text    label >> text=First Name    ==    Incorrect Label
+
+Self Healing returns value in Getter Keyword
+    New Page    https://automationintesting.com/selenium/testpage/
+    Fill Text    id=first_name    tom
+    ${name}    Get Text    id=first_name
+    Should Be Equal    ${name}    tom
