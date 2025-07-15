@@ -123,5 +123,7 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
             True if the error is due to a failed locator, False otherwise.
         """
         return (
-            "element with locator" in message.lower() and "not found" in message.lower()
+            ("with locator" in message and "not found" in message) or
+            ("No element with locator" in message and "found" in message) or
+            ("No radio button with name" in message and "found" in message)
         )
