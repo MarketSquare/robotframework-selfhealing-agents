@@ -186,3 +186,53 @@ class BrowserDomUtils(BaseDomUtils):
             str: The library type identifier.
         """
         return "browser"
+
+    def is_element_clickable(self, locator: str) -> bool:
+        """Check if the element identified by the locator is clickable using Browser library methods.
+
+        Args:
+            locator: The locator to check.
+
+        Returns:
+            True if the element is clickable, False otherwise.
+        """
+        # clickable_tags = ["button", "a", "input", "select", "textarea"]
+        if self.library_instance is None:
+            return False
+        try:
+            element = getattr(self.library_instance, "get_element")(locator)
+            # Use get_property_value to check the tagName
+            tag = getattr(self.library_instance, "get_property")(
+                element, "tagName"
+            ).lower()
+
+            if tag == 'button' or tag == 'a':
+                return True
+            elif tag == 'input':
+                type = getattr(self.library_instance, "evaluate_javascript")(locator, f"(elem) => elem.{'control.type'}")
+                if type == "button" or type == "radio" or type == "checkbox" or type == "search" or type == "reset" or type == "submit":
+                    return True
+
+            other_clickable_tags = [
+                    "mat-button",     # Angular Material
+                    "mat-radio-button",
+                    "mat-checkbox",
+                    "md-button",      # Older Angular Material
+                    "ion-button",     # Ionic
+                    "vaadin-button",  # Vaadin
+                    "paper-button",   # Polymer
+                    "x-button",       # Generic custom button
+                ]
+
+            if tag in other_clickable_tags:
+                return True
+
+            cursor_style = getattr(self.library_instance, "get_style")(
+                locator, "cursor"
+            )
+            if cursor_style == "pointer":
+                return True
+            
+
+        except Exception:
+            return False

@@ -70,3 +70,15 @@ class BaseDomUtils(ABC):
             The library type (e.g., 'browser', 'selenium', 'appium').
         """
         pass
+
+    @abstractmethod
+    def is_element_clickable(self, locator: str) -> bool:
+        """Check if the element identified by the locator is clickable.
+
+        Args:
+            locator: The locator to check.
+
+        Returns:
+            True if the element is clickable, False otherwise.
+        """
+        pass
