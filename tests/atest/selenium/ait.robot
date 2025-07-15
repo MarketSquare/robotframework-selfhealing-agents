@@ -1,11 +1,11 @@
 *** Settings ***
 Library    SeleniumLibrary
 Library    RobotAid    config_path=${CURDIR}/../config_test.yaml
-Test Setup    Open Browser    browser=headlesschrome
+Test Setup    Open Browser    browser=${BROWSER}
 Test Teardown    Close All Browsers
 
 *** Variables ***
-${BROWSER}    chromium
+${BROWSER}    headlesschrome
 
 *** Test Cases ***
 Login with valid credentials
@@ -18,3 +18,7 @@ Login with valid credentials
     Input Text    id:tell_me_more    More information
     Select From List By Label    id:user_continent    Africa
     Click Element    id:i_do_nothing
+
+Only return clickable elements
+    Go To    https://automationintesting.com/selenium/testpage/
+    Click Element    id:Red
