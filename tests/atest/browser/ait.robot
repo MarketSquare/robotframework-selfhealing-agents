@@ -31,3 +31,14 @@ Self Healing returns value in Getter Keyword
     Fill Text    id=first_name    tom
     ${name}    Get Text    id=first_name
     Should Be Equal    ${name}    tom
+
+Resolve to multiple elements
+    New Page    https://automationintesting.com/selenium/testpage/
+    Set Browser Timeout    1s
+    Fill Text    input    tom
+
+Resolve to wrong element type
+    New Page    https://automationintesting.com/selenium/testpage/
+    Set Browser Timeout    1s
+    Fill Text    button >> text=I do nothing!    tom
+
