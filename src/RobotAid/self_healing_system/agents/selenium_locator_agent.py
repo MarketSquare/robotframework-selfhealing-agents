@@ -127,4 +127,5 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
             or ("No element with locator" in message and "found" in message)
             or ("No radio button with name" in message and "found" in message)
             or ("Page should have contained" in message)
+            or ("invalid element state" in message)
         )
