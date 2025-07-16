@@ -22,3 +22,7 @@ Login with valid credentials
 Only return clickable elements
     Go To    https://automationintesting.com/selenium/testpage/
     Click Element    id:Red
+
+Resolve to wrong element type
+    Go To    https://automationintesting.com/selenium/testpage/
+    Input Text    //button[@id="submitbutton"]    tom
