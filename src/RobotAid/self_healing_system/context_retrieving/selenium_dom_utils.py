@@ -134,7 +134,7 @@ class SeleniumDomUtils(BaseDomUtils):
             tag = element.tag_name.lower()
 
             # Check basic clickable tags
-            if tag == "button" or tag == "a":
+            if tag == "button" or tag == "a" or tag == "select":
                 return True
             elif tag == "input":
                 # Check input type for clickable input elements

@@ -206,23 +206,32 @@ class BrowserDomUtils(BaseDomUtils):
                 element, "tagName"
             ).lower()
 
-            if tag == 'button' or tag == 'a':
+            if tag == "button" or tag == "a" or tag == "select":
                 return True
-            elif tag == 'input':
-                type = getattr(self.library_instance, "evaluate_javascript")(locator, f"(elem) => elem.{'control.type'}")
-                if type == "button" or type == "radio" or type == "checkbox" or type == "search" or type == "reset" or type == "submit":
+            elif tag == "input":
+                type = getattr(self.library_instance, "evaluate_javascript")(
+                    locator, f"(elem) => elem.{'control.type'}"
+                )
+                if (
+                    type == "button"
+                    or type == "radio"
+                    or type == "checkbox"
+                    or type == "search"
+                    or type == "reset"
+                    or type == "submit"
+                ):
                     return True
 
             other_clickable_tags = [
-                    "mat-button",     # Angular Material
-                    "mat-radio-button",
-                    "mat-checkbox",
-                    "md-button",      # Older Angular Material
-                    "ion-button",     # Ionic
-                    "vaadin-button",  # Vaadin
-                    "paper-button",   # Polymer
-                    "x-button",       # Generic custom button
-                ]
+                "mat-button",  # Angular Material
+                "mat-radio-button",
+                "mat-checkbox",
+                "md-button",  # Older Angular Material
+                "ion-button",  # Ionic
+                "vaadin-button",  # Vaadin
+                "paper-button",  # Polymer
+                "x-button",  # Generic custom button
+            ]
 
             if tag in other_clickable_tags:
                 return True
@@ -232,7 +241,6 @@ class BrowserDomUtils(BaseDomUtils):
             )
             if cursor_style == "pointer":
                 return True
-            
 
         except Exception:
             return False
