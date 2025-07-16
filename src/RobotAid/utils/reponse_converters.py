@@ -11,6 +11,7 @@ def extract_json_objects(text: str, decoder: JSONDecoder = JSONDecoder()) -> Any
     If the text contains a single JSON object or array, return it directly (dict or list).
     If multiple top-level objects/arrays are found, return a list of them.
     """
+
     # Attempt to fix common LLM issues: single quotes, trailing commas, etc.
     def fix_json_string(s: str) -> str:
         s = s.strip()
@@ -22,10 +23,10 @@ def extract_json_objects(text: str, decoder: JSONDecoder = JSONDecoder()) -> Any
         # Unescape inner single quotes in double-quoted strings
         s = s.replace('\\"', '"').replace("\\'", "'")
         # Remove trailing commas before closing brackets/braces
-        s = re.sub(r',([\s\n]*[\]\}])', r'\1', s)
+        s = re.sub(r",([\s\n]*[\]\}])", r"\1", s)
         # Remove newlines between brackets/braces
-        s = re.sub(r'([\[\{])\s*\n+\s*', r'\1', s)
-        s = re.sub(r'\s*\n+\s*([\]\}])', r'\1', s)
+        s = re.sub(r"([\[\{])\s*\n+\s*", r"\1", s)
+        s = re.sub(r"\s*\n+\s*([\]\}])", r"\1", s)
         return s
 
     pos = 0
@@ -33,8 +34,8 @@ def extract_json_objects(text: str, decoder: JSONDecoder = JSONDecoder()) -> Any
     results = []
     while pos < len(text):
         # Find the next JSON object or array
-        match_obj = text.find('{', pos)
-        match_arr = text.find('[', pos)
+        match_obj = text.find("{", pos)
+        match_arr = text.find("[", pos)
         if match_obj == -1 and match_arr == -1:
             break
         if match_obj == -1 or (match_arr != -1 and match_arr < match_obj):
@@ -66,10 +67,10 @@ def convert_response_to_list(response: str) -> list:
     """Convert a JSON response string to a list of strings.
 
     Args:
-        response (str): The JSON response string.
+        response: The JSON response string.
 
     Returns:
-        list: A list of strings extracted from the JSON response.
+        A list of strings extracted from the JSON response.
     """
     try:
         json_data = list(extract_json_objects(response))
@@ -89,10 +90,10 @@ def convert_response_to_dict(response: str) -> dict:
     """Convert a JSON response string to a dictionary.
 
     Args:
-        response (str): The JSON response string.
+        response: The JSON response string.
 
     Returns:
-        dict: A dictionary extracted from the JSON response.
+        A dictionary extracted from the JSON response.
     """
     try:
         json_data = extract_json_objects(response)

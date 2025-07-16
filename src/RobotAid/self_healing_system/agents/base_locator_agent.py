@@ -22,10 +22,10 @@ class BaseLocatorAgent(ABC):
     Defines the common interface and shared functionality for all locator agent flavors.
 
     Attributes:
-        app_settings (AppSettings): Instance of AppSettings containing user defined app configuration.
-        client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
-        usage_limits (UsageLimits): Usage token and request limits.
-        dom_utility (Optional[BaseDomUtils]): DOM utility instance for the specific library.
+        app_settings: Instance of AppSettings containing user defined app configuration.
+        client_settings: Instance of ClientSettings containing user defined client configuration.
+        usage_limits: Usage token and request limits.
+        dom_utility: DOM utility instance for the specific library.
     """
 
     def __init__(
@@ -37,6 +37,15 @@ class BaseLocatorAgent(ABC):
         ),
         dom_utility: Optional[BaseDomUtils] = None,
     ) -> None:
+        """Initialize the BaseLocatorAgent.
+
+        Args:
+            app_settings: Application settings containing configuration.
+            client_settings: Client settings for LLM connection.
+            usage_limits: Token and request limits for the agent. Defaults to
+                UsageLimits with request_limit=5 and total_tokens_limit=2000.
+            dom_utility: Optional DOM utility instance for validation.
+        """
         self.usage_limits: UsageLimits = usage_limits
         self.app_settings = app_settings
         self.client_settings = client_settings
@@ -60,7 +69,11 @@ class BaseLocatorAgent(ABC):
         self._setup_output_validation()
 
     def _setup_output_validation(self) -> None:
-        """Set up output validation for the generation agent."""
+        """Set up output validation for the generation agent.
+
+        Configures the output validator that processes and validates
+        the locator healing response from the LLM.
+        """
 
         @self.generation_agent.output_validator
         async def validate_output(
@@ -69,10 +82,13 @@ class BaseLocatorAgent(ABC):
             """Validates the output of the locator agent.
 
             Args:
-                output (LocatorHealingResponse): Output from the locator agent.
+                output: Output from the locator agent.
 
             Returns:
-                LocatorHealingResponse: Validated output.
+                Validated output with processed and sorted locators.
+
+            Raises:
+                ModelRetry: If the output is invalid or contains no valid locators.
             """
             try:
                 # The output is already a LocatorHealingResponse, but we can validate and process locators
@@ -94,7 +110,7 @@ class BaseLocatorAgent(ABC):
         """Get the DOM utility instance, creating it lazily if needed.
 
         Returns:
-            Optional[BaseDomUtils]: The DOM utility instance, or None if creation failed.
+            The DOM utility instance, or None if creation failed.
         """
         if self._dom_utility is None and self._provided_dom_utility is None:
             # Create DOM utility based on agent type
@@ -112,10 +128,13 @@ class BaseLocatorAgent(ABC):
         """Generates suggestions for fixing broken locator.
 
         Args:
-            ctx (RunContext): PydanticAI context.
+            ctx: PydanticAI context containing the prompt payload.
 
         Returns:
-            LocatorHealingResponse: List of repaired locator suggestions.
+            List of repaired locator suggestions.
+
+        Raises:
+            ModelRetry: If the response is not of the expected type.
         """
         response: AgentRunResult[
             LocatorHealingResponse
@@ -136,7 +155,7 @@ class BaseLocatorAgent(ABC):
         """Get the system prompt specific to this locator agent flavor.
 
         Returns:
-            str: The system prompt for this agent flavor.
+            The system prompt for this agent flavor.
         """
         pass
 
@@ -145,10 +164,10 @@ class BaseLocatorAgent(ABC):
         """Process the locator to make it compatible with the target library.
 
         Args:
-            locator (str): The raw locator from the LLM.
+            locator: The raw locator from the LLM.
 
         Returns:
-            str: The processed locator compatible with the target library.
+            The processed locator compatible with the target library.
         """
         pass
 
@@ -156,10 +175,10 @@ class BaseLocatorAgent(ABC):
         """Check if the locator is valid and unique in the current context.
 
         Args:
-            locator (str): The locator to validate.
+            locator: The locator to validate.
 
         Returns:
-            bool: True if the locator is valid and unique, False otherwise.
+            True if the locator is valid and unique, False otherwise.
         """
         if self.dom_utility is None:
             return True
@@ -173,7 +192,7 @@ class BaseLocatorAgent(ABC):
         """Get the type identifier for this agent flavor.
 
         Returns:
-            str: The agent type identifier.
+            The agent type identifier.
         """
         pass
 
@@ -181,10 +200,10 @@ class BaseLocatorAgent(ABC):
         """Check if the locator is unique in the current context.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is unique, False otherwise.
+            True if the locator is unique, False otherwise.
         """
         if self.dom_utility is None:
             return True
@@ -197,12 +216,25 @@ class BaseLocatorAgent(ABC):
         """Sort locators based on their uniqueness and validity.
 
         Args:
-            locators (list[str]): List of locators to sort.
+            locators: List of locators to sort.
 
         Returns:
-            list[str]: Sorted list of locators.
+            Sorted list of locators with unique locators first.
         """
         valid_locators = [loc for loc in locators if self._is_locator_valid(loc)]
         return sorted(
             valid_locators, key=lambda x: self._is_locator_unique(x), reverse=True
         )
+
+    @staticmethod
+    @abstractmethod
+    def is_failed_locator_error(message: str) -> bool:
+        """Check if the locator error is due to a failed locator.
+
+        Args:
+            message: The error message to check.
+
+        Returns:
+            True if the error is due to a failed locator, False otherwise.
+        """
+        pass

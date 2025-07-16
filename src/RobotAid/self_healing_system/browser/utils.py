@@ -1,6 +1,6 @@
 def convert_locator_to_browser(locator: str) -> str:
     """Converts a locator to a format suitable for Browser Library.
-    Replaces 
+    Replaces
         css: or xpath: with css= or xpath=.
         ":contains" with ":has-text"
         ":-soup-contains-own" with ":text"
@@ -26,4 +26,3 @@ def convert_locator_to_browser(locator: str) -> str:
     locator = locator.replace(":-soup-contains", ":has-text")
 
     return locator
-

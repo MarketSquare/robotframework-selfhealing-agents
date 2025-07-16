@@ -35,10 +35,10 @@ class BrowserDomUtils(BaseDomUtils):
         """Check if the given locator is valid using Browser library methods.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is valid, False otherwise.
+            True if the locator is valid, False otherwise.
         """
         if self.library_instance is None:
             return True
@@ -53,10 +53,10 @@ class BrowserDomUtils(BaseDomUtils):
         """Check if the given locator is unique using Browser library methods.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is unique, False otherwise.
+            True if the locator is unique, False otherwise.
         """
         if self.library_instance is None:
             return True  # Skip validation if library is not available
@@ -70,10 +70,10 @@ class BrowserDomUtils(BaseDomUtils):
         """Check if the given locator is visible using Browser library methods.
 
         Args:
-            locator (str): The locator to check.
+            locator: The locator to check.
 
         Returns:
-            bool: True if the locator is visible, False otherwise.
+            True if the locator is visible, False otherwise.
         """
         if self.library_instance is None:
             return True  # Skip validation if library is not available

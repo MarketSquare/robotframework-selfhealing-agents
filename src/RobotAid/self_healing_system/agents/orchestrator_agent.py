@@ -5,7 +5,11 @@ from pydantic_ai.usage import UsageLimits
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.prompts import PromptsOrchestrator
 from RobotAid.self_healing_system.clients.llm_client import get_model
-from RobotAid.self_healing_system.schemas import LocatorHealingResponse, PromptPayload
+from RobotAid.self_healing_system.schemas import (
+    LocatorHealingResponse,
+    NoHealingNeededResponse,
+    PromptPayload,
+)
 from RobotAid.utils.app_settings import AppSettings
 from RobotAid.utils.client_settings import ClientSettings
 
@@ -15,9 +19,9 @@ class OrchestratorAgent:
     """Routes raw failure text to the appropriate healing tool.
 
     Attributes:
-        app_settings (AppSettings): Instance of AppSettings containing user defined app configuration.
-        client_settings (ClientSettings): Instance of ClientSettings containing user defined client configuration.
-        locator_agent (LocatorAgent): LocatorAgent instance.
+        app_settings: Instance of AppSettings containing user defined app configuration.
+        client_settings: Instance of ClientSettings containing user defined client configuration.
+        locator_agent: LocatorAgent instance.
     """
 
     def __init__(
@@ -29,6 +33,15 @@ class OrchestratorAgent:
             request_limit=5, total_tokens_limit=2000
         ),
     ) -> None:
+        """Initialize the OrchestratorAgent.
+
+        Args:
+            app_settings: Application settings containing configuration.
+            client_settings: Client settings for LLM connection.
+            locator_agent: LocatorAgent instance for handling locator healing.
+            usage_limits: Token and request limits for the agent. Defaults to
+                UsageLimits with request_limit=5 and total_tokens_limit=2000.
+        """
         self.locator_agent: LocatorAgent = locator_agent
         self.usage_limits: UsageLimits = usage_limits
         self.agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
@@ -48,11 +61,14 @@ class OrchestratorAgent:
         """Get a list of healed locator suggestions for a broken locator.
 
         Args:
-            ctx (RunContext): PydanticAI tool context.
-            broken_locator (str): Locator that needs to be healed.
+            ctx: PydanticAI tool context.
+            broken_locator: Locator that needs to be healed.
 
         Returns:
-            (str): List of repaired locator suggestions in JSON format.
+            List of repaired locator suggestions in JSON format.
+
+        Raises:
+            ModelRetry: If locator healing fails.
 
         Example:
             get_healed_locators(ctx, broken_locator="#btn-login")
@@ -63,16 +79,23 @@ class OrchestratorAgent:
         except Exception as e:
             raise ModelRetry(f"Locator healing failed: {str(e)}")
 
-    async def run_async(self, robot_ctx: dict) -> str | LocatorHealingResponse:
+    async def run_async(
+        self, robot_ctx: dict
+    ) -> str | LocatorHealingResponse | NoHealingNeededResponse:
         """Run orchestration asynchronously.
 
         Args:
-            robot_ctx (dict): Contains context for the self-healing process of the LLM.
+            robot_ctx: Contains context for the self-healing process of the LLM.
 
         Returns:
-            (str): List of repaired locator suggestions.
+            List of repaired locator suggestions.
         """
         payload: PromptPayload = PromptPayload(**robot_ctx)
+
+        # Only run the agent in case of a locator error
+        if not self.locator_agent.is_failed_locator_error(payload.error_msg):
+            return NoHealingNeededResponse(message=payload.error_msg)
+
         response: AgentRunResult = await self.agent.run(
             PromptsOrchestrator.get_user_msg(payload),
             deps=payload,
@@ -80,32 +103,3 @@ class OrchestratorAgent:
             model_settings={"temperature": 0.1, "parallel_tool_calls": False},
         )
         return response.output
-
-
-def cleanup_response(response: str) -> str:
-    """Cleans up the response from the agent to ensure it is in the correct format.
-        e.g. if response starts with "The JSON response is " or <|python_tag|> or {"output": "{"suggestions": [...]}"}
-        Just returns the JSON part of the response.
-
-    Args:
-        response (str): Raw response from the agent.
-
-    Returns:
-        LocatorHealingResponse: Parsed and validated response.
-    """
-    import re
-
-    if response.startswith("The JSON response is"):
-        response = response[len("The JSON response is") :].strip()
-    if response.startswith("<|python_tag|>"):
-        response = response[len("<|python_tag|>") :].strip()
-    if response.endswith("."):
-        response = response[:-1].strip()
-    # Handle nested JSON structure like {"output": "..."}
-    # Extract content from nested JSON structure like {"output": "..."}
-    nested_json_pattern = r'^\{"output":\s*"(.*)"\}$'
-    match = re.match(nested_json_pattern, response)
-    if match:
-        response = match.group(1)
-        response = response.replace('\\"', '"')
-    return response

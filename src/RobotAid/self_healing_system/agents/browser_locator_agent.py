@@ -26,10 +26,24 @@ class BrowserLocatorAgent(BaseLocatorAgent):
         ),
         dom_utility: Optional[BaseDomUtils] = None,
     ) -> None:
+        """Initialize the BrowserLocatorAgent.
+
+        Args:
+            app_settings: Application settings containing configuration.
+            client_settings: Client settings for LLM connection.
+            usage_limits: Token and request limits for the agent. Defaults to
+                UsageLimits with request_limit=5 and total_tokens_limit=2000.
+            dom_utility: Optional DOM utility instance for validation.
+        """
         super().__init__(app_settings, client_settings, usage_limits, dom_utility)
 
     def _get_system_prompt(self) -> str:
-        """Get the Browser library specific system prompt."""
+        """Get the Browser library specific system prompt.
+
+        Returns:
+            The system prompt containing Browser library specific instructions
+            for locator generation and formatting.
+        """
         return (
             f"{PromptsLocator.system_msg}\n"
             "BROWSER LIBRARY SPECIFIC INSTRUCTIONS:\n"
@@ -43,11 +57,26 @@ class BrowserLocatorAgent(BaseLocatorAgent):
         )
 
     def _process_locator(self, locator: str) -> str:
-        """Process locator for Browser library compatibility."""
+        """Process locator for Browser library compatibility.
+
+        Args:
+            locator: The raw locator string to process.
+
+        Returns:
+            The processed locator compatible with Browser library format.
+        """
         return convert_locator_to_browser(locator)
 
     def _is_locator_valid(self, locator: str) -> bool:
-        """Validate locator using Browser library DOM utilities."""
+        """Validate locator using Browser library DOM utilities.
+
+        Args:
+            locator: The locator string to validate.
+
+        Returns:
+            True if the locator is valid and unique, False otherwise.
+            Returns True if DOM utility is not available.
+        """
         if self.dom_utility is None:
             return True  # Skip validation if DOM utility is not available
 
@@ -57,5 +86,23 @@ class BrowserLocatorAgent(BaseLocatorAgent):
             return False
 
     def get_agent_type(self) -> str:
-        """Get the agent type identifier."""
+        """Get the agent type identifier.
+
+        Returns:
+            The string identifier for the browser agent type.
+        """
         return "browser"
+
+    @staticmethod
+    def is_failed_locator_error(message: str) -> bool:
+        """Check if the locator error is due to a failed locator.
+
+        Args:
+            message: The error message to check.
+
+        Returns:
+            True if the error is due to a failed locator, False otherwise.
+        """
+        return ("waiting for" in message or "Element is not an" in message) and (
+            "waiting for element to be" not in message
+        )

@@ -9,6 +9,7 @@ load_dotenv(find_dotenv(), override=True)
 
 class ClientSettings(BaseSettings):
     """Client env configuration."""
+
     azure_api_key: Optional[str] = Field(
         None, env="AZURE_API_KEY", description="Azure API key"
     )
@@ -23,4 +24,9 @@ class ClientSettings(BaseSettings):
     )
 
     def __init__(self, **values: Any) -> None:
+        """Initialize the ClientSettings.
+
+        Args:
+            **values: Arbitrary keyword arguments for initialization.
+        """
         super().__init__(**values)

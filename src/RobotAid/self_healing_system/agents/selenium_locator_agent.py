@@ -13,10 +13,10 @@ def convert_locator_to_selenium(locator: str) -> str:
     """Convert a locator to Selenium library compatible format.
 
     Args:
-        locator (str): The locator to convert.
+        locator: The locator to convert.
 
     Returns:
-        str: The converted locator compatible with Selenium library.
+        The converted locator compatible with Selenium library.
     """
     locator = locator.strip()
     if locator.startswith("css="):
@@ -45,10 +45,24 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
         ),
         dom_utility: Optional[BaseDomUtils] = None,
     ) -> None:
+        """Initialize the SeleniumLocatorAgent.
+
+        Args:
+            app_settings: Application settings containing configuration.
+            client_settings: Client settings for LLM connection.
+            usage_limits: Token and request limits for the agent. Defaults to
+                UsageLimits with request_limit=5 and total_tokens_limit=2000.
+            dom_utility: Optional DOM utility instance for validation.
+        """
         super().__init__(app_settings, client_settings, usage_limits, dom_utility)
 
     def _get_system_prompt(self) -> str:
-        """Get the Selenium library specific system prompt."""
+        """Get the Selenium library specific system prompt.
+
+        Returns:
+            The system prompt containing Selenium library specific instructions
+            for locator generation and formatting.
+        """
         return (
             f"{PromptsLocator.system_msg}\n"
             "SELENIUM LIBRARY SPECIFIC INSTRUCTIONS:\n"
@@ -62,11 +76,26 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
         )
 
     def _process_locator(self, locator: str) -> str:
-        """Process locator for Selenium library compatibility."""
+        """Process locator for Selenium library compatibility.
+
+        Args:
+            locator: The raw locator string to process.
+
+        Returns:
+            The processed locator compatible with Selenium library format.
+        """
         return convert_locator_to_selenium(locator)
 
     def _is_locator_valid(self, locator: str) -> bool:
-        """Validate locator using Selenium library DOM utilities."""
+        """Validate locator using Selenium library DOM utilities.
+
+        Args:
+            locator: The locator string to validate.
+
+        Returns:
+            True if the locator is valid, False otherwise.
+            Returns True if DOM utility is not available.
+        """
         if self.dom_utility is None:
             return True  # Skip validation if DOM utility is not available
 
@@ -76,5 +105,26 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
             return False
 
     def get_agent_type(self) -> str:
-        """Get the agent type identifier."""
+        """Get the agent type identifier.
+
+        Returns:
+            The string identifier for the selenium agent type.
+        """
         return "selenium"
+
+    @staticmethod
+    def is_failed_locator_error(message: str) -> bool:
+        """Check if the locator error is due to a failed locator.
+
+        Args:
+            message: The error message to check.
+
+        Returns:
+            True if the error is due to a failed locator, False otherwise.
+        """
+        return (
+            ("with locator" in message and "not found" in message)
+            or ("No element with locator" in message and "found" in message)
+            or ("No radio button with name" in message and "found" in message)
+            or ("Page should have contained" in message)
+        )

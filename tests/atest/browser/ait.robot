@@ -21,3 +21,24 @@ Login with valid credentials
     Fill Text    id=tell_me_more    More information
     Select Options By    id=user_continent    label    Africa
     Click    id=i_do_nothing
+
+Not a broken locator error
+    New Page    https://automationintesting.com/selenium/testpage/
+    Run Keyword And Expect Error    Text 'First name\\n' (str) should be 'Incorrect Label' (str)    Get Text    label >> text=First Name    ==    Incorrect Label
+
+Self Healing returns value in Getter Keyword
+    New Page    https://automationintesting.com/selenium/testpage/
+    Fill Text    id=first_name    tom
+    ${name}    Get Text    id=first_name
+    Should Be Equal    ${name}    tom
+
+Resolve to multiple elements
+    New Page    https://automationintesting.com/selenium/testpage/
+    Set Browser Timeout    1s
+    Fill Text    input    tom
+
+Resolve to wrong element type
+    New Page    https://automationintesting.com/selenium/testpage/
+    Set Browser Timeout    1s
+    Fill Text    button >> text=I do nothing!    tom
+
