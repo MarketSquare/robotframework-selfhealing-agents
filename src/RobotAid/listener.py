@@ -140,12 +140,12 @@ class RobotAid(ListenerV3):
     def _append_report_info(self, data: running.Keyword, healed_locator: str, tried_locator_memory: list, status_healed: str):
         self.report_info.append(
             ReportData(
-                test_suite=data.source.parts[-1],
-                suite_abs_path=str(data.source),
+                file=data.source.parts[-1],
+                keyword_source=str(data.source),
                 test_name=data.parent.name,
                 keyword=data.name,
                 keyword_args=data.args,
                 healed_locator=healed_locator if status_healed == "PASS" else "Locator not healed.",
-                tried_locators=tried_locator_memory
+                tried_locators=tried_locator_memory,
             )
         )

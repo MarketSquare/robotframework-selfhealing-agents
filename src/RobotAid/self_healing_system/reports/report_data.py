@@ -5,8 +5,8 @@ class ReportData(BaseModel):
     """Data container for report generation.
 
     Attributes:
-        test_suite (str): Name of the test suite.
-        suite_abs_path (str): Absolute path of the test suite.
+        file (str): Name of the file where the error occurred.
+        keyword_source (str): Absolute path of the keyword source file.
         test_name (str): Name of the test name.
         keyword (str): Failed Keyword Call.
         keyword_args (list): Failed Keyword Arguments.
@@ -15,8 +15,8 @@ class ReportData(BaseModel):
     """
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    test_suite: str = Field(..., description="Name of the test suite.")
-    suite_abs_path: str = Field(..., description="Absolute path of the test suite.")
+    file: str = Field(..., description="Name of the file where the error occurred.")
+    keyword_source: str = Field(..., description="Absolute path of the keyword source file.")
     test_name: str = Field(..., description="Name of the test case.")
     keyword: str = Field(..., description="Failed Keyword Call.")
     keyword_args: list = Field(..., description="Failed Keyword Arguments.")
