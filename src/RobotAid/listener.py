@@ -164,8 +164,8 @@ class RobotAid(ListenerV3):
     ):
         self.report_info.append(
             ReportData(
-                test_suite=data.source.parts[-1],
-                suite_abs_path=str(data.source),
+                file=data.source.parts[-1],
+                keyword_source=str(data.source),
                 test_name=data.parent.name,
                 keyword=data.name,
                 keyword_args=data.args,
