@@ -23,6 +23,12 @@ Add Product To Cart
     Click    Sauce Labs Onesie >> Add To Cart
     Get Text    shopping_cart    ==    1
 
+Check clickable
+    New Page    https://www.saucedemo.com/
+    Fill Text    id=user-name    standard_user
+    Fill Text    id=password    secret_sauce
+    Click    id=loginbutton
+    Get Url    ==    https://www.saucedemo.com/inventory.html
 
 *** Keywords ***
 Login
