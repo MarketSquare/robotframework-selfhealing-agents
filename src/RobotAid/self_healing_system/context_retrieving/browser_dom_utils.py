@@ -210,7 +210,7 @@ class BrowserDomUtils(BaseDomUtils):
                 return True
             elif tag == "input":
                 type = getattr(self.library_instance, "evaluate_javascript")(
-                    locator, f"(elem) => elem.{'control.type'}"
+                    locator, f"(elem) => elem.{'type'}"
                 )
                 if (
                     type == "button"
