@@ -114,7 +114,9 @@ class RobotAid(ListenerV3):
             # This would store information for post-execution healing
 
     def close(self):
-        ReportGenerator().generate_reports(report_info=self.report_info)
+        if self.report_info:
+            ReportGenerator().generate_reports(report_info=self.report_info)
+        debug=True
 
     def _start_self_healing(self, result: result.Keyword) -> None:
         """Starts the self-healing process via pydanticAI agentic system. Sets class attributes for further processing."""
