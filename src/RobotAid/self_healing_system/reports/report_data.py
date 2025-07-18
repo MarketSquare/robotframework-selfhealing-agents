@@ -10,6 +10,7 @@ class ReportData(BaseModel):
         test_name (str): Name of the test name.
         keyword (str): Failed Keyword Call.
         keyword_args (list): Failed Keyword Arguments.
+        failed_locator (str): Original failed Locator.
         healed_locator (str): Healed Locator.
         tried_locators (list): List of tried but failed locators.
     """
@@ -21,5 +22,6 @@ class ReportData(BaseModel):
     test_name: str = Field(..., description="Name of the test case.")
     keyword: str = Field(..., description="Failed Keyword Call.")
     keyword_args: list = Field(..., description="Failed Keyword Arguments.")
+    failed_locator: str = Field(..., description="Original failed Locator.")
     healed_locator: str | None = Field(..., description="Healed locator.")
     tried_locators: list = Field(..., description="List of tried but failed locators.")
