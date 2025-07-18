@@ -8,3 +8,11 @@ Login
     Fill Text    id=pwd    secret_sauce
     Click    css=input#login-button
     Get Url    ==    https://www.saucedemo.com/inventory.html
+
+Subsublogin
+    [Arguments]
+    ...  ${button}
+    Click    ${button}
+
+SubsubloginNoBtn
+    Click    ${test-button}
