@@ -7,7 +7,7 @@ from RobotAid.utils.client_settings import ClientSettings
 
 
 # only a temporary method for handling different clients - especially since azure behaves differently in pydanticAI
-def get_model(
+def get_client_model(
     provider: str, model: str, client_settings: ClientSettings
 ) -> None | OpenAIModel:
     """Returns model/pydanticAI-string based on llm_provider defined by user.

@@ -6,7 +6,7 @@ from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.usage import UsageLimits
 
 from RobotAid.self_healing_system.agents.prompts import PromptsLocator
-from RobotAid.self_healing_system.clients.llm_client import get_model
+from RobotAid.self_healing_system.clients.llm_client import get_client_model
 from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
 from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import (
     DomUtilityFactory,
@@ -55,7 +55,7 @@ class BaseLocatorAgent(ABC):
         self.generation_agent: Agent[PromptPayload, LocatorHealingResponse] = Agent[
             PromptPayload, LocatorHealingResponse
         ](
-            model=get_model(
+            model=get_client_model(
                 provider=app_settings.locator_agent.provider,
                 model=app_settings.locator_agent.model,
                 client_settings=client_settings,
