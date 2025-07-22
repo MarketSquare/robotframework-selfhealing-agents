@@ -11,12 +11,12 @@ Test Tags    not_ready
 
 
 *** Test Cases ***
-Add Product To Cart
+Add Product To Cart With Btn
     LoginLocal    id=pwd  1   standard_user   css=log-button    https://www.saucedemo.com/inventory.html
     Click    ${adding_cart}
     Get Text    shopping_cart      ==    1
 
-Add Product To Cart 2
+Add Product To Cart No Btn
     LoginLocalNoBtn    id=pwd  1   standard_user    https://www.saucedemo.com/inventory.html
     Click    ${adding_cart}
     Get Text    shopping_cart      ==    1
