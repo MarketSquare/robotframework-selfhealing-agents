@@ -4,7 +4,7 @@ from pydantic_ai.usage import UsageLimits
 
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.prompts import PromptsOrchestrator
-from RobotAid.self_healing_system.clients.llm_client import get_model
+from RobotAid.self_healing_system.clients.llm_client import get_client_model
 from RobotAid.self_healing_system.schemas import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
@@ -45,7 +45,7 @@ class OrchestratorAgent:
         self.locator_agent: LocatorAgent = locator_agent
         self.usage_limits: UsageLimits = usage_limits
         self.agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
-            model=get_model(
+            model=get_client_model(
                 provider=app_settings.orchestrator_agent.provider,
                 model=app_settings.orchestrator_agent.model,
                 client_settings=client_settings,
