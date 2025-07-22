@@ -176,6 +176,44 @@ class ReportGenerator:
             )
         return external_resource_paths
 
+    @staticmethod
+    def _get_replacements_for_file(
+            report_info: List[ReportData],
+            source_path: Path
+    ) -> List[Tuple[str, str]]:
+        """Build a list of original-to-healed locator pairs for a file.
+
+        Args:
+            report_info: List of data objects representing healing events.
+            source_path: Absolute path of the source file to filter on.
+
+        Returns:
+            A list of (original_locator, healed_locator) tuples.
+        """
+        entries: List[ReportData] = [
+            entry for entry in report_info if entry.file == source_path.name
+        ]
+        try:
+            # Appends the list of files with the resource imports. Needed for keyword inline arguments of custom
+            # written keywords if locators exists in these arguments AND are defined in external resources.
+            # This will ultimately include the (original_locator, healed_locator) information of the imported
+            # resource files for the inline args in the parent file.
+            model = get_model(source_path)
+            setting: SettingSection = next(
+                s for s in model.sections if isinstance(s, SettingSection)
+            )
+            resources: List[ResourceImport] = [
+                r for r in setting.body if isinstance(r, ResourceImport)
+            ]
+            for res in resources:
+                for entry in report_info:
+                    if entry.file in res.name:
+                        entries.append(entry)
+        except OSError:
+            pass
+
+        return [(entry.failed_locator, entry.healed_locator) for entry in entries]
+
     def _replace_in_common_model(
             self,
             source_path: Path,
@@ -264,41 +302,3 @@ class ReportGenerator:
             pass
 
         return external_resource_paths
-
-    def _get_replacements_for_file(
-        self,
-        report_info: List[ReportData],
-        source_path: Path
-    ) -> List[Tuple[str, str]]:
-        """Build a list of original-to-healed locator pairs for a file.
-
-        Args:
-            report_info: List of data objects representing healing events.
-            source_path: Absolute path of the source file to filter on.
-
-        Returns:
-            A list of (original_locator, healed_locator) tuples.
-        """
-        entries: List[ReportData] = [
-            entry for entry in report_info if entry.file == source_path.name
-        ]
-        try:
-            # Appends the list of files with the resource imports. Needed for keyword inline arguments of custom
-            # written keywords if locators exists in these arguments AND are defined in external resources.
-            # This will ultimately include the (original_locator, healed_locator) information of the imported
-            # resource files for the inline args in the parent file.
-            model = get_model(source_path)
-            setting: SettingSection = next(
-                s for s in model.sections if isinstance(s, SettingSection)
-            )
-            resources: List[ResourceImport] = [
-                r for r in setting.body if isinstance(r, ResourceImport)
-            ]
-            for res in resources:
-                for entry in report_info:
-                    if entry.file in res.name:
-                        entries.append(entry)
-        except OSError:
-            pass
-
-        return [(entry.failed_locator, entry.healed_locator) for entry in entries]
