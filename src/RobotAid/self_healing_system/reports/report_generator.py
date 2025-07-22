@@ -1,12 +1,11 @@
 import os
-import re
 import html
 import shutil
 import difflib
 
 from pathlib import Path
 from itertools import chain
-from typing import List, Tuple, Set, Pattern
+from typing import List, Tuple, Set
 
 from robot.api.parsing import (
     get_model,
@@ -22,10 +21,6 @@ from RobotAid.self_healing_system.reports.robot_model_visitors import (
     VariablesReplacer
 )
 
-
-LOCATOR_PATTERN: Pattern[str] = re.compile(
-    r'^(?:id|xpath|css|name|link|dom|jquery)=', re.IGNORECASE
-)
 
 ACTION_LOG_CSS: str = (
     "<style>"
@@ -58,7 +53,7 @@ class ReportGenerator:
         os.makedirs(self.reports_dir, exist_ok=True)
 
     def generate_reports(self, report_info: List[ReportData]) -> None:
-        """Generate action log, healed suites, and diff files for given report data.
+        """Generate action log, healed .robot and .resource files, and diff files for given report data.
 
         Args:
             report_info: List of data objects representing healing events.
@@ -128,7 +123,7 @@ class ReportGenerator:
         sources: Set[Path] = {Path(entry.keyword_source) for entry in report_info}
         all_paths: Set[Path] = sources.union(external_resource_paths)
         for original_path in all_paths:
-            healed_dir: Path = self.reports_dir / original_path.parent.name
+            healed_dir: Path = self.reports_dir / "healed_files" / original_path.parent.name
             healed_file: Path = healed_dir / original_path.name
             try:
                 original_lines: List[str] = original_path.read_text(encoding="utf-8").splitlines()
@@ -143,8 +138,10 @@ class ReportGenerator:
             )
             diff_html: str = diff_html.replace("</head>", f"{DIFF_CSS}</head>", 1)
 
-            diff_path: Path = self.reports_dir / f"{original_path.stem}_diff.html"
+            diff_dir: Path = self.reports_dir / "diff_files" / original_path.parent.name
+            diff_path: Path = diff_dir / f"{original_path.stem}_diff.html"
             try:
+                os.makedirs(diff_dir, exist_ok=True)
                 diff_path.write_text(diff_html, encoding="utf-8")
             except OSError as exc:
                 raise RuntimeError(f"Failed to write diff file to {diff_path}") from exc
@@ -186,7 +183,7 @@ class ReportGenerator:
     ) -> None:
         """Applies locator replacements to a robot.api.parsing (common) model and saves it.
         Note: In robot.api.parsing exists get_model() and get_resource_model(), depending on the
-              file imported having a only a VariableSection.
+              file imported having only a VariableSection.
 
         Retrieves the AST for the suite or resource at `source_path`, applies the given
         keyword locator replacements and variable replacements, and writes the healed
@@ -204,7 +201,7 @@ class ReportGenerator:
         LocatorReplacer(replacements).visit(model)
         VariablesReplacer(replacements).visit(model)
 
-        suite_output_dir: Path = self.reports_dir / source_path.parent.name
+        suite_output_dir: Path = self.reports_dir / "healed_files" / source_path.parent.name
         suite_output_dir.mkdir(parents=True, exist_ok=True)
         suite_output_file: Path = suite_output_dir / source_path.name
         try:
@@ -222,12 +219,12 @@ class ReportGenerator:
     ) -> List[Path]:
         """Applies locator replacements to a robot.api.parsing resource model and saves it.
         Note: In robot.api.parsing exists get_model() and get_resource_model(), depending on the
-              file imported having a only a VariableSection.
+              file imported having only a VariableSection.
 
-        Each resource imported by the suite at `source_path` is loaded, and
-        variable replacements are applied when their definitions match.
-        If a healed version of the same resource already exists in the reports
-        directory, it is reloaded and used as the basis for further replacements.
+        Each resource imported by the suite at `source_path` is loaded, and variable replacements
+        are applied when their definitions match. If a healed version of the same resource
+        already exists in the reports directory, it is reloaded and used as the basis for further
+        replacements.
 
         Args:
             source_path: Path to the file containing resource imports.
@@ -255,7 +252,7 @@ class ReportGenerator:
                 }
                 unpacked_tuples = list(chain.from_iterable(defined))
                 if any(var in unpacked_tuples for var, _ in replacements):
-                    res_dir: Path = self.reports_dir / res_path.parent.name
+                    res_dir: Path = self.reports_dir / "healed_files" / res_path.parent.name
                     res_dir.mkdir(parents=True, exist_ok=True)
                     res_out: Path = res_dir / res_path.name
                     if res_out.exists():
@@ -285,7 +282,11 @@ class ReportGenerator:
         entries: List[ReportData] = [
             entry for entry in report_info if entry.file == source_path.name
         ]
-        try:    # handles inline arguments when these locators are defined in external files
+        try:
+            # Appends the list of files with the resource imports. Needed for keyword inline arguments of custom
+            # written keywords if locators exists in these arguments AND are defined in external resources.
+            # This will ultimately include the (original_locator, healed_locator) information of the imported
+            # resource files for the inline args in the parent file.
             model = get_model(source_path)
             setting: SettingSection = next(
                 s for s in model.sections if isinstance(s, SettingSection)
