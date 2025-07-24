@@ -4,8 +4,9 @@ import shutil
 import difflib
 
 from pathlib import Path
-from itertools import chain
+from operator import attrgetter
 from typing import List, Tuple, Set
+from itertools import chain, groupby
 
 from robot.api.parsing import (
     get_model,
@@ -20,24 +21,7 @@ from RobotAid.self_healing_system.reports.robot_model_visitors import (
     LocatorReplacer,
     VariablesReplacer
 )
-
-
-ACTION_LOG_CSS: str = (
-    "<style>"
-    "body{font-family:sans-serif;}"
-    "table{border-collapse:collapse;width:100%;}"
-    "th,td{border:1px solid #ccc;padding:8px;text-align:left;}"
-    "th{background:#f4f4f4;}"
-    "</style>"
-)
-DIFF_CSS: str = (
-    "<style>"
-    "td.diff_add, td.diff_sub, td.diff_chg{background:none;}"
-    "span.diff_add{background-color:#dfd;}"
-    "span.diff_sub{background-color:#fdd;}"
-    "span.diff_chg{background-color:#ffd;}"
-    "</style>"
-)
+from RobotAid.self_healing_system.reports.css_styles import ACTION_LOG_CSS, DIFF_CSS
 
 
 class ReportGenerator:
@@ -76,75 +60,45 @@ class ReportGenerator:
         """
         header: str = (
             "<html><head><meta charset='utf-8'><title>Locator Healing Report</title>"
-            f"{ACTION_LOG_CSS}</head><body><h1>Locator Healing Report</h1><table>"
-            "<tr><th>Suite</th><th>Path</th><th>Test</th><th>Keyword</th>"
-            "<th>Keyword Args</th><th>Failed Locator</th><th>Healed Locator</th>"
-            "<th>Tried Locators</th></tr>"
+            f"{ACTION_LOG_CSS}</head><body><h1>Locator Healing Report</h1>"
         )
-        rows: List[str] = []
-        for entry in report_info:
-            args: str = ", ".join(html.escape(str(a)) for a in entry.keyword_args)
-            tried: str = "<br>".join(html.escape(l) for l in entry.tried_locators)
-            rows.append(
-                "<tr>"
-                f"<td>{html.escape(entry.file)}</td>"
-                f"<td>{html.escape(entry.keyword_source)}</td>"
-                f"<td>{html.escape(entry.test_name)}</td>"
-                f"<td>{html.escape(entry.keyword)}</td>"
-                f"<td>{args}</td>"
-                f"<td>{html.escape(entry.failed_locator)}</td>"
-                f"<td>{html.escape(entry.healed_locator or '')}</td>"
-                f"<td>{tried}</td>"
-                "</tr>"
+        groups = sorted(report_info, key=attrgetter("file"))
+        body_parts: List[str] = []
+        for suite, entries in groupby(groups, key=attrgetter("file")):
+            entries_list = list(entries)
+            path = html.escape(entries_list[0].keyword_source)
+            summary = (
+                f"<details><summary>{html.escape(suite)}"
+                f"<div class='path'>{path}</div></summary>"
             )
-        footer: str = "</table></body></html>"
-        content: str = header + ''.join(rows) + footer
-
+            inner_header = (
+                "<table class='inner'>"
+                "<tr><th>Test</th><th>Keyword</th><th>Keyword Args</th>"
+                "<th>Failed Locator</th><th>Healed Locator</th><th>Tried Locators</th></tr>"
+            )
+            rows: List[str] = []
+            for e in entries_list:
+                args = ", ".join(html.escape(str(a)) for a in e.keyword_args)
+                tried = "<br>".join(html.escape(l) for l in e.tried_locators)
+                rows.append(
+                    "<tr>"
+                    f"<td>{html.escape(e.test_name)}</td>"
+                    f"<td>{html.escape(e.keyword)}</td>"
+                    f"<td>{args}</td>"
+                    f"<td>{html.escape(e.failed_locator)}</td>"
+                    f"<td>{html.escape(e.healed_locator or '')}</td>"
+                    f"<td>{tried}</td>"
+                    "</tr>"
+                )
+            inner_footer = "</table></details>"
+            body_parts.append(summary + inner_header + "".join(rows) + inner_footer)
+        footer: str = "</body></html>"
+        content = header + "".join(body_parts) + footer
         output_path: Path = self.reports_dir / "action_log.html"
         try:
             output_path.write_text(content, encoding="utf-8")
         except OSError as e:
             raise RuntimeError(f"Failed to write action log to {output_path}") from e
-
-    def _generate_diff_files(
-        self,
-        report_info: List[ReportData],
-        external_resource_paths: List[Path],
-    ) -> None:
-        """Generates HTML diff files between original and healed suites/resources.
-
-        Args:
-            report_info: List of data objects representing healing events.
-            external_resource_paths: Paths to external original resource files.
-
-        Raises:
-            RuntimeError: If reading or writing diff files fails.
-        """
-        sources: Set[Path] = {Path(entry.keyword_source) for entry in report_info}
-        all_paths: Set[Path] = sources.union(external_resource_paths)
-        for original_path in all_paths:
-            healed_dir: Path = self.reports_dir / "healed_files" / original_path.parent.name
-            healed_file: Path = healed_dir / original_path.name
-            try:
-                original_lines: List[str] = original_path.read_text(encoding="utf-8").splitlines()
-                healed_lines: List[str] = healed_file.read_text(encoding="utf-8").splitlines()
-            except OSError as e:
-                raise RuntimeError(
-                    f"Failed to read files for diff: {original_path} or {healed_file}"
-                ) from e
-
-            diff_html: str = difflib.HtmlDiff(tabsize=4, wrapcolumn=80).make_file(
-                original_lines, healed_lines, fromdesc="Original", todesc="Healed"
-            )
-            diff_html: str = diff_html.replace("</head>", f"{DIFF_CSS}</head>", 1)
-
-            diff_dir: Path = self.reports_dir / "diff_files" / original_path.parent.name
-            diff_path: Path = diff_dir / f"{original_path.stem}_diff.html"
-            try:
-                os.makedirs(diff_dir, exist_ok=True)
-                diff_path.write_text(diff_html, encoding="utf-8")
-            except OSError as exc:
-                raise RuntimeError(f"Failed to write diff file to {diff_path}") from exc
 
     def _generate_healed_files(self, report_info: List[ReportData]) -> List[Path]:
         """Applies healed locators to test suites and external resources, then saves them.
@@ -302,3 +256,43 @@ class ReportGenerator:
             pass
 
         return external_resource_paths
+
+    def _generate_diff_files(
+        self,
+        report_info: List[ReportData],
+        external_resource_paths: List[Path],
+    ) -> None:
+        """Generates HTML diff files between original and healed suites/resources.
+
+        Args:
+            report_info: List of data objects representing healing events.
+            external_resource_paths: Paths to external original resource files.
+
+        Raises:
+            RuntimeError: If reading or writing diff files fails.
+        """
+        sources: Set[Path] = {Path(entry.keyword_source) for entry in report_info}
+        all_paths: Set[Path] = sources.union(external_resource_paths)
+        for original_path in all_paths:
+            healed_dir: Path = self.reports_dir / "healed_files" / original_path.parent.name
+            healed_file: Path = healed_dir / original_path.name
+            try:
+                original_lines: List[str] = original_path.read_text(encoding="utf-8").splitlines()
+                healed_lines: List[str] = healed_file.read_text(encoding="utf-8").splitlines()
+            except OSError as e:
+                raise RuntimeError(
+                    f"Failed to read files for diff: {original_path} or {healed_file}"
+                ) from e
+
+            diff_html: str = difflib.HtmlDiff(tabsize=4, wrapcolumn=80).make_file(
+                original_lines, healed_lines, fromdesc="Original", todesc="Healed"
+            )
+            diff_html: str = diff_html.replace("</head>", f"{DIFF_CSS}</head>", 1)
+
+            diff_dir: Path = self.reports_dir / "diff_files" / original_path.parent.name
+            diff_path: Path = diff_dir / f"{original_path.stem}_diff.html"
+            try:
+                os.makedirs(diff_dir, exist_ok=True)
+                diff_path.write_text(diff_html, encoding="utf-8")
+            except OSError as exc:
+                raise RuntimeError(f"Failed to write diff file to {diff_path}") from exc

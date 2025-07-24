@@ -53,7 +53,10 @@ class VariablesReplacer(ModelTransformer):
             The node with variables replaced where applicable.
         """
         for variable in node.body:
-            name_token: str = variable.tokens[2].value
-            if name_token in self.replacements:
-                variable.tokens[2].value = self.replacements[name_token]
+            try:
+                name_token: str = variable.tokens[2].value
+                if name_token in self.replacements:
+                    variable.tokens[2].value = self.replacements[name_token]
+            except:
+                pass
         return self.generic_visit(node)
