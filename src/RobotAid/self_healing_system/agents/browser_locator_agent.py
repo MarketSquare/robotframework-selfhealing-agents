@@ -103,6 +103,7 @@ class BrowserLocatorAgent(BaseLocatorAgent):
         Returns:
             True if the error is due to a failed locator, False otherwise.
         """
-        return ("waiting for" in message or "Element is not an" in message) and (
-            "waiting for element to be" not in message
-        )
+        return (
+            "waiting for locator" in message
+            and "waiting for element to be" not in message
+        ) or "Element is not an" in message

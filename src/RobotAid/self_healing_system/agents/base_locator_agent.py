@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic_ai import Agent, ModelRetry, RunContext
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.usage import UsageLimits
+from robot.api import logger
 
 from RobotAid.self_healing_system.agents.prompts import PromptsLocator
 from RobotAid.self_healing_system.clients.llm_client import get_client_model
@@ -77,6 +78,7 @@ class BaseLocatorAgent(ABC):
 
         @self.generation_agent.output_validator
         async def validate_output(
+            ctx: RunContext[PromptPayload],
             output: LocatorHealingResponse,
         ) -> LocatorHealingResponse:
             """Validates the output of the locator agent.
@@ -98,6 +100,54 @@ class BaseLocatorAgent(ABC):
 
                 suggestions = [self._process_locator(x) for x in fixed_locators]
                 suggestions = self._sort_locators(suggestions)
+
+                # Filter out non-clickable locators if deps.ct
+                keyword_name = ctx.deps.keyword_name
+                clickable_keywords = [
+                    "click",
+                    "click with options",
+                    "select options by",
+                    "deselect options",
+                    "tap",
+                    "check checkbox",
+                    "uncheck checkbox",
+                    "checkbox",
+                    "double click",
+                    "get list items",
+                    "get selected list",
+                    "list selection",
+                    "list should have",
+                    "mouse down",
+                    "contain button",
+                    "contain link",
+                    "contain list",
+                    "contain checkbox",
+                    "contain radio button",
+                    "radio button should",
+                    "select checkbox",
+                    "select all from list",
+                    "select from list by",
+                    "select radio button",
+                    "unselect from list by",
+                    "unselect radio button",
+                    "unselect checkbox",
+                ]
+                if keyword_name and any(
+                    keyword in keyword_name.lower() for keyword in clickable_keywords
+                ):
+                    logger.info(
+                        f"Filtering clickable locators for keyword '{keyword_name}'",
+                        also_console=True,
+                    )
+                    logger.info(
+                        f"Locators before filtering: {suggestions}",
+                        also_console=True,
+                    )
+                    suggestions = self._filter_clickable_locators(suggestions)
+                    logger.info(
+                        f"Locators after filtering: {suggestions}",
+                        also_console=True,
+                    )
 
                 if suggestions:
                     return LocatorHealingResponse(suggestions=suggestions)
@@ -212,6 +262,22 @@ class BaseLocatorAgent(ABC):
         except Exception:
             return False
 
+    def _is_element_clickable(self, locator: str) -> bool:
+        """Check if the element identified by the locator is clickable.
+
+        Args:
+            locator: The locator to check.
+
+        Returns:
+            True if the element is clickable, False otherwise.
+        """
+        if self.dom_utility is None:
+            return True
+        try:
+            return self.dom_utility.is_element_clickable(locator)
+        except Exception:
+            return False
+
     def _sort_locators(self, locators: list[str]) -> list[str]:
         """Sort locators based on their uniqueness and validity.
 
@@ -225,6 +291,17 @@ class BaseLocatorAgent(ABC):
         return sorted(
             valid_locators, key=lambda x: self._is_locator_unique(x), reverse=True
         )
+
+    def _filter_clickable_locators(self, locators: list[str]) -> list[str]:
+        """Filter locators to only include clickable ones.
+
+        Args:
+            locators: List of locators to filter.
+
+        Returns:
+            List of locators that are clickable.
+        """
+        return [loc for loc in locators if self._is_element_clickable(loc)]
 
     @staticmethod
     @abstractmethod
