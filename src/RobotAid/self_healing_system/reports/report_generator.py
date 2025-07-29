@@ -285,6 +285,9 @@ class ReportGenerator:
                     f"Failed to read files for diff: {original_path} or {healed_file}"
                 ) from e
 
+            if original_lines == healed_lines:
+                continue
+
             diff_html: str = difflib.HtmlDiff(tabsize=4, wrapcolumn=80).make_file(
                 original_lines, healed_lines, fromdesc="Original", todesc="Healed"
             )
