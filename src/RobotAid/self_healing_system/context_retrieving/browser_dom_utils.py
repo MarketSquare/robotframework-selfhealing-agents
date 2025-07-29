@@ -3,7 +3,17 @@ from typing import Optional
 from bs4 import BeautifulSoup
 from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.base_dom_utils import (
+    BaseDomUtils,
+    generate_unique_css_selector,
+    has_child_dialog_without_open,
+    has_direct_text,
+    has_parent_dialog_without_open,
+    is_div_in_li,
+    is_headline,
+    is_leaf_or_lowest,
+    is_p,
+)
 from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
 
 
@@ -244,3 +254,206 @@ class BrowserDomUtils(BaseDomUtils):
 
         except Exception:
             return False
+
+    def get_locator_proposals(
+        self, failed_locator: str, keyword_name: str
+    ) -> list[str]:
+        """Get proposals for the given locator.
+
+        Args:
+            locator: The locator to get proposals for.
+
+        Returns:
+            A list of proposed locators.
+        """
+        dom_tree = self.get_dom_tree()
+        soup = BeautifulSoup(dom_tree, "html.parser")
+
+        match keyword_name:
+            case (
+                "Fill Text"
+                | "Type Text"
+                | "Press Keys"
+                | "Fill Secret"
+                | "Type Secret"
+                | "Clear Text"
+            ):
+                element_types = ["textarea", "input"]
+                elements = soup.find_all(element_types)
+            case "Click" | "Click With Options":
+                element_types = [
+                    "a",
+                    "button",
+                    "checkbox",
+                    "link",
+                    "input",
+                    "label",
+                    "li",
+                    has_direct_text,
+                ]
+                elements = soup.find_all(element_types)
+            case "Select Options By" | "Deselect Options":
+                element_types = ["select"]
+                elements = soup.find_all(element_types)
+            case "Check Checkbox" | "Uncheck Checkbox":
+                element_types = ["input", "button", "checkbox"]
+                elements = soup.find_all(element_types)
+            case "Get Text":
+                element_types = ["label", "div", "span", has_direct_text]
+                elements = soup.find_all(element_types)
+
+        filtered_elements = [
+            elem
+            for elem in elements
+            if (
+                (is_leaf_or_lowest(elem) or has_direct_text(elem))
+                and (not has_parent_dialog_without_open(elem))
+                and (not has_child_dialog_without_open(elem))
+                and (not is_headline(elem))
+                and (not is_div_in_li(elem))
+                and (not is_p(elem))
+            )
+        ]
+
+        locators = []
+        # Generate and display unique selectors
+        for elem in filtered_elements:
+            try:
+                locator = get_locator(elem, soup)
+            except Exception:
+                locator = None
+            if locator:
+                locators.append(locator)
+        return locators
+
+    def get_locator_metadata(self, locator: str) -> list[dict]:
+        """Get metadata for the given locator.
+
+        Args:
+            locator: The locator to get metadata for.
+
+        Returns:
+            A list of dictionaries containing metadata about elements matching the locator.
+        """
+        if self.library_instance is None:
+            return []
+
+        try:
+            elements = getattr(self.library_instance, "get_elements")(locator)
+            metadata_list = []
+
+            for element in elements:
+                metadata = {}
+
+                # Properties (retrieved via evaluate_javascript)
+                property_list = [
+                    "tagName",
+                    "childElementCount",
+                    "innerText",
+                    "type",
+                    "value",
+                    "name",
+                ]
+                for property in property_list:
+                    try:
+                        value = getattr(self.library_instance, "evaluate_javascript")(
+                            element, f"(elem) => elem.{property}"
+                        )
+                        if value:
+                            metadata[property] = str(value)
+                    except Exception:
+                        pass
+
+                # Additional properties with parent/sibling context
+                additional_properties = [
+                    "parentElement.tagName",
+                    "parentElement.innerText",
+                    "previousSibling.tagName",
+                    "previousSibling.innerText",
+                    "nextSibling.tagName",
+                    "nextSibling.innerText",
+                ]
+                for property in additional_properties:
+                    try:
+                        value = getattr(self.library_instance, "evaluate_javascript")(
+                            element, f"(elem) => elem.{property}"
+                        )
+                        if value:
+                            metadata[property] = str(value)
+                    except Exception:
+                        pass
+
+                # Attributes (retrieved via get_attribute)
+                allowed_attributes = [
+                    "id",
+                    "class",
+                    "placeholder",
+                    "role",
+                    "href",
+                    "title",
+                ]
+                try:
+                    attribute_list = getattr(
+                        self.library_instance, "get_attribute_names"
+                    )(element)
+                    for attribute in allowed_attributes:
+                        if attribute in attribute_list:
+                            try:
+                                value = getattr(self.library_instance, "get_attribute")(
+                                    element, attribute
+                                )
+                                if value:
+                                    metadata[attribute] = str(value)
+                            except Exception:
+                                pass
+                except Exception:
+                    # Fallback: try to get common attributes directly
+                    for attribute in allowed_attributes:
+                        try:
+                            value = getattr(self.library_instance, "get_attribute")(
+                                element, attribute
+                            )
+                            if value:
+                                metadata[attribute] = str(value)
+                        except Exception:
+                            pass
+
+                # Element state information using Browser library methods
+                try:
+                    metadata["is_visible"] = "visible" in getattr(
+                        self.library_instance, "get_element_states"
+                    )(element)
+                except Exception:
+                    metadata["is_visible"] = False
+
+                try:
+                    metadata["is_enabled"] = "enabled" in getattr(
+                        self.library_instance, "get_element_states"
+                    )(element)
+                except Exception:
+                    metadata["is_enabled"] = False
+
+                try:
+                    metadata["is_checked"] = "checked" in getattr(
+                        self.library_instance, "get_element_states"
+                    )(element)
+                except Exception:
+                    metadata["is_checked"] = False
+
+                metadata_list.append(metadata)
+
+            return metadata_list
+
+        except Exception:
+            return []
+
+
+def get_locator(elem, soup):
+    selector = generate_unique_css_selector(elem, soup)
+    if selector:
+        return "css=" + selector
+    # else:
+    #     selector = generate_unique_xpath_selector(elem, soup)
+    #     if selector:
+    #         return "xpath=" + selector
+    return None
