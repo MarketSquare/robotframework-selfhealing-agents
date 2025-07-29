@@ -73,7 +73,7 @@ class ReportGenerator:
             )
             inner_header = (
                 "<table class='inner'>"
-                "<tr><th>Test</th><th>Keyword</th><th>Keyword Args</th>"
+                "<tr><th>Test</th><th>Keyword</th><th>Keyword Args</th><th>Line Number</th>"
                 "<th>Failed Locator</th><th>Healed Locator</th><th>Tried Locators</th></tr>"
             )
             rows: List[str] = []
@@ -85,6 +85,7 @@ class ReportGenerator:
                     f"<td>{html.escape(e.test_name)}</td>"
                     f"<td>{html.escape(e.keyword)}</td>"
                     f"<td>{args}</td>"
+                    f"<td>{html.escape(str(e.lineno))}</td>"
                     f"<td>{html.escape(e.failed_locator)}</td>"
                     f"<td>{html.escape(e.healed_locator or '')}</td>"
                     f"<td>{tried}</td>"

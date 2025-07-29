@@ -170,6 +170,7 @@ class RobotAid(ListenerV3):
                 test_name=data.parent.name,
                 keyword=data.name,
                 keyword_args=data.args,
+                lineno=data.lineno,
                 failed_locator=BuiltIn().replace_variables(data.args[0]),
                 healed_locator=healed_locator
                 if status_healed == "PASS"
