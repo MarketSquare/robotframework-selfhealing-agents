@@ -2,9 +2,7 @@
 name = "robotframework-aid"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "MarketSquare - Robot Framework community"}
-]
+authors = [{ name = "MarketSquare - Robot Framework community" }]
 license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
@@ -12,7 +10,8 @@ dependencies = [
     "pydantic-ai",
     "robotframework >=7.1",
     "beautifulsoup4 >=4.13.4",
-    "pydantic-settings >=2.9.1"
+    "pydantic-settings >=2.9.1",
+    "lxml>=6.0.0",
 ]
 
 
@@ -21,11 +20,9 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-packages = [
-    { include = "RobotAid", from = "src" }
-]
+packages = [{ include = "RobotAid", from = "src" }]
 
-[tool.poetry.group.dev.dependencies]    
+[tool.poetry.group.dev.dependencies]
 pytest = "*"
 invoke = "*"
 coverage = "*"
