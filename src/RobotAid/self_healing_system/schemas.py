@@ -34,9 +34,13 @@ class LocatorHealingResponse(BaseModel):
 
     Attributes:
         suggestions: Contains suggestions for fixing locator error.
+        metadata: Contains metadata about each locator suggestion
     """
 
     suggestions: list = Field(..., description="Suggestions for fixing locator error.")
+    metadata: list = Field(
+        default=[], description="Metadata about each locator suggestion."
+    )
 
 
 class NoHealingNeededResponse(BaseModel):
