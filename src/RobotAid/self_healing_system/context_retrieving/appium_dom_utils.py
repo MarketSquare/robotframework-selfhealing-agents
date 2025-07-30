@@ -136,3 +136,139 @@ class AppiumDomUtils(BaseDomUtils):
             str: The library type identifier.
         """
         return "appium"
+
+    def get_locator_proposals(
+        self, failed_locator: str, keyword_name: str
+    ) -> list[str]:
+        """Get proposals for the given locator.
+
+        Args:
+            locator: The locator to get proposals for.
+
+        Returns:
+            A list of proposed locators.
+        """
+        pass
+
+    def get_locator_metadata(self, locator: str) -> list[dict]:
+        """Get metadata for the given locator.
+
+        Args:
+            locator: The locator to get metadata for.
+
+        Returns:
+            A list of dictionaries containing metadata about elements matching the locator.
+        """
+        if self.library_instance is None:
+            return []
+
+        try:
+            # Try to get elements using Appium library methods
+            if hasattr(self.library_instance, "get_webelements"):
+                elements = getattr(self.library_instance, "get_webelements")(locator)
+            else:
+                return []
+
+            metadata_list = []
+
+            for element in elements:
+                metadata = {}
+
+                # Get basic element properties for mobile elements
+                try:
+                    metadata["tag"] = (
+                        element.tag_name.lower() if hasattr(element, "tag_name") else ""
+                    )
+                except Exception:
+                    metadata["tag"] = ""
+
+                try:
+                    metadata["resource_id"] = element.get_attribute("resource-id") or ""
+                except Exception:
+                    metadata["resource_id"] = ""
+
+                try:
+                    metadata["class"] = element.get_attribute("class") or ""
+                except Exception:
+                    metadata["class"] = ""
+
+                try:
+                    metadata["text"] = element.text or ""
+                except Exception:
+                    metadata["text"] = ""
+
+                try:
+                    metadata["content_desc"] = (
+                        element.get_attribute("content-desc") or ""
+                    )
+                except Exception:
+                    metadata["content_desc"] = ""
+
+                try:
+                    metadata["name"] = element.get_attribute("name") or ""
+                except Exception:
+                    metadata["name"] = ""
+
+                try:
+                    metadata["value"] = element.get_attribute("value") or ""
+                except Exception:
+                    metadata["value"] = ""
+
+                try:
+                    metadata["package"] = element.get_attribute("package") or ""
+                except Exception:
+                    metadata["package"] = ""
+
+                try:
+                    metadata["checkable"] = element.get_attribute("checkable") == "true"
+                except Exception:
+                    metadata["checkable"] = False
+
+                try:
+                    metadata["checked"] = element.get_attribute("checked") == "true"
+                except Exception:
+                    metadata["checked"] = False
+
+                try:
+                    metadata["clickable"] = element.get_attribute("clickable") == "true"
+                except Exception:
+                    metadata["clickable"] = False
+
+                try:
+                    metadata["enabled"] = element.get_attribute("enabled") == "true"
+                except Exception:
+                    metadata["enabled"] = False
+
+                try:
+                    metadata["focusable"] = element.get_attribute("focusable") == "true"
+                except Exception:
+                    metadata["focusable"] = False
+
+                try:
+                    metadata["focused"] = element.get_attribute("focused") == "true"
+                except Exception:
+                    metadata["focused"] = False
+
+                try:
+                    metadata["scrollable"] = (
+                        element.get_attribute("scrollable") == "true"
+                    )
+                except Exception:
+                    metadata["scrollable"] = False
+
+                try:
+                    metadata["selected"] = element.get_attribute("selected") == "true"
+                except Exception:
+                    metadata["selected"] = False
+
+                try:
+                    metadata["displayed"] = element.get_attribute("displayed") == "true"
+                except Exception:
+                    metadata["displayed"] = False
+
+                metadata_list.append(metadata)
+
+            return metadata_list
+
+        except Exception:
+            return []

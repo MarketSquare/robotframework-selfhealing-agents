@@ -19,6 +19,11 @@ class SystemSettings(BaseModel):
     enabled: bool = Field(
         ..., description="True if RF listener should trigger the self-healing system"
     )
+    use_llm_for_locator_generation: bool = Field(
+        True,
+        description="Use LLM to generate locators for the locator agent",
+    )
+
     max_retries: int = Field(
         3,
         ge=0,

@@ -52,22 +52,41 @@ class BaseLocatorAgent(ABC):
         self.client_settings = client_settings
         self._provided_dom_utility = dom_utility
         self._dom_utility: Optional[BaseDomUtils] = None
+        self.use_llm_for_locator_generation = app_settings.system.use_llm_for_locator_generation
 
-        self.generation_agent: Agent[PromptPayload, LocatorHealingResponse] = Agent[
-            PromptPayload, LocatorHealingResponse
-        ](
-            model=get_client_model(
-                provider=app_settings.locator_agent.provider,
-                model=app_settings.locator_agent.model,
-                client_settings=client_settings,
-            ),
-            system_prompt=self._get_system_prompt(),
-            deps_type=PromptPayload,
-            output_type=LocatorHealingResponse,
-        )
+        # Initialize agent attributes
+        self.generation_agent: Optional[
+            Agent[PromptPayload, LocatorHealingResponse]
+        ] = None
+        self.selection_agent: Optional[Agent[PromptPayload, str]] = None
 
-        # Set up output validation
-        self._setup_output_validation()
+        # Only create LLM agent if LLM generation is enabled
+        if self.use_llm_for_locator_generation:
+            self.generation_agent = Agent[PromptPayload, LocatorHealingResponse](
+                model=get_client_model(
+                    provider=app_settings.locator_agent.provider,
+                    model=app_settings.locator_agent.model,
+                    client_settings=client_settings,
+                ),
+                system_prompt=self._get_system_prompt(),
+                deps_type=PromptPayload,
+                output_type=LocatorHealingResponse,
+            )
+
+            # Set up output validation
+            self._setup_output_validation()
+        else:
+            # For DOM-based approach, create an agent for choosing between locators
+            self.selection_agent = Agent[PromptPayload, str](
+                model=get_client_model(
+                    provider=app_settings.locator_agent.provider,
+                    model=app_settings.locator_agent.model,
+                    client_settings=client_settings,
+                ),
+                system_prompt=PromptsLocator.system_msg_choose_locator,
+                deps_type=PromptPayload,
+                output_type=str,
+            )
 
     def _setup_output_validation(self) -> None:
         """Set up output validation for the generation agent.
@@ -75,6 +94,8 @@ class BaseLocatorAgent(ABC):
         Configures the output validator that processes and validates
         the locator healing response from the LLM.
         """
+        if self.generation_agent is None:
+            return
 
         @self.generation_agent.output_validator
         async def validate_output(
@@ -186,6 +207,18 @@ class BaseLocatorAgent(ABC):
         Raises:
             ModelRetry: If the response is not of the expected type.
         """
+        if self.use_llm_for_locator_generation:
+            return await self._heal_with_llm(ctx)
+        else:
+            return await self._heal_with_dom_utils(ctx)
+
+    async def _heal_with_llm(
+        self, ctx: RunContext[PromptPayload]
+    ) -> LocatorHealingResponse:
+        """Generate locator suggestions using LLM approach."""
+        if self.generation_agent is None:
+            raise ModelRetry("LLM generation agent is not available")
+
         response: AgentRunResult[
             LocatorHealingResponse
         ] = await self.generation_agent.run(
@@ -199,6 +232,128 @@ class BaseLocatorAgent(ABC):
                 "Locator healing response is not of type LocatorHealingResponse."
             )
         return response.output
+
+    async def _heal_with_dom_utils(
+        self, ctx: RunContext[PromptPayload]
+    ) -> LocatorHealingResponse:
+        """Generate locator suggestions using DOM utilities approach."""
+        if self.dom_utility is None:
+            raise ModelRetry("DOM utility is required for non-LLM locator generation")
+
+        try:
+            # Use DOM utility to generate locator proposals
+            failed_locator = ctx.deps.failed_locator
+            keyword_name = ctx.deps.keyword_name
+
+            metadata_list = []
+
+            proposals = self.dom_utility.get_locator_proposals(
+                failed_locator, keyword_name
+            )
+
+            if not proposals:
+                raise ModelRetry("No locator proposals could be generated from DOM")
+
+            # Process locators for library compatibility
+            processed_proposals = [self._process_locator(loc) for loc in proposals]
+
+            # Sort and filter locators
+            sorted_proposals = self._sort_locators(processed_proposals)
+
+            # Filter clickable locators if needed for click-related keywords
+            clickable_keywords = [
+                "click",
+                "click with options",
+                "select options by",
+                "deselect options",
+                "tap",
+                "check checkbox",
+                "uncheck checkbox",
+                "checkbox",
+                "double click",
+                "get list items",
+                "get selected list",
+                "list selection",
+                "list should have",
+                "mouse down",
+                "contain button",
+                "contain link",
+                "contain list",
+                "contain checkbox",
+                "contain radio button",
+                "radio button should",
+                "select checkbox",
+                "select all from list",
+                "select from list by",
+                "select radio button",
+                "unselect from list by",
+                "unselect radio button",
+                "unselect checkbox",
+            ]
+            if keyword_name and any(
+                keyword in keyword_name.lower() for keyword in clickable_keywords
+            ):
+                logger.info(
+                    f"Filtering clickable locators for keyword '{keyword_name}'",
+                    also_console=True,
+                )
+                logger.info(
+                    f"Locators before filtering: {sorted_proposals}",
+                    also_console=True,
+                )
+                sorted_proposals = self._filter_clickable_locators(sorted_proposals)
+                logger.info(
+                    f"Locators after filtering: {sorted_proposals}",
+                    also_console=True,
+                )
+
+            for loc in sorted_proposals:
+                # Log each proposal for debugging
+                metadata = self.dom_utility.get_locator_metadata(loc)
+                metadata_list.append(metadata[0] if metadata else {})
+
+            # Use the selection agent to choose the best locator
+            if self.selection_agent is None:
+                raise ModelRetry(
+                    "Selection agent is not available for DOM-based approach"
+                )
+
+            response: AgentRunResult[str] = await self.selection_agent.run(
+                user_prompt=PromptsLocator.get_user_msg_choose_locator(
+                    ctx=ctx,
+                    suggestions=sorted_proposals,
+                    metadata=metadata_list,
+                ),
+                deps=ctx.deps,
+                usage_limits=self.usage_limits,
+                model_settings={"temperature": 0.1},
+            )
+
+            # Parse the selected locator from the response
+            if isinstance(response.output, str):
+                import json
+
+                try:
+                    # Try to parse JSON response
+                    parsed_response = json.loads(response.output)
+                    if (
+                        isinstance(parsed_response, dict)
+                        and "suggestions" in parsed_response
+                    ):
+                        selected_locator = parsed_response["suggestions"]
+                    else:
+                        # Fallback: use the raw response
+                        selected_locator = response.output.strip()
+                except json.JSONDecodeError:
+                    # Fallback: use the raw response
+                    selected_locator = response.output.strip()
+
+                # Return as LocatorHealingResponse with the single selected locator
+                return LocatorHealingResponse(suggestions=[selected_locator])
+
+            raise ModelRetry("Selection response is not a valid string.")
+        except Exception as e:
+            raise ModelRetry(f"DOM-based locator generation failed: {str(e)}")
 
     @abstractmethod
     def _get_system_prompt(self) -> str:

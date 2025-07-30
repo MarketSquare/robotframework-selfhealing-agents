@@ -66,3 +66,32 @@ class PromptsLocator:
             f"Dom Tree: ```{ctx.deps.dom_tree}```\n\n"
             f"Tried Locator Suggestion Memory:\n{ctx.deps.tried_locator_memory}\n\n"
         )
+
+    system_msg_choose_locator: str = (
+        "You are a locator selection tool for Robot Framework self-healing.\n"
+        "Your task is to choose the best locator from the provided suggestions.\n"
+        "You will receive a list of locator suggestions and must select the most appropriate one.\n"
+        "Respond ONLY with the JSON. Do not include any explanations, analysis, or additional text.\n"
+        'ONLY return the JSON in this exact format: {"suggestions": "locator"}\n'
+    )
+
+    @staticmethod
+    def get_user_msg_choose_locator(
+        ctx: RunContext[PromptPayload], suggestions: list, metadata: list
+    ) -> str:
+        """Assembles user message (a.k.a. user prompt) for choosing a locator.
+
+        Args:
+            ctx (RunContext): PydanticAI context. Contains information about keyword failure.
+
+        Returns:
+            (str): Assembled user message (a.k.a. user prompt) for choosing a locator.
+        """
+        return (
+            f"Failed locator: `{ctx.deps.failed_locator}`\n\n"
+            f"Keyword name: `{ctx.deps.keyword_name}`\n\n"
+            f"Keyword arguments: `{ctx.deps.keyword_args}`\n\n"
+            f"Suggestions:\n {suggestions}\n\n"
+            f"Metadata:\n {metadata}\n\n"
+            f"Tried Locator Suggestion Memory:\n{ctx.deps.tried_locator_memory}\n\n"
+        )
