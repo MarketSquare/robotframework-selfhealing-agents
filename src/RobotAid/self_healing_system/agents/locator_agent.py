@@ -3,14 +3,13 @@ from typing import Optional, Union
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.usage import UsageLimits
 
+from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.base_locator_agent import BaseLocatorAgent
 from RobotAid.self_healing_system.agents.locator_agent_factory import (
     LocatorAgentFactory,
     LocatorAgentType,
 )
 from RobotAid.self_healing_system.schemas import PromptPayload
-from RobotAid.utils.app_settings import AppSettings
-from RobotAid.utils.client_settings import ClientSettings
 
 
 class LocatorAgent:
@@ -25,15 +24,13 @@ class LocatorAgent:
 
     Attributes:
         _agent: The underlying specific agent implementation.
-        app_settings: Instance of AppSettings containing user defined app configuration.
-        client_settings: Instance of ClientSettings containing user defined client configuration.
+        cfg: Instance of Cfg config class containing user defined app configuration.
         usage_limits: Usage token and request limits.
     """
 
     def __init__(
         self,
-        app_settings: AppSettings,
-        client_settings: ClientSettings,
+        cfg: Cfg,
         usage_limits: UsageLimits = UsageLimits(
             request_limit=5, total_tokens_limit=2000
         ),
@@ -43,29 +40,25 @@ class LocatorAgent:
         """Initialize the LocatorAgent.
 
         Args:
-            app_settings: Instance of AppSettings containing user defined app configuration.
-            client_settings: Instance of ClientSettings containing user defined client configuration.
+            cfg: Instance of Cfg config class containing user defined app configuration.
             usage_limits: Usage token and request limits.
             agent_type: Optional agent type. If None, will auto-detect based on available libraries.
             dom_utility: Optional DOM utility instance for the specific library.
         """
-        self.app_settings = app_settings
-        self.client_settings = client_settings
+        self.cfg = cfg
         self.usage_limits = usage_limits
 
         if agent_type is None:
             # Auto-detect agent type for backward compatibility
             self._agent = LocatorAgentFactory.create_auto_detected_agent(
-                app_settings=app_settings,
-                client_settings=client_settings,
+                cfg=cfg,
                 usage_limits=usage_limits,
                 dom_utility=dom_utility,
             )
         else:
             self._agent = LocatorAgentFactory.create_agent(
                 agent_type=agent_type,
-                app_settings=app_settings,
-                client_settings=client_settings,
+                cfg=cfg,
                 usage_limits=usage_limits,
                 dom_utility=dom_utility,
             )

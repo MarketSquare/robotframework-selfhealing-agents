@@ -1,6 +1,6 @@
 import os
 
-from RobotAid.utils.client_settings import ClientSettings
+from RobotAid.utils.cfg import ClientSettings
 
 
 def test_defaults_are_none() -> None:

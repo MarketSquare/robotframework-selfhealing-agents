@@ -2,6 +2,7 @@ from pydantic_ai import Agent, ModelRetry, RunContext
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.usage import UsageLimits
 
+from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.prompts import PromptsOrchestrator
 from RobotAid.self_healing_system.clients.llm_client import get_client_model
@@ -10,8 +11,6 @@ from RobotAid.self_healing_system.schemas import (
     NoHealingNeededResponse,
     PromptPayload,
 )
-from RobotAid.utils.app_settings import AppSettings
-from RobotAid.utils.client_settings import ClientSettings
 
 
 # MVP Orchestrator Agent - will be adjusted to context and when additional agents will be implemented.
@@ -19,41 +18,9 @@ class OrchestratorAgent:
     """Routes raw failure text to the appropriate healing tool.
 
     Attributes:
-        app_settings: Instance of AppSettings containing user defined app configuration.
-        client_settings: Instance of ClientSettings containing user defined client configuration.
+        cfg: Instance of Cfg config class containing user defined app configuration.
         locator_agent: LocatorAgent instance.
     """
-
-    def __init__(
-        self,
-        app_settings: AppSettings,
-        client_settings: ClientSettings,
-        locator_agent: LocatorAgent,
-        usage_limits: UsageLimits = UsageLimits(
-            request_limit=5, total_tokens_limit=2000
-        ),
-    ) -> None:
-        """Initialize the OrchestratorAgent.
-
-        Args:
-            app_settings: Application settings containing configuration.
-            client_settings: Client settings for LLM connection.
-            locator_agent: LocatorAgent instance for handling locator healing.
-            usage_limits: Token and request limits for the agent. Defaults to
-                UsageLimits with request_limit=5 and total_tokens_limit=2000.
-        """
-        self.locator_agent: LocatorAgent = locator_agent
-        self.usage_limits: UsageLimits = usage_limits
-        self.agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
-            model=get_client_model(
-                provider=app_settings.orchestrator_agent.provider,
-                model=app_settings.orchestrator_agent.model,
-                client_settings=client_settings,
-            ),
-            system_prompt=PromptsOrchestrator.system_msg,
-            deps_type=PromptPayload,
-            output_type=[self.get_healed_locators, str],
-        )
 
     async def get_healed_locators(
         self, ctx: RunContext[PromptPayload], broken_locator: str
@@ -78,6 +45,35 @@ class OrchestratorAgent:
             return await self.locator_agent.heal_async(ctx=ctx)
         except Exception as e:
             raise ModelRetry(f"Locator healing failed: {str(e)}")
+
+    def __init__(
+        self,
+        cfg: Cfg,
+        locator_agent: LocatorAgent,
+        usage_limits: UsageLimits = UsageLimits(
+            request_limit=5, total_tokens_limit=2000
+        ),
+    ) -> None:
+        """Initialize the OrchestratorAgent.
+
+        Args:
+            cfg: Instance of Cfg config class containing user defined app configuration.
+            locator_agent: LocatorAgent instance for handling locator healing.
+            usage_limits: Token and request limits for the agent. Defaults to
+                UsageLimits with request_limit=5 and total_tokens_limit=2000.
+        """
+        self.locator_agent: LocatorAgent = locator_agent
+        self.usage_limits: UsageLimits = usage_limits
+        self.agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
+            model=get_client_model(
+                provider=cfg.orchestrator_agent_provider,
+                model=cfg.orchestrator_agent_model,
+                cfg=cfg,
+            ),
+            system_prompt=PromptsOrchestrator.system_msg,
+            deps_type=PromptPayload,
+            output_type=[self.get_healed_locators, str],
+        )
 
     async def run_async(
         self, robot_ctx: dict

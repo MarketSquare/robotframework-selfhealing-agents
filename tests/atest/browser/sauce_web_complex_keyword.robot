@@ -1,6 +1,6 @@
 *** Settings ***
 Library    Browser    timeout=5s
-Library    RobotAid    config_path=${CURDIR}/../config_test.yaml
+Library    RobotAid
 Resource    ./resources/sauce_web_vars.resource
 Resource    ./resources/sauce_web_keywords.resource
 Suite Setup    New Browser    browser=${BROWSER}    headless=${HEADLESS}

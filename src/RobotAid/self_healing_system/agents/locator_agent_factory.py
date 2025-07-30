@@ -3,6 +3,7 @@ from typing import Optional, Union
 
 from pydantic_ai.usage import UsageLimits
 
+from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.base_locator_agent import BaseLocatorAgent
 from RobotAid.self_healing_system.agents.browser_locator_agent import (
     BrowserLocatorAgent,
@@ -15,8 +16,6 @@ from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import 
     DomUtilityFactory,
     DomUtilityType,
 )
-from RobotAid.utils.app_settings import AppSettings
-from RobotAid.utils.client_settings import ClientSettings
 
 
 class LocatorAgentType(Enum):
@@ -38,8 +37,7 @@ class LocatorAgentFactory:
     @staticmethod
     def create_agent(
         agent_type: Union[LocatorAgentType, str, DomUtilityType],
-        app_settings: AppSettings,
-        client_settings: ClientSettings,
+        cfg: Cfg,
         usage_limits: Optional[UsageLimits] = None,
         dom_utility: Optional[BaseDomUtils] = None,
     ) -> BaseLocatorAgent:
@@ -48,8 +46,7 @@ class LocatorAgentFactory:
         Args:
             agent_type: The type of agent to create (browser, selenium, or appium).
                        Can be LocatorAgentType enum, DomUtilityType enum, or string.
-            app_settings: Application settings instance.
-            client_settings: Client settings instance.
+            cfg: Instance of Cfg config class containing user defined app configuration.
             usage_limits: Optional usage limits for the agent.
             dom_utility: Optional DOM utility instance. If not provided, will be created
                         automatically based on agent type.
@@ -78,15 +75,13 @@ class LocatorAgentFactory:
 
         if agent_type == LocatorAgentType.BROWSER:
             return BrowserLocatorAgent(
-                app_settings=app_settings,
-                client_settings=client_settings,
+                cfg=cfg,
                 usage_limits=usage_limits,
                 dom_utility=dom_utility,
             )
         elif agent_type == LocatorAgentType.SELENIUM:
             return SeleniumLocatorAgent(
-                app_settings=app_settings,
-                client_settings=client_settings,
+                cfg=cfg,
                 usage_limits=usage_limits,
                 dom_utility=dom_utility,
             )
@@ -185,8 +180,7 @@ class LocatorAgentFactory:
 
     @staticmethod
     def create_auto_detected_agent(
-        app_settings: AppSettings,
-        client_settings: ClientSettings,
+        cfg: Cfg,
         usage_limits: Optional[UsageLimits] = None,
         dom_utility: Optional[BaseDomUtils] = None,
     ) -> BaseLocatorAgent:
@@ -196,8 +190,7 @@ class LocatorAgentFactory:
         available libraries and creates the corresponding agent.
 
         Args:
-            app_settings: Application settings instance.
-            client_settings: Client settings instance.
+            cfg: Instance of Cfg config class containing user defined app configuration.
             usage_limits: Optional usage limits for the agent.
             dom_utility: Optional DOM utility instance. If not provided, will be created
                         automatically based on detected type.
@@ -208,8 +201,7 @@ class LocatorAgentFactory:
         agent_type = LocatorAgentFactory.detect_agent_type()
         return LocatorAgentFactory.create_agent(
             agent_type=agent_type,
-            app_settings=app_settings,
-            client_settings=client_settings,
+            cfg=cfg,
             usage_limits=usage_limits,
             dom_utility=dom_utility,
         )
@@ -217,8 +209,7 @@ class LocatorAgentFactory:
     @staticmethod
     def create_agent_from_keyword_result(
         result,
-        app_settings: AppSettings,
-        client_settings: ClientSettings,
+        cfg: Cfg,
         usage_limits: Optional[UsageLimits] = None,
         dom_utility: Optional[BaseDomUtils] = None,
     ) -> BaseLocatorAgent:
@@ -229,8 +220,7 @@ class LocatorAgentFactory:
 
         Args:
             result: Robot Framework keyword result object.
-            app_settings: Application settings instance.
-            client_settings: Client settings instance.
+            cfg: Instance of Cfg config class containing user defined app configuration.
             usage_limits: Optional usage limits for the agent.
             dom_utility: Optional DOM utility instance. If not provided, will be created
                         automatically based on detected type.
@@ -245,8 +235,7 @@ class LocatorAgentFactory:
 
         return LocatorAgentFactory.create_agent(
             agent_type=agent_type,
-            app_settings=app_settings,
-            client_settings=client_settings,
+            cfg=cfg,
             usage_limits=usage_limits,
             dom_utility=dom_utility,
         )

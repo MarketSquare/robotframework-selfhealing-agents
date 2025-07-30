@@ -7,7 +7,7 @@ from robot import result
 from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
 from RobotAid.self_healing_system.schemas import LocatorHealingResponse
 from RobotAid.utils.app_settings import AppSettings
-from RobotAid.utils.client_settings import ClientSettings
+from RobotAid.utils.cfg import ClientSettings
 
 
 class DummyKeyword:

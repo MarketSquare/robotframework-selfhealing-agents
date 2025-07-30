@@ -1,12 +1,11 @@
 """Main Robot Framework listener for healing hooks."""
 
-from pathlib import Path
-
 from robot import result, running
 from robot.api import logger
 from robot.api.interfaces import ListenerV3
 from robot.libraries.BuiltIn import BuiltIn
 
+from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
 from RobotAid.self_healing_system.reports.report_data import ReportData
 from RobotAid.self_healing_system.reports.report_generator import ReportGenerator
@@ -15,8 +14,6 @@ from RobotAid.self_healing_system.schemas import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
 )
-from RobotAid.utils.app_settings import AppSettings
-from RobotAid.utils.client_settings import ClientSettings
 
 
 class RobotAid(ListenerV3):
@@ -25,19 +22,12 @@ class RobotAid(ListenerV3):
     ROBOT_LIBRARY_SCOPE = "GLOBAL"
     ROBOT_LISTENER_API_VERSION = 3
 
-    def __init__(self, config_path: str | None = None):
+    def __init__(self):
         """Initialize the healing listener."""
-        resolved_path = (
-            Path(config_path)
-            if config_path
-            else Path(__file__).resolve().parent / "config.yaml"
-        )
-        self.app_settings = AppSettings.from_yaml(resolved_path)
-        self.client_settings = ClientSettings()
+        self.cfg = Cfg()
 
         self.ROBOT_LIBRARY_LISTENER = self
         self.context = {}
-        self.enabled = self.app_settings.system.enabled
 
         self.report_info = list()
         self.keyword_try_ctr = 0
@@ -46,7 +36,7 @@ class RobotAid(ListenerV3):
         self.tried_locator_memory = list()
         self.is_keyword_healed = False
         logger.info(
-            f"RobotAid initialized with healing={'enabled' if self.enabled else 'disabled'}"
+            f"RobotAid initialized with healing={'enabled' if self.cfg.enable_self_healing else 'disabled'}"
         )
 
     def _parse_boolean(self, value):
@@ -58,7 +48,7 @@ class RobotAid(ListenerV3):
 
     def start_test(self, data: running.TestCase, result: result.TestCase):
         """Called when a test starts."""
-        if not self.enabled:
+        if not self.cfg.enable_self_healing:
             return
         self.context["current_test"] = data.name
         logger.debug(f"RobotAid: Monitoring test '{data.name}'")
@@ -66,7 +56,7 @@ class RobotAid(ListenerV3):
     def end_keyword(self, data: running.Keyword, result: result.Keyword):
         """Called when a keyword finishes execution."""
         self.is_keyword_healed = False
-        if not self.enabled:
+        if not self.cfg.enable_self_healing:
             return
         # ToDo: Implement a more robust way to start self-healing
         if result.failed and result.owner in [
@@ -76,7 +66,7 @@ class RobotAid(ListenerV3):
         ]:
             logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
             pre_healing_process_data = data.deepcopy()
-            if self.keyword_try_ctr < self.app_settings.system.max_retries:
+            if self.keyword_try_ctr < self.cfg.max_retries:
                 if self.generate_suggestions:
                     self._start_self_healing(result=result)
                 return_value = self._try_locator_suggestions(
@@ -104,7 +94,7 @@ class RobotAid(ListenerV3):
 
     def end_test(self, data: running.TestCase, result: result.TestCase):
         """Called when a test ends."""
-        if not self.enabled:
+        if not self.cfg.enable_self_healing:
             return
 
         if result.failed:
@@ -122,8 +112,7 @@ class RobotAid(ListenerV3):
         locator_suggestions: LocatorHealingResponse | str | NoHealingNeededResponse = (
             KickoffSelfHealing.kickoff_healing(
                 result=result,
-                app_settings=self.app_settings,
-                client_settings=self.client_settings,
+                cfg=self.cfg,
                 tried_locator_memory=self.tried_locator_memory,
             )
         )

@@ -3,6 +3,7 @@ import asyncio
 from pydantic_ai.usage import UsageLimits
 from robot import result
 
+from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
 from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import (
@@ -13,8 +14,6 @@ from RobotAid.self_healing_system.schemas import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
 )
-from RobotAid.utils.app_settings import AppSettings
-from RobotAid.utils.client_settings import ClientSettings
 
 try:
     import logfire
@@ -54,16 +53,14 @@ class KickoffSelfHealing:
     @staticmethod
     def kickoff_healing(
         result: result.Keyword,
-        app_settings: AppSettings,
-        client_settings: ClientSettings,
+        cfg: Cfg,
         tried_locator_memory: list,
     ) -> LocatorHealingResponse | str | NoHealingNeededResponse:
         """Instantiates the multi-agent system, retrieves context and kicks off self-healing-system.
 
         Args:
             result: Keyword and additional information passed by robotframework listener.
-            app_settings: Instance of AppSettings containing user defined app configuration.
-            client_settings: Instance of ClientSettings containing user defined client configuration.
+            cfg: Instance of Cfg config class containing user defined app configuration.
             tried_locator_memory: Memory list of executed locator suggestions that still failed.
 
         Returns:
@@ -93,8 +90,7 @@ class KickoffSelfHealing:
 
         # Create appropriate locator agent (let LocatorAgent handle auto-detection)
         locator_agent = LocatorAgent(
-            app_settings=app_settings,
-            client_settings=client_settings,
+            cfg=cfg,
             usage_limits=UsageLimits(request_limit=5, total_tokens_limit=8000),
             dom_utility=dom_utility,
             agent_type=agent_type,
@@ -102,8 +98,7 @@ class KickoffSelfHealing:
 
         orchestrator_agent: OrchestratorAgent = OrchestratorAgent(
             locator_agent=locator_agent,
-            app_settings=app_settings,
-            client_settings=client_settings,
+            cfg=cfg,
             usage_limits=UsageLimits(request_limit=5, total_tokens_limit=8000),
         )
 

@@ -6,6 +6,7 @@ from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.usage import UsageLimits
 from robot.api import logger
 
+from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.prompts import PromptsLocator
 from RobotAid.self_healing_system.clients.llm_client import get_client_model
 from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
@@ -13,8 +14,6 @@ from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import 
     DomUtilityFactory,
 )
 from RobotAid.self_healing_system.schemas import LocatorHealingResponse, PromptPayload
-from RobotAid.utils.app_settings import AppSettings
-from RobotAid.utils.client_settings import ClientSettings
 
 
 class BaseLocatorAgent(ABC):
@@ -23,16 +22,14 @@ class BaseLocatorAgent(ABC):
     Defines the common interface and shared functionality for all locator agent flavors.
 
     Attributes:
-        app_settings: Instance of AppSettings containing user defined app configuration.
-        client_settings: Instance of ClientSettings containing user defined client configuration.
+        cfg: Instance of Cfg config class containing user defined app configuration.
         usage_limits: Usage token and request limits.
         dom_utility: DOM utility instance for the specific library.
     """
 
     def __init__(
         self,
-        app_settings: AppSettings,
-        client_settings: ClientSettings,
+        cfg: Cfg,
         usage_limits: UsageLimits = UsageLimits(
             request_limit=5, total_tokens_limit=2000
         ),
@@ -41,18 +38,16 @@ class BaseLocatorAgent(ABC):
         """Initialize the BaseLocatorAgent.
 
         Args:
-            app_settings: Application settings containing configuration.
-            client_settings: Client settings for LLM connection.
+            cfg: Instance of Cfg config class containing user defined app configuration.
             usage_limits: Token and request limits for the agent. Defaults to
                 UsageLimits with request_limit=5 and total_tokens_limit=2000.
             dom_utility: Optional DOM utility instance for validation.
         """
         self.usage_limits: UsageLimits = usage_limits
-        self.app_settings = app_settings
-        self.client_settings = client_settings
+        self.cfg = cfg
         self._provided_dom_utility = dom_utility
         self._dom_utility: Optional[BaseDomUtils] = None
-        self.use_llm_for_locator_generation = app_settings.system.use_llm_for_locator_generation
+        self.use_llm_for_locator_generation = cfg.use_llm_for_locator_generation
 
         # Initialize agent attributes
         self.generation_agent: Optional[
@@ -64,9 +59,9 @@ class BaseLocatorAgent(ABC):
         if self.use_llm_for_locator_generation:
             self.generation_agent = Agent[PromptPayload, LocatorHealingResponse](
                 model=get_client_model(
-                    provider=app_settings.locator_agent.provider,
-                    model=app_settings.locator_agent.model,
-                    client_settings=client_settings,
+                    provider=cfg.locator_agent_provider,
+                    model=cfg.locator_agent_model,
+                    cfg=cfg,
                 ),
                 system_prompt=self._get_system_prompt(),
                 deps_type=PromptPayload,
@@ -79,9 +74,9 @@ class BaseLocatorAgent(ABC):
             # For DOM-based approach, create an agent for choosing between locators
             self.selection_agent = Agent[PromptPayload, str](
                 model=get_client_model(
-                    provider=app_settings.locator_agent.provider,
-                    model=app_settings.locator_agent.model,
-                    client_settings=client_settings,
+                    provider=cfg.locator_agent_provider,
+                    model=cfg.locator_agent_model,
+                    cfg=cfg,
                 ),
                 system_prompt=PromptsLocator.system_msg_choose_locator,
                 deps_type=PromptPayload,
