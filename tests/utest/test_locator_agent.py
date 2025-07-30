@@ -6,7 +6,7 @@ from types import SimpleNamespace
 from pydantic_ai.usage import UsageLimits
 
 from RobotAid.utils.app_settings import AppSettings
-from RobotAid.utils.client_settings import ClientSettings
+from RobotAid.utils.cfg import ClientSettings
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.schemas import PromptPayload, LocatorHealingResponse
 

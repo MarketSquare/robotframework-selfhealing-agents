@@ -7,7 +7,7 @@ import pytest
 from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
 from RobotAid.self_healing_system.schemas import LocatorHealingResponse, PromptPayload
 from RobotAid.utils.app_settings import AppSettings
-from RobotAid.utils.client_settings import ClientSettings
+from RobotAid.utils.cfg import ClientSettings
 
 
 class DummyAgentRunResult:
