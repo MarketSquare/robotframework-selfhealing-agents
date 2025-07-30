@@ -1,6 +1,6 @@
 *** Settings ***
 Library    SeleniumLibrary
-Library    RobotAid    config_path=${CURDIR}/../config_test.yaml
+Library    RobotAid
 Test Setup    Open Browser    browser=${BROWSER}
 Test Teardown    Close All Browsers
 
