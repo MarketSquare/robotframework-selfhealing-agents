@@ -2,11 +2,10 @@ from typing import Optional
 
 from pydantic_ai.usage import UsageLimits
 
+from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.base_locator_agent import BaseLocatorAgent
 from RobotAid.self_healing_system.agents.prompts import PromptsLocator
 from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
-from RobotAid.utils.app_settings import AppSettings
-from RobotAid.utils.client_settings import ClientSettings
 
 
 def convert_locator_to_selenium(locator: str) -> str:
@@ -38,8 +37,7 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
 
     def __init__(
         self,
-        app_settings: AppSettings,
-        client_settings: ClientSettings,
+        cfg: Cfg,
         usage_limits: UsageLimits = UsageLimits(
             request_limit=5, total_tokens_limit=2000
         ),
@@ -48,13 +46,12 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
         """Initialize the SeleniumLocatorAgent.
 
         Args:
-            app_settings: Application settings containing configuration.
-            client_settings: Client settings for LLM connection.
+            cfg: Instance of Cfg config class containing user defined app configuration.
             usage_limits: Token and request limits for the agent. Defaults to
                 UsageLimits with request_limit=5 and total_tokens_limit=2000.
             dom_utility: Optional DOM utility instance for validation.
         """
-        super().__init__(app_settings, client_settings, usage_limits, dom_utility)
+        super().__init__(cfg, usage_limits, dom_utility)
 
     def _get_system_prompt(self) -> str:
         """Get the Selenium library specific system prompt.
