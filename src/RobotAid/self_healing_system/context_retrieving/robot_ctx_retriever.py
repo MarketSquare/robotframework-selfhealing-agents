@@ -4,8 +4,8 @@ from robot import result
 from robot.libraries.BuiltIn import BuiltIn
 from robot.utils.misc import seq2str
 
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import (
+from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
     DomUtilityFactory,
 )
 

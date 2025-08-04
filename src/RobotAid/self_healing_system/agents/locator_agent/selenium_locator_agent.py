@@ -3,9 +3,9 @@ from typing import Optional
 from pydantic_ai.usage import UsageLimits
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.agents.base_locator_agent import BaseLocatorAgent
-from RobotAid.self_healing_system.agents.prompts import PromptsLocator
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
+from RobotAid.self_healing_system.agents.prompts.prompts_locator import PromptsLocator
+from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
 
 
 def convert_locator_to_selenium(locator: str) -> str:
