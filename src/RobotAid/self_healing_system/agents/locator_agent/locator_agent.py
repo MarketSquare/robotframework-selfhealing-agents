@@ -4,12 +4,12 @@ from pydantic_ai import Agent, RunContext
 from pydantic_ai.usage import UsageLimits
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.agents.base_locator_agent import BaseLocatorAgent
-from RobotAid.self_healing_system.agents.locator_agent_factory import (
+from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
+from RobotAid.self_healing_system.agents.locator_agent.locator_agent_factory import (
     LocatorAgentFactory,
     LocatorAgentType,
 )
-from RobotAid.self_healing_system.schemas import PromptPayload
+from RobotAid.self_healing_system.schemas.prompt_payload import PromptPayload
 
 
 class LocatorAgent:

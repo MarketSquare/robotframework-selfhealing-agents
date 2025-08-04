@@ -2,7 +2,7 @@ from typing import Optional
 
 from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
 
 
 class AppiumDomUtils(BaseDomUtils):

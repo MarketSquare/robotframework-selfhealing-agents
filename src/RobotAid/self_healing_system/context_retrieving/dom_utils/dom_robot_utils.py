@@ -3,7 +3,7 @@ from typing import Optional
 from bs4 import BeautifulSoup
 from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_soap_utils import SoupDomUtils
 
 
 class RobotDomUtils:

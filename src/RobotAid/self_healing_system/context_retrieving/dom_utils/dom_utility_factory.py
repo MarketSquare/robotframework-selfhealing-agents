@@ -3,14 +3,14 @@ from typing import Optional, Union
 
 from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.appium_dom_utils import (
+from RobotAid.self_healing_system.context_retrieving.frameworks.appium_dom_utils import (
     AppiumDomUtils,
 )
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.browser_dom_utils import (
+from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.frameworks.browser_dom_utils import (
     BrowserDomUtils,
 )
-from RobotAid.self_healing_system.context_retrieving.selenium_dom_utils import (
+from RobotAid.self_healing_system.context_retrieving.frameworks.selenium_dom_utils import (
     SeleniumDomUtils,
 )
 

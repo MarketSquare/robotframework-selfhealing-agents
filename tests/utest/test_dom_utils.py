@@ -1,7 +1,7 @@
 import Browser
 import pytest
-from RobotAid.self_healing_system.context_retrieving.dom_robot_utils import RobotDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_robot_utils import RobotDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_soap_utils import SoupDomUtils
 from bs4 import BeautifulSoup
 
 dom_tree = """

@@ -6,11 +6,11 @@ from robot import result
 from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
-from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import (
+from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
     DomUtilityFactory,
 )
-from RobotAid.self_healing_system.robot_ctx_retriever import RobotCtxRetriever
-from RobotAid.self_healing_system.schemas import (
+from RobotAid.self_healing_system.context_retrieving.robot_ctx_retriever import RobotCtxRetriever
+from RobotAid.self_healing_system.schemas.locator_healing import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
 )

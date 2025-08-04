@@ -4,15 +4,15 @@ from typing import Optional, Union
 from pydantic_ai.usage import UsageLimits
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.agents.base_locator_agent import BaseLocatorAgent
-from RobotAid.self_healing_system.agents.browser_locator_agent import (
+from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
+from RobotAid.self_healing_system.agents.locator_agent.browser_locator_agent import (
     BrowserLocatorAgent,
 )
-from RobotAid.self_healing_system.agents.selenium_locator_agent import (
+from RobotAid.self_healing_system.agents.locator_agent.selenium_locator_agent import (
     SeleniumLocatorAgent,
 )
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import (
+from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
     DomUtilityFactory,
     DomUtilityType,
 )

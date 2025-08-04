@@ -3,7 +3,7 @@ from typing import Optional
 from bs4 import BeautifulSoup
 from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import (
+from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import (
     BaseDomUtils,
     generate_unique_xpath_selector,
     has_child_dialog_without_open,
@@ -14,7 +14,7 @@ from RobotAid.self_healing_system.context_retrieving.base_dom_utils import (
     is_leaf_or_lowest,
     is_p,
 )
-from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_soap_utils import SoupDomUtils
 
 
 class SeleniumDomUtils(BaseDomUtils):

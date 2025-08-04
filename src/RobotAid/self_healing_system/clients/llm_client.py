@@ -1,12 +1,11 @@
+from openai import AsyncAzureOpenAI
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.azure import AzureProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.clients.azure_client import AzureClient
 
 
-# only a temporary method for handling different clients - especially since azure behaves differently in pydanticAI
 def get_client_model(
     provider: str, model: str, cfg: Cfg
 ) -> None | OpenAIModel:
@@ -23,8 +22,15 @@ def get_client_model(
     if provider == "azure":
         return OpenAIModel(
             model_name=model,
-            provider=AzureProvider(openai_client=AzureClient.get_client_instance()),
+            provider=AzureProvider(
+                openai_client=AsyncAzureOpenAI(
+                    api_key=cfg.azure_api_key,
+                    api_version=cfg.azure_api_version,
+                    azure_endpoint=cfg.azure_endpoint,
+                )
+            )
         )
+
     if provider == "openai":
         return OpenAIModel(
             model_name=model,

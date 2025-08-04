@@ -3,13 +3,13 @@ from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.usage import UsageLimits
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
-from RobotAid.self_healing_system.agents.prompts import PromptsOrchestrator
+from RobotAid.self_healing_system.agents.locator_agent.locator_agent import LocatorAgent
+from RobotAid.self_healing_system.agents.prompts.prompts_orchestrator import PromptsOrchestrator
 from RobotAid.self_healing_system.clients.llm_client import get_client_model
-from RobotAid.self_healing_system.schemas import (
+from RobotAid.self_healing_system.schemas.prompt_payload import PromptPayload
+from RobotAid.self_healing_system.schemas.locator_healing import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
-    PromptPayload,
 )
 
 

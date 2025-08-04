@@ -7,13 +7,14 @@ from pydantic_ai.usage import UsageLimits
 from robot.api import logger
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.agents.prompts import PromptsLocator
+from RobotAid.self_healing_system.agents.prompts.prompts_locator import PromptsLocator
 from RobotAid.self_healing_system.clients.llm_client import get_client_model
-from RobotAid.self_healing_system.context_retrieving.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import (
+from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
     DomUtilityFactory,
 )
-from RobotAid.self_healing_system.schemas import LocatorHealingResponse, PromptPayload
+from RobotAid.self_healing_system.schemas.prompt_payload import PromptPayload
+from RobotAid.self_healing_system.schemas.locator_healing import LocatorHealingResponse
 
 
 class BaseLocatorAgent(ABC):

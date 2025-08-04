@@ -10,7 +10,7 @@ from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
 from RobotAid.self_healing_system.reports.report_data import ReportData
 from RobotAid.self_healing_system.reports.report_generator import ReportGenerator
 from RobotAid.self_healing_system.rerun import rerun_keyword_with_fixed_locator
-from RobotAid.self_healing_system.schemas import (
+from RobotAid.self_healing_system.schemas.locator_healing import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
 )

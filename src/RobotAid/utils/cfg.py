@@ -45,6 +45,10 @@ class Cfg(BaseSettings):
         None, env="AZURE_API_KEY",
         description="Azure API key"
     )
+    azure_api_version: Optional[str] = Field(
+        None, env="AZURE_API_VERSION",
+        description="Azure API Version"
+    )
     azure_endpoint: Optional[str] = Field(
         None, env="AZURE_ENDPOINT",
         description="Azure endpoint URL"
