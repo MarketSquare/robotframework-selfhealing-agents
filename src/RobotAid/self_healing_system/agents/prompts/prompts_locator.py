@@ -1,6 +1,6 @@
 from pydantic_ai import RunContext
 
-from RobotAid.self_healing_system.schemas.prompt_payload import PromptPayload
+from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 
 
 class PromptsLocator:

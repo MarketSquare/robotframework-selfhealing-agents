@@ -13,8 +13,8 @@ from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils i
 from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
     DomUtilityFactory,
 )
-from RobotAid.self_healing_system.schemas.prompt_payload import PromptPayload
-from RobotAid.self_healing_system.schemas.locator_healing import LocatorHealingResponse
+from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
+from RobotAid.self_healing_system.schemas.api.locator_healing import LocatorHealingResponse
 
 
 class BaseLocatorAgent(ABC):

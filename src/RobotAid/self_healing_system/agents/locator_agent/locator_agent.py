@@ -9,7 +9,7 @@ from RobotAid.self_healing_system.agents.locator_agent.locator_agent_factory imp
     LocatorAgentFactory,
     LocatorAgentType,
 )
-from RobotAid.self_healing_system.schemas.prompt_payload import PromptPayload
+from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 
 
 class LocatorAgent:
