@@ -5,7 +5,7 @@ from typing import Optional, Any
 from robot.libraries.BuiltIn import BuiltIn
 
 from RobotAid.self_healing_system.kickoff_multi_agent_system import KickoffMultiAgentSystem
-from RobotAid.self_healing_system.reports.report_data import ReportData
+from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
 from RobotAid.self_healing_system.schemas.internal_state.listener_state import ListenerState
 from RobotAid.self_healing_system.schemas.api.locator_healing import (
     LocatorHealingResponse,
@@ -106,6 +106,25 @@ class SelfHealingEngine:
             self._should_generate_locators = True
         return result
 
+    @staticmethod
+    def _rerun_keyword_with_fixed_locator(
+            data: Any, fixed_locator: Optional[str] = None
+    ) -> str:
+        if fixed_locator:
+            data.args = list(data.args)
+            data.args[0] = fixed_locator
+        try:
+            logger.info(
+                f"Re-trying Keyword '{data.name}' with arguments '{data.args}'.",
+                also_console=True,
+            )
+            return_value = BuiltIn().run_keyword(data.name, *data.args)
+            # BuiltIn().run_keyword("Take Screenshot")      # TODO: discuss if this is valuable for other RF-error types
+            return return_value
+        except Exception as e:
+            logger.debug(f"Unexpected error: {e}")
+            raise
+
     def _record_report(
         self,
         data: running.Keyword,
@@ -133,22 +152,3 @@ class SelfHealingEngine:
         self._listener_state.suggestions = None
         self._listener_state.should_generate_locators = True
         self._listener_state.tried_locators.clear()
-
-    @staticmethod
-    def _rerun_keyword_with_fixed_locator(
-            data: Any, fixed_locator: Optional[str] = None
-    ) -> str:
-        if fixed_locator:
-            data.args = list(data.args)
-            data.args[0] = fixed_locator
-        try:
-            logger.info(
-                f"Re-trying Keyword '{data.name}' with arguments '{data.args}'.",
-                also_console=True,
-            )
-            return_value = BuiltIn().run_keyword(data.name, *data.args)
-            # BuiltIn().run_keyword("Take Screenshot")      # TODO: discuss if this is valuable for other RF-error types
-            return return_value
-        except Exception as e:
-            logger.debug(f"Unexpected error: {e}")
-            raise
