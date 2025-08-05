@@ -16,4 +16,4 @@ class BaseReport(ABC):
 
     @abstractmethod
     def _generate_report(self, report_context: ReportContext) -> ReportContext:
-        ...
+        pass
