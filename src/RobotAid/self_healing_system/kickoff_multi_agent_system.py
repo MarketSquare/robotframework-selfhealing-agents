@@ -1,54 +1,33 @@
 import asyncio
+from robot.api import logger
 
 from pydantic_ai.usage import UsageLimits
 from robot import result
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.agents.locator_agent import LocatorAgent
-from RobotAid.self_healing_system.agents.orchestrator_agent import OrchestratorAgent
+from RobotAid.self_healing_system.agents.locator_agent.locator_agent import LocatorAgent
+from RobotAid.self_healing_system.agents.orchestrator_agent.orchestrator_agent import OrchestratorAgent
 from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
     DomUtilityFactory,
 )
 from RobotAid.self_healing_system.context_retrieving.robot_ctx_retriever import RobotCtxRetriever
-from RobotAid.self_healing_system.schemas.locator_healing import (
+from RobotAid.self_healing_system.schemas.api.locator_healing import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
 )
+from RobotAid.utils.logfire_init import init_logfire
 
-try:
-    import logfire
-
-    def scrubbing_callback(m: logfire.ScrubMatch):
-        """Callback function for scrubbing sensitive data in logfire.
-
-        Args:
-            m: ScrubMatch object containing pattern match information.
-
-        Returns:
-            The value if specific patterns match, None otherwise.
-        """
-        if (
-            m.path == ("attributes", "all_messages_events", 0, "content")
-            and m.pattern_match.group(0) == "Password"
-        ):
-            return m.value
-
-        if (
-            m.path == ("attributes", "all_messages_events", 1, "content")
-            and m.pattern_match.group(0) == "credit-card"
-        ):
-            return m.value
-
-    logfire.configure(scrubbing=logfire.ScrubbingOptions(callback=scrubbing_callback))
-
-    logfire.instrument_pydantic_ai()
-except ImportError:
-    print("Logfire is not installed. Skipping logfire configuration.")
+_LIBRARY_MAPPING = {
+    "SeleniumLibrary": "selenium",
+    "Browser": "browser",
+    "AppiumLibrary": "appium",
+}
 
 
-# - Orchestrator agent is implemented for showcase reasons, not directly needed for MVP for locator fix.
-class KickoffSelfHealing:
+class KickoffMultiAgentSystem:
     """Core class for kickoff the self-healing-system for broken robotframework tests."""
+
+    init_logfire()
 
     @staticmethod
     def kickoff_healing(
@@ -66,20 +45,7 @@ class KickoffSelfHealing:
         Returns:
             List of suggestions for healing the current robotframework test.
         """
-
-        # Get result.owner to determine agent_type and dom_utility
-        # Create dict to map result.owner to agent_type and dom_utility
-
-        # Create dict to map result.owner to agent_type and dom_utility tuples
-        library_mapping = {
-            "SeleniumLibrary": "selenium",
-            "Browser": "browser",
-            "AppiumLibrary": "appium",
-            # Add more mappings as needed
-        }
-
-        agent_type = library_mapping.get(result.owner or "", None)
-
+        agent_type = _LIBRARY_MAPPING.get(result.owner or "", None)
         dom_utility = DomUtilityFactory.create_dom_utility(utility_type=agent_type)
 
         # Get context using the library-specific DOM utility (auto-detected)
@@ -102,6 +68,8 @@ class KickoffSelfHealing:
             usage_limits=UsageLimits(request_limit=5, total_tokens_limit=8000),
         )
 
-        response = asyncio.run(orchestrator_agent.run_async(robot_ctx=robot_ctx))
-        print(response)
+        response = asyncio.get_event_loop().run_until_complete(
+            orchestrator_agent.run_async(robot_ctx=robot_ctx)
+        )
+        logger.debug(f"{response}")
         return response
