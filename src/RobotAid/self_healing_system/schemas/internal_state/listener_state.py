@@ -2,7 +2,7 @@ from typing import Dict, Any, List, Optional
 from pydantic import BaseModel, Field
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.reports.report_data import ReportData
+from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
 
 
 class ListenerState(BaseModel):
