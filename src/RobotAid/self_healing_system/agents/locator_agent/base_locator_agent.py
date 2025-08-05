@@ -8,7 +8,7 @@ from robot.api import logger
 
 from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.prompts.prompts_locator import PromptsLocator
-from RobotAid.self_healing_system.clients.llm_client import get_client_model
+from RobotAid.self_healing_system.llm.client_model import get_client_model
 from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
 from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
     DomUtilityFactory,

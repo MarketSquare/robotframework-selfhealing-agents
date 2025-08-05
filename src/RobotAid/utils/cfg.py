@@ -41,6 +41,8 @@ class Cfg(BaseSettings):
         "gpt-4o-mini", env="LOCATOR_AGENT_MODEL",
         description="Model selection for locator agent."
     )
+
+
     azure_api_key: Optional[str] = Field(
         None, env="AZURE_API_KEY",
         description="Azure API key"
@@ -60,6 +62,11 @@ class Cfg(BaseSettings):
     base_url: Optional[str] = Field(
         None, env="BASE_URL",
         description="Base URL endpoint"
+    )
+
+    litellm_api_key: Optional[str] = Field(
+        None, env="LITELLM_API_KEY",
+        description="LiteLLM API key"
     )
 
     def __init__(self, **values: Any) -> None:

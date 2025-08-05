@@ -5,7 +5,7 @@ from pydantic_ai.usage import UsageLimits
 from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.locator_agent.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.prompts.prompts_orchestrator import PromptsOrchestrator
-from RobotAid.self_healing_system.clients.llm_client import get_client_model
+from RobotAid.self_healing_system.llm.client_model import get_client_model
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 from RobotAid.self_healing_system.schemas.api.locator_healing import (
     LocatorHealingResponse,
