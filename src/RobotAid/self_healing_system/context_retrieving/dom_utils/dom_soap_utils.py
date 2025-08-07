@@ -2,6 +2,7 @@ import re
 from typing import List, Optional
 
 from bs4 import BeautifulSoup, Tag
+from lxml import etree
 
 
 class SoupDomUtils:
@@ -438,3 +439,311 @@ class SoupDomUtils:
                     del tag[attr]
 
         return str(soup.body)
+
+    @staticmethod
+    def generate_unique_xpath_selector(
+            element,
+            soup,
+            check_parents=True,
+            check_siblings=True,
+            check_children=True,
+            check_text=True,
+            only_return_unique_selectors=True,
+    ):
+        """Generate a unique XPath for the given element."""
+        if element is None:
+            return ""
+
+        # Step 1: Tag
+        steps = []
+        tag_xpath = f"{element.name}"
+        steps.append(tag_xpath)
+
+        if element.get("content-desc"):
+            content_desc_xpath = f"[@content-desc='{element['content-desc']}']"
+            content_desc_xpath_with_prefix = f"//{element.name}{content_desc_xpath}"
+            if SoupDomUtils.is_xpath_unique(soup, content_desc_xpath_with_prefix):
+                return content_desc_xpath_with_prefix
+            if SoupDomUtils.is_xpath_multiple(soup, content_desc_xpath_with_prefix):
+                steps.append(content_desc_xpath)
+
+        if element.get("resource-id"):
+            content_desc_xpath = f"[@resource-id='{element['resource-id']}']"
+            content_desc_xpath_with_prefix = f"//{element.name}{content_desc_xpath}"
+            if SoupDomUtils.is_xpath_unique(soup, content_desc_xpath_with_prefix):
+                return content_desc_xpath_with_prefix
+            if SoupDomUtils.is_xpath_multiple(soup, content_desc_xpath_with_prefix):
+                steps.append(content_desc_xpath)
+
+        if check_text:
+            # Step 4: Text Content
+            if element.text.strip():
+                for text in element.stripped_strings:
+                    sanitized_text = SoupDomUtils.clean_text_for_xpath(text)
+                    if '"' in sanitized_text:
+                        text_xpath = f"[contains(text(), '{sanitized_text}')]"
+                    elif "'" in sanitized_text:
+                        text_xpath = f'[contains(text(), "{sanitized_text}")]'
+                    else:
+                        text_xpath = f"[contains(text(), '{sanitized_text}')]"
+                    if SoupDomUtils.is_xpath_unique(soup, f"//{element.name}{text_xpath}"):
+                        return f"//{element.name}{text_xpath}"
+
+            elif element.get("text"):
+                sanitized_text = SoupDomUtils.clean_text_for_xpath(element["text"])
+                if '"' in sanitized_text:
+                    text_xpath = f"[contains(@text, '{sanitized_text}')]"
+                elif "'" in sanitized_text:
+                    text_xpath = f'[contains(@text, "{sanitized_text}")]'
+                else:
+                    text_xpath = f"[contains(@text, '{sanitized_text}')]"
+                if SoupDomUtils.is_xpath_unique(soup, f"//{element.name}{text_xpath}"):
+                    return f"//{element.name}{text_xpath}"
+        # Step 2: ID
+        if element.get("id"):
+            id_xpath = f"[@id='{element['id']}']"
+            id_xpath_with_prefix = f"//{element.name}{id_xpath}"
+            if SoupDomUtils.is_xpath_unique(soup, id_xpath_with_prefix):
+                return id_xpath_with_prefix
+            if SoupDomUtils.is_xpath_multiple(soup, id_xpath_with_prefix):
+                steps.append(id_xpath)
+
+        if element.get("name"):
+            name_xpath = f"[@name='{element['name']}']"
+            name_xpath_with_prefix = f"//{element.name}{name_xpath}"
+            if SoupDomUtils.is_xpath_unique(soup, name_xpath_with_prefix):
+                return name_xpath_with_prefix
+            if SoupDomUtils.is_xpath_multiple(soup, name_xpath_with_prefix):
+                steps.append(name_xpath)
+
+        if element.get("type"):
+            type_xpath = f"[@type='{element['type']}']"
+            type_xpath_with_prefix = f"//{element.name}{type_xpath}"
+            if SoupDomUtils.is_xpath_unique(soup, type_xpath_with_prefix):
+                return type_xpath_with_prefix
+            if SoupDomUtils.is_xpath_multiple(soup, type_xpath_with_prefix):
+                steps.append(type_xpath)
+
+        if element.get("placeholder"):
+            placeholder_xpath = f"[@placeholder='{element['placeholder']}']"
+            placeholder_xpath_with_prefix = f"//{element.name}{placeholder_xpath}"
+            if SoupDomUtils.is_xpath_unique(soup, placeholder_xpath_with_prefix):
+                return placeholder_xpath_with_prefix
+            if SoupDomUtils.is_xpath_multiple(soup, placeholder_xpath_with_prefix):
+                steps.append(placeholder_xpath)
+
+        if element.get("role"):
+            role_xpath = f"[@role='{element['role']}']"
+            role_xpath_with_prefix = f"//{element.name}{role_xpath}"
+            if SoupDomUtils.is_xpath_unique(soup, role_xpath_with_prefix):
+                return role_xpath_with_prefix
+            if SoupDomUtils.is_xpath_multiple(soup, role_xpath_with_prefix):
+                steps.append(role_xpath)
+
+        # Step 3: Class
+        if element.get("class"):
+            # Build an XPath condition for all classes using "and"
+            if isinstance(element["class"], list):
+                filtered_classes = [x for x in element["class"] if "hidden" not in x]
+                class_conditions = " and ".join(
+                    [f"contains(@class, '{cls}')" for cls in filtered_classes]
+                )
+                class_xpath = f"[{class_conditions}]"
+            if isinstance(element["class"], str):
+                class_xpath = f"[@class='{element['class']}']"
+            class_xpath_with_prefix = f"//{element.name}{class_xpath}"
+            if SoupDomUtils.is_xpath_unique(soup, class_xpath_with_prefix):
+                return class_xpath_with_prefix
+            if SoupDomUtils.is_xpath_multiple(soup, class_xpath_with_prefix):
+                steps.append(class_xpath)
+
+        if check_text:
+            # Step 4: Text Content
+
+            if element.text.strip():
+                for text in element.stripped_strings:
+                    element_contains_text = True
+                    sanitized_text = SoupDomUtils.clean_text_for_xpath(text)
+                    if '"' in sanitized_text:
+                        text_xpath = f"[contains(text(), '{sanitized_text}')]"
+                    elif "'" in sanitized_text:
+                        text_xpath = f'[contains(text(), "{sanitized_text}")]'
+                    else:
+                        text_xpath = f"[contains(text(), '{sanitized_text}')]"
+                    if SoupDomUtils.is_xpath_unique(soup, f"//{element.name}{text_xpath}"):
+                        return f"//{element.name}{text_xpath}"
+                    elif SoupDomUtils.is_xpath_unique(soup, f"//*{text_xpath}"):
+                        return f"//*{text_xpath}"
+                    elif SoupDomUtils.is_xpath_multiple(soup, f"//{element.name}{text_xpath}"):
+                        steps.append(text_xpath)
+                    elif SoupDomUtils.is_xpath_multiple(soup, f"//*{text_xpath}"):
+                        steps.append(f"//*{text_xpath}")
+
+            elif element.get("text"):
+                element_contains_text = True
+                sanitized_text = SoupDomUtils.clean_text_for_xpath(element["text"])
+                if '"' in sanitized_text:
+                    text_xpath = f"[contains(@text, '{sanitized_text}')]"
+                elif "'" in sanitized_text:
+                    text_xpath = f'[contains(@text, "{sanitized_text}")]'
+                else:
+                    text_xpath = f"[contains(@text, '{sanitized_text}')]"
+                if SoupDomUtils.is_xpath_unique(soup, f"//{element.name}{text_xpath}"):
+                    return f"//{element.name}{text_xpath}"
+                elif SoupDomUtils.is_xpath_multiple(soup, f"//{element.name}{text_xpath}"):
+                    steps.append(text_xpath)
+
+        if SoupDomUtils.is_xpath_unique(soup, f"//{''.join(steps)}"):
+            return f"//{''.join(steps)}"
+
+        if check_parents:
+            # Step 5: Parent Relationships
+            parent = element.parent
+            if parent:
+                parent_xpath = SoupDomUtils.generate_unique_xpath_selector(parent, soup)
+                if parent_xpath:
+                    index = parent.find_all(element.name).index(element) + 1
+                    parent_child_xpath = f"{parent_xpath}/{element.name}[{index}]"
+                    if SoupDomUtils.is_xpath_unique(soup, parent_child_xpath):
+                        return parent_child_xpath
+
+        if check_siblings:
+            # Step 6: Sibling Relationships
+            siblings = element.find_previous_siblings(element.name)
+            for sibling in siblings:
+                previous_sibling_selector = SoupDomUtils.generate_unique_xpath_selector(
+                    sibling,
+                    soup,
+                    check_siblings=False,
+                    check_parents=False,
+                    check_children=False,
+                )
+                if previous_sibling_selector:
+                    sibling_selector = (
+                        f"{previous_sibling_selector}/following-sibling::{''.join(steps)}"
+                    )
+                    if SoupDomUtils.is_xpath_unique(soup, sibling_selector):
+                        return sibling_selector
+
+            siblings = element.find_next_siblings()
+            for sibling in siblings:
+                next_sibling_selector = SoupDomUtils.generate_unique_xpath_selector(
+                    sibling,
+                    soup,
+                    check_siblings=False,
+                    check_parents=False,
+                    check_children=False,
+                )
+                if next_sibling_selector:
+                    sibling_selector = (
+                        f"{next_sibling_selector}/preceding-sibling::{''.join(steps)}"
+                    )
+                    if SoupDomUtils.is_xpath_unique(soup, sibling_selector):
+                        return sibling_selector
+
+        if check_parents:
+            parent_level = 0
+            max_level = 10
+            # Step 5: Parent and Sibling Relationships
+            parent_selectors = []
+            for parent in element.parents:
+                if (
+                        parent
+                        and not SoupDomUtils.has_child_dialog_without_open(parent)
+                        and parent.name != "[document]"
+                ):
+                    parent_level += 1
+                    if parent_level <= max_level:
+                        parent_selector = SoupDomUtils.generate_unique_xpath_selector(
+                            parent,
+                            soup,
+                            check_children=False,
+                            check_siblings=True,
+                            check_parents=False,
+                            check_text=True,
+                            only_return_unique_selectors=False,
+                        )
+                        if parent_selector:
+                            parent_selectors.append(parent_selector)
+                            parent_child_selector = (
+                                f"{'/'.join(reversed(parent_selectors))}/{''.join(steps)}"
+                            )
+                            current_parent_child_selector = (
+                                f"{parent_selector}//{''.join(steps)}"
+                            )
+                            if SoupDomUtils.is_selector_unique(soup, current_parent_child_selector):
+                                return current_parent_child_selector
+                            elif SoupDomUtils.is_selector_unique(soup, parent_child_selector):
+                                return parent_child_selector
+
+        # if check_children:
+        #     # Step 7: Child Relationships
+        #     children = element.find_all(recursive=False)
+        #     for child in children:
+        #         child_text = clean_text_for_xpath(child.text)
+        #         if child_text:
+        #             if '"' in child_text:
+        #                 child_text_xpath = f"{element.name}/{child.name}[contains(text(), '{child_text}')]"
+        #             elif "'" in child_text:
+        #                 child_text_xpath = f'{element.name}/{child.name}[contains(text(), "{child_text}")]'
+        #             else:
+        #                 child_text_xpath = f"{element.name}/{child.name}[contains(text(), '{child_text}')]"
+
+        #             if is_xpath_unique(soup, child_text_xpath):
+        #                 return child_text_xpath
+
+        if only_return_unique_selectors:
+            if SoupDomUtils.is_xpath_unique(soup, f"//{''.join(steps)}"):
+                # Combine steps into a final XPath
+                return f"//{''.join(steps)}"
+        else:
+            if SoupDomUtils.is_xpath_unique(soup, f"//{''.join(steps)}") or SoupDomUtils.is_xpath_multiple(
+                    soup, f"//{''.join(steps)}"
+            ):
+                return f"//{''.join(steps)}"
+
+    @staticmethod
+    def is_xpath_unique(soup, xpath):
+        """Check if the XPath selector matches only one element."""
+        try:
+            if soup.is_xml:
+                tree = etree.XML(str(soup.hierarchy), parser=etree.HTMLParser())
+            else:
+                tree = etree.HTML(str(soup), parser=etree.HTMLParser())
+        except Exception as e:
+            print(f"Error in is_xpath_unique: {e}\nXpath: {xpath}")
+            return False
+        try:
+            # Use the XPath to find matching elements
+            elements = tree.xpath(xpath)
+            # Return True if exactly one element matches
+            return len(elements) == 1
+        except Exception as e:
+            print(f"Error in is_xpath_unique: {e}\nXpath: {xpath}")
+            return False
+
+    @staticmethod
+    def is_xpath_multiple(soup, xpath):
+        """Check if the XPath selector matches multiple elements."""
+        try:
+            # Parse the HTML content using lxml
+            tree = etree.HTML(str(soup), parser=etree.HTMLParser())
+        except:
+            try:
+                tree = etree.HTML(str(soup.hierarchy), parser=etree.HTMLParser())
+            except Exception as e:
+                print(f"Error in is_xpath_unique: {e}\nXpath: {xpath}")
+                return False
+        try:
+            # Use the XPath to find matching elements
+            elements = tree.xpath(xpath)
+            # Return True if more than one element matches
+            return len(elements) > 1
+        except Exception as e:
+            print(f"Error in is_xpath_multiple: {e}")
+            return False
+
+    @staticmethod
+    def clean_text_for_xpath(text):
+        """Sanitize text for use in an XPath expression."""
+        return re.sub(r"\s+", " ", text.strip())

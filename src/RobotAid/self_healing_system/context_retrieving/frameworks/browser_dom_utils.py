@@ -3,17 +3,7 @@ from typing import Optional
 from bs4 import BeautifulSoup
 from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import (
-    BaseDomUtils,
-    generate_unique_css_selector,
-    has_child_dialog_without_open,
-    has_direct_text,
-    has_parent_dialog_without_open,
-    is_div_in_li,
-    is_headline,
-    is_leaf_or_lowest,
-    is_p,
-)
+from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
 from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_soap_utils import SoupDomUtils
 
 
@@ -289,7 +279,7 @@ class BrowserDomUtils(BaseDomUtils):
                     "input",
                     "label",
                     "li",
-                    has_direct_text,
+                    SoupDomUtils.has_direct_text,
                 ]
                 elements = soup.find_all(element_types)
             case "Select Options By" | "Deselect Options":
@@ -299,19 +289,19 @@ class BrowserDomUtils(BaseDomUtils):
                 element_types = ["input", "button", "checkbox"]
                 elements = soup.find_all(element_types)
             case "Get Text":
-                element_types = ["label", "div", "span", has_direct_text]
+                element_types = ["label", "div", "span", SoupDomUtils.has_direct_text]
                 elements = soup.find_all(element_types)
 
         filtered_elements = [
             elem
             for elem in elements
             if (
-                (is_leaf_or_lowest(elem) or has_direct_text(elem))
-                and (not has_parent_dialog_without_open(elem))
-                and (not has_child_dialog_without_open(elem))
-                and (not is_headline(elem))
-                and (not is_div_in_li(elem))
-                and (not is_p(elem))
+                (SoupDomUtils.is_leaf_or_lowest(elem) or SoupDomUtils.has_direct_text(elem))
+                and (not SoupDomUtils.has_parent_dialog_without_open(elem))
+                and (not SoupDomUtils.has_child_dialog_without_open(elem))
+                and (not SoupDomUtils.is_headline(elem))
+                and (not SoupDomUtils.is_div_in_li(elem))
+                and (not SoupDomUtils.is_p(elem))
             )
         ]
 
@@ -319,7 +309,7 @@ class BrowserDomUtils(BaseDomUtils):
         # Generate and display unique selectors
         for elem in filtered_elements:
             try:
-                locator = get_locator(elem, soup)
+                locator = BrowserDomUtils._get_locator(elem, soup)
             except Exception:
                 locator = None
             if locator:
@@ -447,13 +437,13 @@ class BrowserDomUtils(BaseDomUtils):
         except Exception:
             return []
 
-
-def get_locator(elem, soup):
-    selector = generate_unique_css_selector(elem, soup)
-    if selector:
-        return "css=" + selector
-    # else:
-    #     selector = generate_unique_xpath_selector(elem, soup)
-    #     if selector:
-    #         return "xpath=" + selector
-    return None
+    @staticmethod
+    def _get_locator(elem, soup):
+        selector = SoupDomUtils.generate_unique_css_selector(elem, soup)
+        if selector:
+            return "css=" + selector
+        # else:
+        #     selector = generate_unique_xpath_selector(elem, soup)
+        #     if selector:
+        #         return "xpath=" + selector
+        return None
