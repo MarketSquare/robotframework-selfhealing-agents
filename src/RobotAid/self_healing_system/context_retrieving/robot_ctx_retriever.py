@@ -8,15 +8,16 @@ from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils i
 from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
     DomUtilityFactory,
 )
+from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 
 
 class RobotCtxRetriever:
     """Retrieves context for the self-healing process of the LLM."""
 
     @staticmethod
-    def get_context(
+    def get_context_payload(
         result: result.Keyword, dom_utility: Optional[BaseDomUtils] = None
-    ) -> dict:
+    ) -> PromptPayload:
         """Returns context for self-healing process of the LLM.
 
         Args:
@@ -36,16 +37,16 @@ class RobotCtxRetriever:
 
         dom_tree: str = dom_utility.get_dom_tree()
 
-        robot_ctx: dict = {
-            "robot_code_line": robot_code_line,
-            "error_msg": result.message,
-            "dom_tree": dom_tree,
-            "keyword_name": result.name,
-            "keyword_args": result.args,
-            "failed_locator": BuiltIn().replace_variables(result.args[0]),
-            "library_type": dom_utility.get_library_type(),
-        }
-        return robot_ctx
+        robot_ctx_payload: PromptPayload = PromptPayload(
+            robot_code_line=robot_code_line,
+            error_msg=result.message,
+            dom_tree=dom_tree,
+            keyword_name=result.name,
+            keyword_args=result.args,
+            failed_locator=BuiltIn().replace_variables(result.args[0]),
+            tried_locator_memory=[]
+        )
+        return robot_ctx_payload
 
     @staticmethod
     def _format_keyword_call(result: result.Keyword) -> str:

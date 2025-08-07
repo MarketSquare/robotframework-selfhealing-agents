@@ -17,16 +17,16 @@ class PromptsOrchestrator:
     user_msg: str = "Return pure JSON. No explanations."
 
     @staticmethod
-    def get_user_msg(ctx: PromptPayload) -> str:
+    def get_user_msg(robot_ctx_payload: PromptPayload) -> str:
         """Assembles user message (a.k.a. user prompt) based on context.
 
         Args:
-            ctx (RunContext): PydanticAI context. Contains information about keyword failure.
+            robot_ctx_payload (RunContext): PydanticAI context. Contains information about keyword failure.
 
         Returns:
             (str): Assembled user message (a.k.a. user prompt) based on context."""
         return (
-            f"Call the 'get_healed_locators' tool for the broken locator: `{ctx.failed_locator}`.\n"
+            f"Call the 'get_healed_locators' tool for the broken locator: `{robot_ctx_payload.failed_locator}`.\n"
             # "Call the 'get_healed_locators' tool ONCE and return the result as pure JSON.\n"
             # "OUTPUT REQUIREMENT: Return ONLY the tool's response.\n"
             # "DO NOT describe, explain, or add any text.\n"

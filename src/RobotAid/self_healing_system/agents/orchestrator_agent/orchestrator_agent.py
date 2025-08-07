@@ -76,25 +76,22 @@ class OrchestratorAgent:
         )
 
     async def run_async(
-        self, robot_ctx: dict
+        self, robot_ctx_payload: PromptPayload
     ) -> str | LocatorHealingResponse | NoHealingNeededResponse:
         """Run orchestration asynchronously.
 
         Args:
-            robot_ctx: Contains context for the self-healing process of the LLM.
+            robot_ctx_payload: Contains context for the self-healing process of the LLM.
 
         Returns:
             List of repaired locator suggestions.
         """
-        payload: PromptPayload = PromptPayload(**robot_ctx)
-
-        # Only run the agent in case of a locator error
-        if not self.locator_agent.is_failed_locator_error(payload.error_msg):
-            return NoHealingNeededResponse(message=payload.error_msg)
+        if not self.locator_agent.is_failed_locator_error(robot_ctx_payload.error_msg):
+            return NoHealingNeededResponse(message=robot_ctx_payload.error_msg)
 
         response: AgentRunResult = await self.agent.run(
-            PromptsOrchestrator.get_user_msg(payload),
-            deps=payload,
+            PromptsOrchestrator.get_user_msg(robot_ctx_payload),
+            deps=robot_ctx_payload,
             usage_limits=self.usage_limits,
             model_settings={"temperature": 0.1, "parallel_tool_calls": False},
         )

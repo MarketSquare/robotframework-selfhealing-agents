@@ -16,6 +16,7 @@ from RobotAid.self_healing_system.schemas.api.locator_healing import (
     NoHealingNeededResponse,
 )
 from RobotAid.utils.logfire_init import init_logfire
+from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 
 _LIBRARY_MAPPING = {
     "SeleniumLibrary": "selenium",
@@ -49,10 +50,10 @@ class KickoffMultiAgentSystem:
         dom_utility = DomUtilityFactory.create_dom_utility(utility_type=agent_type)
 
         # Get context using the library-specific DOM utility (auto-detected)
-        robot_ctx: dict = RobotCtxRetriever.get_context(
+        robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(
             result=result, dom_utility=dom_utility
         )
-        robot_ctx["tried_locator_memory"] = tried_locator_memory
+        robot_ctx_payload.tried_locator_memory = tried_locator_memory
 
         # Create appropriate locator agent (let LocatorAgent handle auto-detection)
         locator_agent = LocatorAgent(
@@ -69,7 +70,7 @@ class KickoffMultiAgentSystem:
         )
 
         response = asyncio.get_event_loop().run_until_complete(
-            orchestrator_agent.run_async(robot_ctx=robot_ctx)
+            orchestrator_agent.run_async(robot_ctx_payload=robot_ctx_payload)
         )
         logger.debug(f"{response}")
         return response
