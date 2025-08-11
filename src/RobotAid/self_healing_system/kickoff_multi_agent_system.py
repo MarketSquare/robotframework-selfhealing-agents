@@ -4,8 +4,8 @@ from robot.api import logger
 from pydantic_ai.usage import UsageLimits
 from robot import result
 
+from RobotAid.self_healing_system.agents.locator_agent.locator_agent_factory import LocatorAgentFactory
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.agents.locator_agent.locator_agent import LocatorAgent
 from RobotAid.self_healing_system.agents.orchestrator_agent.orchestrator_agent import OrchestratorAgent
 from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
     DomUtilityFactory,
@@ -46,22 +46,16 @@ class KickoffMultiAgentSystem:
         Returns:
             List of suggestions for healing the current robotframework test.
         """
+        # TODO: maybe do a robust check to make sure the owner library is given 100%
         agent_type = _LIBRARY_MAPPING.get(result.owner or "", None)
         dom_utility = DomUtilityFactory.create_dom_utility(utility_type=agent_type)
 
-        # Get context using the library-specific DOM utility (auto-detected)
         robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(
             result=result, dom_utility=dom_utility
         )
         robot_ctx_payload.tried_locator_memory = tried_locator_memory
 
-        # Create appropriate locator agent (let LocatorAgent handle auto-detection)
-        locator_agent = LocatorAgent(
-            cfg=cfg,
-            usage_limits=UsageLimits(request_limit=5, total_tokens_limit=8000),
-            dom_utility=dom_utility,
-            agent_type=agent_type,
-        )
+        locator_agent = LocatorAgentFactory.create_agent(agent_type, cfg, None, dom_utility)
 
         orchestrator_agent: OrchestratorAgent = OrchestratorAgent(
             locator_agent=locator_agent,
