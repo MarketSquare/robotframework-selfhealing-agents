@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Optional, Union
 
-from robot.libraries.BuiltIn import BuiltIn
 
 from RobotAid.self_healing_system.context_retrieving.frameworks.appium_dom_utils import (
     AppiumDomUtils,
@@ -50,8 +49,6 @@ class DomUtilityFactory:
         Raises:
             ValueError: If the utility type is not supported.
         """
-        if utility_type is None:
-            utility_type = DomUtilityFactory._auto_detect_utility_type()
 
         # Convert string to enum if necessary
         if isinstance(utility_type, str):
@@ -67,74 +64,6 @@ class DomUtilityFactory:
             return AppiumDomUtils(library_instance)
         else:
             raise ValueError(f"Unsupported DOM utility type: {utility_type}")
-
-    @staticmethod
-    def _auto_detect_utility_type() -> DomUtilityType:
-        """Auto-detect the DOM utility type based on available Robot Framework libraries.
-
-        Returns:
-            DomUtilityType: The detected utility type.
-
-        Raises:
-            ValueError: If no supported libraries are detected.
-        """
-        builtin = BuiltIn()
-
-        # Check for Browser library first (preferred for new projects)
-        try:
-            builtin.get_library_instance("Browser")
-            return DomUtilityType.BROWSER
-        except Exception:
-            pass
-        try:
-            builtin.get_library_instance("SeleniumLibrary")
-            return DomUtilityType.SELENIUM
-        except Exception:
-            pass
-        try:
-            builtin.get_library_instance("AppiumLibrary")
-            return DomUtilityType.APPIUM
-        except Exception:
-            pass
-
-        # Default to Browser if no libraries are detected (for testing scenarios)
-        print(
-            "Warning: No supported Robot Framework libraries detected. Defaulting to Browser utility."
-        )
-        return DomUtilityType.BROWSER
-
-    @staticmethod
-    def get_supported_types() -> list[str]:
-        """Get a list of supported DOM utility types.
-
-        Returns:
-            list[str]: List of supported utility type strings.
-        """
-        return [utility.value for utility in DomUtilityType]
-
-    @staticmethod
-    def detect_library_from_keyword_result(result) -> Optional[DomUtilityType]:
-        """Detect the DOM utility type from a Robot Framework keyword result.
-
-        Args:
-            result: Robot Framework keyword result object with an 'owner' attribute.
-
-        Returns:
-            DomUtilityType: The detected utility type, or None if not detected.
-        """
-        if not hasattr(result, "owner"):
-            return None
-
-        owner = getattr(result, "owner", "").lower()
-
-        if "browser" in owner:
-            return DomUtilityType.BROWSER
-        elif "selenium" in owner:
-            return DomUtilityType.SELENIUM
-        elif "appium" in owner:
-            return DomUtilityType.APPIUM
-
-        return None
 
     @staticmethod
     def create_dom_utility_from_agent_type(
