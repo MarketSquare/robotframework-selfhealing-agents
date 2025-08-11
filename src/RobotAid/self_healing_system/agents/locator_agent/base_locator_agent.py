@@ -7,12 +7,12 @@ from pydantic_ai.usage import UsageLimits
 from robot.api import logger
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.agents.prompts.prompts_locator import PromptsLocator
+from RobotAid.self_healing_system.agents.prompts.locator.prompts_locator import (
+    PromptsLocatorGenerationAgent,
+    PromptsLocatorSelectionAgent
+)
 from RobotAid.self_healing_system.llm.client_model import get_client_model
 from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
-    DomUtilityFactory,
-)
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 from RobotAid.self_healing_system.schemas.api.locator_healing import LocatorHealingResponse
 
@@ -27,14 +27,14 @@ class BaseLocatorAgent(ABC):
         usage_limits: Usage token and request limits.
         dom_utility: DOM utility instance for the specific library.
     """
-
+    # TODO: Request limit, token limit to .env, optional default keep with current values
     def __init__(
         self,
         cfg: Cfg,
+        dom_utility: BaseDomUtils,
         usage_limits: UsageLimits = UsageLimits(
             request_limit=5, total_tokens_limit=2000
-        ),
-        dom_utility: Optional[BaseDomUtils] = None,
+        )
     ) -> None:
         """Initialize the BaseLocatorAgent.
 
@@ -46,8 +46,7 @@ class BaseLocatorAgent(ABC):
         """
         self.usage_limits: UsageLimits = usage_limits
         self.cfg = cfg
-        self._provided_dom_utility = dom_utility
-        self._dom_utility: Optional[BaseDomUtils] = None
+        self._dom_utility: BaseDomUtils = dom_utility
         self.use_llm_for_locator_generation = cfg.use_llm_for_locator_generation
 
         # Initialize agent attributes
@@ -64,7 +63,7 @@ class BaseLocatorAgent(ABC):
                     model=cfg.locator_agent_model,
                     cfg=cfg,
                 ),
-                system_prompt=self._get_system_prompt(),
+                system_prompt=PromptsLocatorGenerationAgent.get_system_msg(self._dom_utility),
                 deps_type=PromptPayload,
                 output_type=LocatorHealingResponse,
             )
@@ -79,7 +78,7 @@ class BaseLocatorAgent(ABC):
                     model=cfg.locator_agent_model,
                     cfg=cfg,
                 ),
-                system_prompt=PromptsLocator.system_msg_choose_locator,
+                system_prompt=PromptsLocatorSelectionAgent.get_system_msg(),
                 deps_type=PromptPayload,
                 output_type=str,
             )
@@ -172,26 +171,9 @@ class BaseLocatorAgent(ABC):
             except Exception as e:
                 raise ModelRetry(f"Invalid locator healing response: {str(e)}") from e
 
-    @property
-    def dom_utility(self) -> Optional[BaseDomUtils]:
-        """Get the DOM utility instance, creating it lazily if needed.
-
-        Returns:
-            The DOM utility instance, or None if creation failed.
-        """
-        if self._dom_utility is None and self._provided_dom_utility is None:
-            # Create DOM utility based on agent type
-            agent_type = self.get_agent_type()
-            self._dom_utility = DomUtilityFactory.create_dom_utility_from_agent_type(
-                agent_type
-            )
-        elif self._provided_dom_utility is not None:
-            return self._provided_dom_utility
-        return self._dom_utility
-
     async def heal_async(
         self, ctx: RunContext[PromptPayload]
-    ) -> LocatorHealingResponse:
+    ) -> LocatorHealingResponse | str:
         """Generates suggestions for fixing broken locator.
 
         Args:
@@ -212,13 +194,10 @@ class BaseLocatorAgent(ABC):
         self, ctx: RunContext[PromptPayload]
     ) -> LocatorHealingResponse:
         """Generate locator suggestions using LLM approach."""
-        if self.generation_agent is None:
-            raise ModelRetry("LLM generation agent is not available")
-
         response: AgentRunResult[
             LocatorHealingResponse
         ] = await self.generation_agent.run(
-            PromptsLocator.get_user_msg(ctx=ctx),
+            PromptsLocatorGenerationAgent.get_user_msg(ctx=ctx),
             deps=ctx.deps,
             usage_limits=self.usage_limits,
             model_settings={"temperature": 0.1},
@@ -233,17 +212,13 @@ class BaseLocatorAgent(ABC):
         self, ctx: RunContext[PromptPayload]
     ) -> LocatorHealingResponse:
         """Generate locator suggestions using DOM utilities approach."""
-        if self.dom_utility is None:
-            raise ModelRetry("DOM utility is required for non-LLM locator generation")
-
         try:
-            # Use DOM utility to generate locator proposals
             failed_locator = ctx.deps.failed_locator
             keyword_name = ctx.deps.keyword_name
 
             metadata_list = []
 
-            proposals = self.dom_utility.get_locator_proposals(
+            proposals = self._dom_utility.get_locator_proposals(
                 failed_locator, keyword_name
             )
 
@@ -305,17 +280,11 @@ class BaseLocatorAgent(ABC):
 
             for loc in sorted_proposals:
                 # Log each proposal for debugging
-                metadata = self.dom_utility.get_locator_metadata(loc)
+                metadata = self._dom_utility.get_locator_metadata(loc)
                 metadata_list.append(metadata[0] if metadata else {})
 
-            # Use the selection agent to choose the best locator
-            if self.selection_agent is None:
-                raise ModelRetry(
-                    "Selection agent is not available for DOM-based approach"
-                )
-
             response: AgentRunResult[str] = await self.selection_agent.run(
-                user_prompt=PromptsLocator.get_user_msg_choose_locator(
+                user_prompt=PromptsLocatorSelectionAgent.get_user_msg(
                     ctx=ctx,
                     suggestions=sorted_proposals,
                     metadata=metadata_list,
@@ -330,7 +299,6 @@ class BaseLocatorAgent(ABC):
                 import json
 
                 try:
-                    # Try to parse JSON response
                     parsed_response = json.loads(response.output)
                     if (
                         isinstance(parsed_response, dict)
@@ -350,15 +318,6 @@ class BaseLocatorAgent(ABC):
             raise ModelRetry("Selection response is not a valid string.")
         except Exception as e:
             raise ModelRetry(f"DOM-based locator generation failed: {str(e)}")
-
-    @abstractmethod
-    def _get_system_prompt(self) -> str:
-        """Get the system prompt specific to this locator agent flavor.
-
-        Returns:
-            The system prompt for this agent flavor.
-        """
-        pass
 
     @abstractmethod
     def _process_locator(self, locator: str) -> str:
@@ -381,21 +340,10 @@ class BaseLocatorAgent(ABC):
         Returns:
             True if the locator is valid and unique, False otherwise.
         """
-        if self.dom_utility is None:
-            return True
         try:
-            return self.dom_utility.is_locator_valid(locator)
+            return self._dom_utility.is_locator_valid(locator)
         except Exception:
             return False
-
-    @abstractmethod
-    def get_agent_type(self) -> str:
-        """Get the type identifier for this agent flavor.
-
-        Returns:
-            The agent type identifier.
-        """
-        pass
 
     def _is_locator_unique(self, locator: str) -> bool:
         """Check if the locator is unique in the current context.
@@ -406,10 +354,8 @@ class BaseLocatorAgent(ABC):
         Returns:
             True if the locator is unique, False otherwise.
         """
-        if self.dom_utility is None:
-            return True
         try:
-            return self.dom_utility.is_locator_unique(locator)
+            return self._dom_utility.is_locator_unique(locator)
         except Exception:
             return False
 
@@ -422,10 +368,8 @@ class BaseLocatorAgent(ABC):
         Returns:
             True if the element is clickable, False otherwise.
         """
-        if self.dom_utility is None:
-            return True
         try:
-            return self.dom_utility.is_element_clickable(locator)
+            return self._dom_utility.is_element_clickable(locator)
         except Exception:
             return False
 

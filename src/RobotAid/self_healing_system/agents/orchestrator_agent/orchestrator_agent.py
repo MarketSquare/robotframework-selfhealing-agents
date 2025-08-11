@@ -3,17 +3,16 @@ from pydantic_ai.agent import AgentRunResult
 from pydantic_ai.usage import UsageLimits
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.agents.locator_agent.locator_agent import LocatorAgent
-from RobotAid.self_healing_system.agents.prompts.prompts_orchestrator import PromptsOrchestrator
+from RobotAid.self_healing_system.agents.prompts.orchestrator.prompts_orchestrator import PromptsOrchestrator
 from RobotAid.self_healing_system.llm.client_model import get_client_model
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 from RobotAid.self_healing_system.schemas.api.locator_healing import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
 )
+from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
 
 
-# MVP Orchestrator Agent - will be adjusted to context and when additional agents will be implemented.
 class OrchestratorAgent:
     """Routes raw failure text to the appropriate healing tool.
 
@@ -22,34 +21,10 @@ class OrchestratorAgent:
         locator_agent: LocatorAgent instance.
     """
 
-    async def get_healed_locators(
-        self, ctx: RunContext[PromptPayload], broken_locator: str
-    ) -> str:
-        """Get a list of healed locator suggestions for a broken locator.
-
-        Args:
-            ctx: PydanticAI tool context.
-            broken_locator: Locator that needs to be healed.
-
-        Returns:
-            List of repaired locator suggestions in JSON format.
-
-        Raises:
-            ModelRetry: If locator healing fails.
-
-        Example:
-            get_healed_locators(ctx, broken_locator="#btn-login")
-            '{"suggestions": ["#btn-login-fixed", "input[type=\'submit\']", "css=.btn-login"]}'
-        """
-        try:
-            return await self.locator_agent.heal_async(ctx=ctx)
-        except Exception as e:
-            raise ModelRetry(f"Locator healing failed: {str(e)}")
-
     def __init__(
         self,
         cfg: Cfg,
-        locator_agent: LocatorAgent,
+        locator_agent: BaseLocatorAgent,
         usage_limits: UsageLimits = UsageLimits(
             request_limit=5, total_tokens_limit=2000
         ),
@@ -62,7 +37,7 @@ class OrchestratorAgent:
             usage_limits: Token and request limits for the agent. Defaults to
                 UsageLimits with request_limit=5 and total_tokens_limit=2000.
         """
-        self.locator_agent: LocatorAgent = locator_agent
+        self.locator_agent: BaseLocatorAgent = locator_agent
         self.usage_limits: UsageLimits = usage_limits
         self.agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
             model=get_client_model(
@@ -72,7 +47,7 @@ class OrchestratorAgent:
             ),
             system_prompt=PromptsOrchestrator.system_msg,
             deps_type=PromptPayload,
-            output_type=[self.get_healed_locators, str],
+            output_type=[self._get_healed_locators, str],
         )
 
     async def run_async(
@@ -96,3 +71,24 @@ class OrchestratorAgent:
             model_settings={"temperature": 0.1, "parallel_tool_calls": False},
         )
         return response.output
+
+    async def _get_healed_locators(self, ctx: RunContext[PromptPayload]) -> str:
+        """Get a list of healed locator suggestions for a broken locator.
+
+        Args:
+            ctx: PydanticAI tool context.
+
+        Returns:
+            List of repaired locator suggestions in JSON format.
+
+        Raises:
+            ModelRetry: If locator healing fails.
+
+        Example:
+            get_healed_locators(ctx, broken_locator="#btn-login")
+            '{"suggestions": ["#btn-login-fixed", "input[type=\'submit\']", "css=.btn-login"]}'
+        """
+        try:
+            return await self.locator_agent.heal_async(ctx=ctx)
+        except Exception as e:
+            raise ModelRetry(f"Locator healing failed: {str(e)}")

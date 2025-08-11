@@ -4,28 +4,7 @@ from pydantic_ai.usage import UsageLimits
 
 from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
-from RobotAid.self_healing_system.agents.prompts.prompts_locator import PromptsLocator
 from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
-
-
-def convert_locator_to_selenium(locator: str) -> str:
-    """Convert a locator to Selenium library compatible format.
-
-    Args:
-        locator: The locator to convert.
-
-    Returns:
-        The converted locator compatible with Selenium library.
-    """
-    locator = locator.strip()
-    if locator.startswith("css="):
-        locator = "css:" + locator[4:]
-    elif locator.startswith("xpath="):
-        locator = "xpath:" + locator[6:]
-    locator = locator.replace(":has-text", ":contains")
-    locator = locator.replace(":text(", "text()=")
-
-    return locator
 
 
 class SeleniumLocatorAgent(BaseLocatorAgent):
@@ -51,26 +30,7 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
                 UsageLimits with request_limit=5 and total_tokens_limit=2000.
             dom_utility: Optional DOM utility instance for validation.
         """
-        super().__init__(cfg, usage_limits, dom_utility)
-
-    def _get_system_prompt(self) -> str:
-        """Get the Selenium library specific system prompt.
-
-        Returns:
-            The system prompt containing Selenium library specific instructions
-            for locator generation and formatting.
-        """
-        return (
-            f"{PromptsLocator.system_msg}\n"
-            "SELENIUM LIBRARY SPECIFIC INSTRUCTIONS:\n"
-            "- Keywords like 'Input Text', 'Input Password' or 'Press Keys'  are always related to 'input' or 'textarea' elements.\n"
-            "- Keywords like 'Click' are often  related to 'button','checkbox', 'a' or 'input' elements.\n"
-            "- Keywords like 'Select From List' are often related to 'select' elements.\n"
-            "- Keywords like 'Select Checkbox' are often related to 'checkbox' elements.\n"
-            "- Prefix CSS selectors with 'css:' \n"
-            "- Prefix XPath expressions with 'xpath:'\n"
-            '- Example response: {"suggestions": ["css:input[id=\'my_id\']", "xpath://*[contains(text(),\'Login\')]", "css:button:contains(Submit)"]}\n'
-        )
+        super().__init__(cfg, dom_utility, usage_limits)
 
     def _process_locator(self, locator: str) -> str:
         """Process locator for Selenium library compatibility.
@@ -81,7 +41,7 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
         Returns:
             The processed locator compatible with Selenium library format.
         """
-        return convert_locator_to_selenium(locator)
+        return self._convert_locator_to_selenium(locator)
 
     def _is_locator_valid(self, locator: str) -> bool:
         """Validate locator using Selenium library DOM utilities.
@@ -93,21 +53,10 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
             True if the locator is valid, False otherwise.
             Returns True if DOM utility is not available.
         """
-        if self.dom_utility is None:
-            return True  # Skip validation if DOM utility is not available
-
         try:
-            return self.dom_utility.is_locator_valid(locator)
+            return self._dom_utility.is_locator_valid(locator)
         except Exception:
             return False
-
-    def get_agent_type(self) -> str:
-        """Get the agent type identifier.
-
-        Returns:
-            The string identifier for the selenium agent type.
-        """
-        return "selenium"
 
     @staticmethod
     def is_failed_locator_error(message: str) -> bool:
@@ -126,3 +75,23 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
             or ("Page should have contained" in message)
             or ("invalid element state" in message)
         )
+
+    @staticmethod
+    def _convert_locator_to_selenium(locator: str) -> str:
+        """Convert a locator to Selenium library compatible format.
+
+        Args:
+            locator: The locator to convert.
+
+        Returns:
+            The converted locator compatible with Selenium library.
+        """
+        locator = locator.strip()
+        if locator.startswith("css="):
+            locator = "css:" + locator[4:]
+        elif locator.startswith("xpath="):
+            locator = "xpath:" + locator[6:]
+        locator = locator.replace(":has-text", ":contains")
+        locator = locator.replace(":text(", "text()=")
+
+        return locator

@@ -12,10 +12,7 @@ from RobotAid.self_healing_system.agents.locator_agent.selenium_locator_agent im
     SeleniumLocatorAgent,
 )
 from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
-    DomUtilityFactory,
-    DomUtilityType,
-)
+from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import DomUtilityType
 
 
 class LocatorAgentType(Enum):
@@ -62,17 +59,6 @@ class LocatorAgentFactory:
 
         # Normalize agent type to enum
         agent_type = LocatorAgentFactory._normalize_agent_type(agent_type)
-
-        if dom_utility is None:
-            dom_utility_type = LocatorAgentFactory._agent_type_to_dom_type(agent_type)
-            try:
-                dom_utility = DomUtilityFactory.create_dom_utility(dom_utility_type)
-            except Exception as e:
-                print(
-                    f"Warning: Could not create DOM utility for {agent_type.value}: {e}"
-                )
-                dom_utility = None
-
         if agent_type == LocatorAgentType.BROWSER:
             return BrowserLocatorAgent(
                 cfg=cfg,
@@ -88,7 +74,8 @@ class LocatorAgentFactory:
         else:
             # For now, APPIUM is not implemented, but we can add it easily
             raise ValueError(
-                f"Unsupported agent type: {agent_type}. Supported types: {[t.value for t in LocatorAgentType if t != LocatorAgentType.APPIUM]}"
+                f"Unsupported agent type: {agent_type}. Supported types:"
+                f" {[t.value for t in LocatorAgentType if t != LocatorAgentType.APPIUM]}"
             )
 
     @staticmethod
@@ -120,122 +107,3 @@ class LocatorAgentFactory:
                 )
         else:
             raise ValueError(f"Unsupported agent type: {type(agent_type)}")
-
-    @staticmethod
-    def _agent_type_to_dom_type(agent_type: LocatorAgentType) -> DomUtilityType:
-        """Convert LocatorAgentType to DomUtilityType.
-
-        Args:
-            agent_type: The locator agent type.
-
-        Returns:
-            The corresponding DOM utility type.
-        """
-        return DomUtilityType(agent_type.value)
-
-    @staticmethod
-    def get_supported_types() -> list[str]:
-        """Get a list of supported agent types.
-
-        Returns:
-            List of supported agent type strings.
-        """
-        supported_types = [
-            LocatorAgentType.BROWSER.value,
-            LocatorAgentType.SELENIUM.value,
-            # Note: APPIUM is not yet implemented
-        ]
-        return supported_types
-
-    @staticmethod
-    def detect_agent_type() -> LocatorAgentType:
-        """Detect the appropriate agent type based on available libraries.
-
-        This method uses the DOM utility factory's detection logic to ensure
-        consistency across the system.
-
-        Returns:
-            The detected agent type.
-        """
-        try:
-            dom_type = DomUtilityFactory._auto_detect_utility_type()
-            return LocatorAgentType(dom_type.value)
-        except Exception:
-            return LocatorAgentType.BROWSER
-
-    @staticmethod
-    def detect_agent_type_from_keyword_result(result) -> Optional[LocatorAgentType]:
-        """Detect the locator agent type from a Robot Framework keyword result.
-
-        Args:
-            result: Robot Framework keyword result object with an 'owner' attribute.
-
-        Returns:
-            The detected agent type, or None if not detected.
-        """
-        dom_type = DomUtilityFactory.detect_library_from_keyword_result(result)
-        if dom_type is None:
-            return None
-        return LocatorAgentType(dom_type.value)
-
-    @staticmethod
-    def create_auto_detected_agent(
-        cfg: Cfg,
-        usage_limits: Optional[UsageLimits] = None,
-        dom_utility: Optional[BaseDomUtils] = None,
-    ) -> BaseLocatorAgent:
-        """Create a locator agent with auto-detected type.
-
-        This method automatically detects the appropriate agent type based on
-        available libraries and creates the corresponding agent.
-
-        Args:
-            cfg: Instance of Cfg config class containing user defined app configuration.
-            usage_limits: Optional usage limits for the agent.
-            dom_utility: Optional DOM utility instance. If not provided, will be created
-                        automatically based on detected type.
-
-        Returns:
-            An instance of the auto-detected locator agent type.
-        """
-        agent_type = LocatorAgentFactory.detect_agent_type()
-        return LocatorAgentFactory.create_agent(
-            agent_type=agent_type,
-            cfg=cfg,
-            usage_limits=usage_limits,
-            dom_utility=dom_utility,
-        )
-
-    @staticmethod
-    def create_agent_from_keyword_result(
-        result,
-        cfg: Cfg,
-        usage_limits: Optional[UsageLimits] = None,
-        dom_utility: Optional[BaseDomUtils] = None,
-    ) -> BaseLocatorAgent:
-        """Create a locator agent based on Robot Framework keyword result.
-
-        This method detects the appropriate agent type from the keyword result
-        and creates the corresponding agent.
-
-        Args:
-            result: Robot Framework keyword result object.
-            cfg: Instance of Cfg config class containing user defined app configuration.
-            usage_limits: Optional usage limits for the agent.
-            dom_utility: Optional DOM utility instance. If not provided, will be created
-                        automatically based on detected type.
-
-        Returns:
-            An instance of the detected locator agent type.
-        """
-        agent_type = LocatorAgentFactory.detect_agent_type_from_keyword_result(result)
-        if agent_type is None:
-            # Fallback to auto-detection if keyword result detection fails
-            agent_type = LocatorAgentFactory.detect_agent_type()
-
-        return LocatorAgentFactory.create_agent(
-            agent_type=agent_type,
-            cfg=cfg,
-            usage_limits=usage_limits,
-            dom_utility=dom_utility,
-        )
