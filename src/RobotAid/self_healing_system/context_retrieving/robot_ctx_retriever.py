@@ -5,9 +5,6 @@ from robot.libraries.BuiltIn import BuiltIn
 from robot.utils.misc import seq2str
 
 from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
-    DomUtilityFactory,
-)
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 
 
@@ -29,12 +26,6 @@ class RobotCtxRetriever:
             Contains context for the self-healing process of the LLM.
         """
         robot_code_line: str = RobotCtxRetriever._format_keyword_call(result)
-
-        # Use provided DOM utility or create one based on the keyword result
-        if dom_utility is None:
-            utility_type = DomUtilityFactory.detect_library_from_keyword_result(result)
-            dom_utility = DomUtilityFactory.create_dom_utility(utility_type)
-
         dom_tree: str = dom_utility.get_dom_tree()
 
         robot_ctx_payload: PromptPayload = PromptPayload(
