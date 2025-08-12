@@ -1,10 +1,12 @@
+from typing import ClassVar
 from pydantic_ai import RunContext
 
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
+from RobotAid.self_healing_system.agents.prompts.base_prompt_agent import BasePromptAgent
 
 
-class PromptsOrchestrator:
-    system_msg: str = (
+class PromptsOrchestrator(BasePromptAgent):
+    _system_msg: ClassVar[str] = (
         "You are a Robot Framework smart recovery tool and a JSON passthrough machine. Your only job is to return the exact, raw JSON output from a tool.\n"
         "The following tools are available to you:\n"
         "- get_healed_locators: This tool provides locator suggestions for a broken locator.\n\n"
@@ -14,7 +16,10 @@ class PromptsOrchestrator:
         # "NEVER return the tool call format like {\"name\": \"tool_name\", \"parameters\": {...}}.\n"
         # "ALWAYS return the tool's actual response which looks like {\"suggestions\": [...]}.\n"
     )
-    user_msg: str = "Return pure JSON. No explanations."
+
+    @classmethod
+    def get_system_msg(cls):
+        return cls._system_msg
 
     @staticmethod
     def get_user_msg(robot_ctx_payload: PromptPayload) -> str:

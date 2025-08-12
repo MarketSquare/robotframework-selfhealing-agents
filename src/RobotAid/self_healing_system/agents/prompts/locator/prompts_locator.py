@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, ClassVar
 from pydantic_ai import RunContext
 
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
@@ -8,11 +8,12 @@ from RobotAid.self_healing_system.agents.prompts.locator.library_specific_additi
     get_system_msg_selenium,
     get_system_msg_appium
 )
+from RobotAid.self_healing_system.agents.prompts.base_prompt_agent import BasePromptAgent
 
 
-class PromptsLocatorGenerationAgent:
+class PromptsLocatorGenerationAgent(BasePromptAgent):
 
-    _system_msg: str = (
+    _system_msg: ClassVar[str] = (
         "You are a xpath and css selector self-healing tool.\n"
         "You will provide a fixed_locator for a failed_locator.\n"
         "Using the elements in the DOM at failure time, suggest 3 new locators.\n"
@@ -56,9 +57,9 @@ class PromptsLocatorGenerationAgent:
         )
 
 
-class PromptsLocatorSelectionAgent:
+class PromptsLocatorSelectionAgent(BasePromptAgent):
 
-    _system_msg: str = (
+    _system_msg: ClassVar[str] = (
         "You are a locator selection tool for Robot Framework self-healing.\n"
         "Your task is to choose the best locator from the provided suggestions.\n"
         "You will receive a list of locator suggestions and must select the most appropriate one.\n"
