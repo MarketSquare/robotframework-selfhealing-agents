@@ -55,7 +55,7 @@ class KickoffMultiAgentSystem:
         )
         robot_ctx_payload.tried_locator_memory = tried_locator_memory
 
-        locator_agent = LocatorAgentFactory.create_agent(agent_type, cfg, None, dom_utility)
+        locator_agent = LocatorAgentFactory.create_agent(agent_type, cfg, dom_utility)
 
         orchestrator_agent: OrchestratorAgent = OrchestratorAgent(
             locator_agent=locator_agent,
