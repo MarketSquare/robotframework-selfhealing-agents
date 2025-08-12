@@ -34,15 +34,6 @@ class SoupDomUtils:
             return False
 
     @staticmethod
-    def is_selector_multiple(soup: BeautifulSoup, selector: str) -> bool:
-        """Check if the CSS selector matches multiple elements."""
-        try:
-            elements = soup.select(selector)
-            return len(elements) > 1
-        except Exception:
-            return False
-
-    @staticmethod
     def has_child_dialog_without_open(element: Tag) -> bool:
         """Check if any parent of the given element is a <dialog> without the 'open' attribute."""
         try:

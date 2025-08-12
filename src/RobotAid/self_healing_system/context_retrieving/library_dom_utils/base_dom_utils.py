@@ -1,21 +1,17 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 
 
 class BaseDomUtils(ABC):
     """Abstract base class for library-specific DOM utilities.
 
     This class defines the common interface that all DOM utility implementations
-    must follow, ensuring consistency across different Robot Framework libraries.
+    must follow, ensuring consistency across different Robot Framework library_dom_utils.
     """
 
-    def __init__(self, library_instance: Optional[object] = None):
-        """Initialize the DOM utility with a library instance.
-
-        Args:
-            library_instance: An instance of the Robot Framework library.
-        """
-        self.library_instance = library_instance
+    @abstractmethod
+    def __init__(self):
+        """Initialize the DOM utility with a library instance."""
+        pass
 
     @abstractmethod
     def is_locator_valid(self, locator: str) -> bool:
@@ -38,18 +34,6 @@ class BaseDomUtils(ABC):
 
         Returns:
             True if the locator is unique, False otherwise.
-        """
-        pass
-
-    @abstractmethod
-    def is_locator_visible(self, locator: str) -> bool:
-        """Check if the given locator is visible in the DOM.
-
-        Args:
-            locator: The locator to check.
-
-        Returns:
-            True if the locator is visible, False otherwise.
         """
         pass
 

@@ -2,7 +2,7 @@ from typing import Optional
 
 from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 
 
 class SeleniumLocatorAgent(BaseLocatorAgent):

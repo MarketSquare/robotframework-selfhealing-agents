@@ -4,7 +4,7 @@ from robot import result
 from robot.libraries.BuiltIn import BuiltIn
 from robot.utils.misc import seq2str
 
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 
 

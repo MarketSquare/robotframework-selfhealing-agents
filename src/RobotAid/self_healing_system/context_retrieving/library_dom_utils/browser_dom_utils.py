@@ -3,8 +3,8 @@ from typing import Optional
 from bs4 import BeautifulSoup
 from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_soap_utils import SoupDomUtils
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
 
 
 class BrowserDomUtils(BaseDomUtils):
@@ -14,22 +14,9 @@ class BrowserDomUtils(BaseDomUtils):
     Browser library (Playwright-based).
     """
 
-    def __init__(self, library_instance: Optional[object] = None):
-        """Initialize Browser DOM utilities.
-
-        Args:
-            library_instance: An instance of the Browser library.
-        """
-        if library_instance is None:
-            try:
-                library_instance = BuiltIn().get_library_instance("Browser")
-            except Exception:
-                print(
-                    "Browser library is not available. Browser DOM utility will be limited."
-                )
-                library_instance = None
-
-        super().__init__(library_instance)
+    def __init__(self):
+        """Initialize Browser DOM utilities."""
+        self.library_instance = BuiltIn().get_library_instance("Browser")
 
     def is_locator_valid(self, locator: str) -> bool:
         """Check if the given locator is valid using Browser library methods.
@@ -63,25 +50,6 @@ class BrowserDomUtils(BaseDomUtils):
 
         try:
             return getattr(self.library_instance, "get_element_count")(locator) == 1
-        except Exception:
-            return False
-
-    def is_locator_visible(self, locator: str) -> bool:
-        """Check if the given locator is visible using Browser library methods.
-
-        Args:
-            locator: The locator to check.
-
-        Returns:
-            True if the locator is visible, False otherwise.
-        """
-        if self.library_instance is None:
-            return True  # Skip validation if library is not available
-
-        try:
-            return "visible" in getattr(self.library_instance, "get_element_states")(
-                locator
-            )
         except Exception:
             return False
 

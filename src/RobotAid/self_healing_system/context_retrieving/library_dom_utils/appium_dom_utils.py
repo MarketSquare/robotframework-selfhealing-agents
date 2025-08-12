@@ -1,8 +1,6 @@
-from typing import Optional
-
 from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 
 
 class AppiumDomUtils(BaseDomUtils):
@@ -12,22 +10,9 @@ class AppiumDomUtils(BaseDomUtils):
     AppiumLibrary for mobile application testing.
     """
 
-    def __init__(self, library_instance: Optional[object] = None):
-        """Initialize Appium DOM utilities.
-
-        Args:
-            library_instance: An instance of the AppiumLibrary.
-        """
-        if library_instance is None:
-            try:
-                library_instance = BuiltIn().get_library_instance("AppiumLibrary")
-            except Exception:
-                print(
-                    "AppiumLibrary is not available. Appium DOM utility will be limited."
-                )
-                library_instance = None
-
-        super().__init__(library_instance)
+    def __init__(self):
+        """Initialize Appium DOM utilities."""
+        self.library_instance = BuiltIn().get_library_instance("AppiumLibrary")
 
     def is_locator_valid(self, locator: str) -> bool:
         """Check if the locator is valid using Appium library methods.
@@ -69,32 +54,6 @@ class AppiumDomUtils(BaseDomUtils):
             else:
                 return True  # Default to valid if method not found
             return len(elements) == 1
-        except Exception:
-            return False
-
-    def is_locator_visible(self, locator: str) -> bool:
-        """Check if the locator is visible using Appium library methods.
-
-        Args:
-            locator (str): The locator to check.
-
-        Returns:
-            bool: True if the locator is visible, False otherwise.
-        """
-        if self.library_instance is None:
-            return True  # Skip validation if library is not available
-
-        try:
-            # Use dynamic attribute access for element visibility check
-            if hasattr(self.library_instance, "element_should_be_visible"):
-                # Try the should be visible method and catch exceptions
-                try:
-                    getattr(self.library_instance, "element_should_be_visible")(locator)
-                    return True
-                except Exception:
-                    return False
-            else:
-                return True  # Default to visible if method not found
         except Exception:
             return False
 

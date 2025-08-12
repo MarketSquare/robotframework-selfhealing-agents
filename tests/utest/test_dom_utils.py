@@ -1,7 +1,7 @@
 import Browser
 import pytest
 from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_robot_utils import RobotDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_soap_utils import SoupDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
 from bs4 import BeautifulSoup
 
 dom_tree = """
@@ -181,16 +181,6 @@ def test_is_locator_not_unique(browser):
     
     # Assert: The locator should not be unique
     assert result is False, f"Locator '{locator}' should not be unique but was."
-
-def test_is_locator_visible(browser):
-    dom_utils = RobotDomUtils(library_instance=browser)
-    browser.new_page("https://playwright.dev/")
-
-    locator = "h1"
-    result = dom_utils.is_locator_visible(locator)
-    
-    # Assert: The locator should be visible
-    assert result is True, f"Locator '{locator}' should be visible but was not."
 
 def test_generate_unique_css_selector():
     soup = BeautifulSoup(dom_tree, 'html.parser')

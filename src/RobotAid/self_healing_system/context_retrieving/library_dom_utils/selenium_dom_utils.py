@@ -3,8 +3,8 @@ from typing import Optional
 from bs4 import BeautifulSoup
 from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_soap_utils import SoupDomUtils
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
 
 
 class SeleniumDomUtils(BaseDomUtils):
@@ -14,22 +14,9 @@ class SeleniumDomUtils(BaseDomUtils):
     SeleniumLibrary.
     """
 
-    def __init__(self, library_instance: Optional[object] = None):
-        """Initialize Selenium DOM utilities.
-
-        Args:
-            library_instance: An instance of the SeleniumLibrary.
-        """
-        if library_instance is None:
-            try:
-                library_instance = BuiltIn().get_library_instance("SeleniumLibrary")
-            except Exception:
-                print(
-                    "SeleniumLibrary is not available. Selenium DOM utility will be limited."
-                )
-                library_instance = None
-
-        super().__init__(library_instance)
+    def __init__(self):
+        """Initialize Selenium DOM utilities."""
+        self.library_instance = BuiltIn().get_library_instance("SeleniumLibrary")
 
     def is_locator_valid(self, locator: str) -> bool:
         """Check if the locator is valid using Selenium library methods.
@@ -65,25 +52,6 @@ class SeleniumDomUtils(BaseDomUtils):
             # Use dynamic attribute access to handle different SeleniumLibrary versions
             elements = getattr(self.library_instance, "get_webelements")(locator)
             return len(elements) == 1
-        except Exception:
-            return False
-
-    def is_locator_visible(self, locator: str) -> bool:
-        """Check if the locator is visible using Selenium library methods.
-
-        Args:
-            locator: The locator to check.
-
-        Returns:
-            True if the locator is visible, False otherwise.
-        """
-        if self.library_instance is None:
-            return True  # Skip validation if library is not available
-
-        try:
-            # Use dynamic attribute access for element visibility check
-            getattr(self.library_instance, "element_should_be_visible")(locator)
-            return True
         except Exception:
             return False
 

@@ -4,7 +4,7 @@ from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
 from RobotAid.self_healing_system.agents.locator_agent.browser_locator_agent import BrowserLocatorAgent
 from RobotAid.self_healing_system.agents.locator_agent.selenium_locator_agent import SeleniumLocatorAgent
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 
 
 _AGENT_MAPPING: Final[Mapping[str, Type[BaseLocatorAgent]]] = {
@@ -46,5 +46,5 @@ class LocatorAgentFactory:
         agent = _AGENT_MAPPING.get(agent_type)
         if agent is None:
             supported = ", ".join(sorted(_AGENT_MAPPING.keys()))
-            raise ValueError(f"Unsupported agent type: {agent_type}. Supported types: {supported}")
+            raise ValueError(f"Unsupported agent type: {agent}. Supported types: {supported}")
         return agent(cfg=cfg, dom_utility=dom_utility)

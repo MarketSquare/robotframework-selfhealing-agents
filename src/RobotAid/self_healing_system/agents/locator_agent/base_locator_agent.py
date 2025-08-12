@@ -12,7 +12,7 @@ from RobotAid.self_healing_system.agents.prompts.locator.prompts_locator import 
     PromptsLocatorSelectionAgent
 )
 from RobotAid.self_healing_system.llm.client_model import get_client_model
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 from RobotAid.self_healing_system.schemas.api.locator_healing import LocatorHealingResponse
 
@@ -27,7 +27,6 @@ class BaseLocatorAgent(ABC):
         usage_limits: Usage token and request limits.
         dom_utility: DOM utility instance for the specific library.
     """
-    # TODO: Request limit, token limit to .env, optional default keep with current values
     def __init__(
         self,
         cfg: Cfg,

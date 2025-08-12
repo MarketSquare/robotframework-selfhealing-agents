@@ -1,13 +1,12 @@
 import asyncio
 from robot.api import logger
 
-from pydantic_ai.usage import UsageLimits
 from robot import result
 
 from RobotAid.self_healing_system.agents.locator_agent.locator_agent_factory import LocatorAgentFactory
 from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.orchestrator_agent.orchestrator_agent import OrchestratorAgent
-from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
+from RobotAid.self_healing_system.context_retrieving.dom_utility_factory import (
     DomUtilityFactory,
 )
 from RobotAid.self_healing_system.context_retrieving.robot_ctx_retriever import RobotCtxRetriever
@@ -50,7 +49,7 @@ class KickoffMultiAgentSystem:
         agent_type = _LIBRARY_MAPPING.get(result.owner, None)
         if not agent_type:
             raise ValueError(f"Library type: {agent_type} not supported.")
-        dom_utility = DomUtilityFactory.create_dom_utility(utility_type=agent_type)
+        dom_utility = DomUtilityFactory.create_dom_utility(agent_type=agent_type)
 
         robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(
             result=result, dom_utility=dom_utility
@@ -62,7 +61,6 @@ class KickoffMultiAgentSystem:
         orchestrator_agent: OrchestratorAgent = OrchestratorAgent(
             locator_agent=locator_agent,
             cfg=cfg,
-            usage_limits=UsageLimits(request_limit=5, total_tokens_limit=8000),
         )
 
         response = asyncio.get_event_loop().run_until_complete(
