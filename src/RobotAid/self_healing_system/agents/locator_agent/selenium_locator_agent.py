@@ -1,7 +1,5 @@
 from typing import Optional
 
-from pydantic_ai.usage import UsageLimits
-
 from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
 from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
@@ -17,9 +15,6 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
     def __init__(
         self,
         cfg: Cfg,
-        usage_limits: UsageLimits = UsageLimits(
-            request_limit=5, total_tokens_limit=2000
-        ),
         dom_utility: Optional[BaseDomUtils] = None,
     ) -> None:
         """Initialize the SeleniumLocatorAgent.
@@ -30,7 +25,7 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
                 UsageLimits with request_limit=5 and total_tokens_limit=2000.
             dom_utility: Optional DOM utility instance for validation.
         """
-        super().__init__(cfg, dom_utility, usage_limits)
+        super().__init__(cfg, dom_utility)
 
     def _process_locator(self, locator: str) -> str:
         """Process locator for Selenium library compatibility.

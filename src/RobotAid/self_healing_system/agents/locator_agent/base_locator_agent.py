@@ -31,10 +31,7 @@ class BaseLocatorAgent(ABC):
     def __init__(
         self,
         cfg: Cfg,
-        dom_utility: BaseDomUtils,
-        usage_limits: UsageLimits = UsageLimits(
-            request_limit=5, total_tokens_limit=2000
-        )
+        dom_utility: BaseDomUtils
     ) -> None:
         """Initialize the BaseLocatorAgent.
 
@@ -44,8 +41,8 @@ class BaseLocatorAgent(ABC):
                 UsageLimits with request_limit=5 and total_tokens_limit=2000.
             dom_utility: Optional DOM utility instance for validation.
         """
-        self.usage_limits: UsageLimits = usage_limits
         self.cfg = cfg
+        self.usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
         self._dom_utility: BaseDomUtils = dom_utility
         self.use_llm_for_locator_generation = cfg.use_llm_for_locator_generation
 

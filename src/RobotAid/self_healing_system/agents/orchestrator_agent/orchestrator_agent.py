@@ -25,20 +25,15 @@ class OrchestratorAgent:
         self,
         cfg: Cfg,
         locator_agent: BaseLocatorAgent,
-        usage_limits: UsageLimits = UsageLimits(
-            request_limit=5, total_tokens_limit=2000
-        ),
     ) -> None:
         """Initialize the OrchestratorAgent.
 
         Args:
             cfg: Instance of Cfg config class containing user defined app configuration.
             locator_agent: LocatorAgent instance for handling locator healing.
-            usage_limits: Token and request limits for the agent. Defaults to
-                UsageLimits with request_limit=5 and total_tokens_limit=2000.
         """
         self.locator_agent: BaseLocatorAgent = locator_agent
-        self.usage_limits: UsageLimits = usage_limits
+        self.usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
         self.agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
             model=get_client_model(
                 provider=cfg.orchestrator_agent_provider,

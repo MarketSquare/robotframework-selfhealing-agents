@@ -41,7 +41,14 @@ class Cfg(BaseSettings):
         "gpt-4o-mini", env="LOCATOR_AGENT_MODEL",
         description="Model selection for locator agent."
     )
-
+    request_limit: int = Field(
+        5, env="REQUEST_LIMIT",
+        description="Request limit for a each agent."
+    )
+    total_tokens_limit: int = Field(
+        2000, env="TOTAL_TOKENS_LIMIT",
+        description="Limit of total tokens for each request."
+    )
 
     azure_api_key: Optional[str] = Field(
         None, env="AZURE_API_KEY",
@@ -63,7 +70,6 @@ class Cfg(BaseSettings):
         None, env="BASE_URL",
         description="Base URL endpoint"
     )
-
     litellm_api_key: Optional[str] = Field(
         None, env="LITELLM_API_KEY",
         description="LiteLLM API key"

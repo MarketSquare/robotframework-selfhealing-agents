@@ -1,6 +1,4 @@
-from typing import Final, Mapping, Optional, Type
-
-from pydantic_ai.usage import UsageLimits
+from typing import Final, Mapping, Type
 
 from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
@@ -29,7 +27,6 @@ class LocatorAgentFactory:
         agent_type: str,
         cfg: Cfg,
         dom_utility: BaseDomUtils,
-        usage_limits: Optional[UsageLimits] = None
     ) -> BaseLocatorAgent:
         """Create a locator agent of the specified type.
 
@@ -37,7 +34,6 @@ class LocatorAgentFactory:
             agent_type: The type of agent to create (browser, selenium, or appium).
                        Can be LocatorAgentType enum, DomUtilityType enum, or string.
             cfg: Instance of Cfg config class containing user defined app configuration.
-            usage_limits: Optional usage limits for the agent.
             dom_utility: Optional DOM utility instance. If not provided, will be created
                         automatically based on agent type.
 
@@ -51,5 +47,4 @@ class LocatorAgentFactory:
         if agent is None:
             supported = ", ".join(sorted(_AGENT_MAPPING.keys()))
             raise ValueError(f"Unsupported agent type: {agent_type}. Supported types: {supported}")
-        limits = usage_limits or UsageLimits(request_limit=5, total_tokens_limit=2000)
-        return agent(cfg=cfg, usage_limits=limits, dom_utility=dom_utility)
+        return agent(cfg=cfg, dom_utility=dom_utility)

@@ -18,6 +18,7 @@ from RobotAid.self_healing_system.schemas.api.locator_healing import (
 from RobotAid.utils.logfire_init import init_logfire
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 
+
 _LIBRARY_MAPPING = {
     "SeleniumLibrary": "selenium",
     "Browser": "browser",
@@ -46,8 +47,9 @@ class KickoffMultiAgentSystem:
         Returns:
             List of suggestions for healing the current robotframework test.
         """
-        # TODO: maybe do a robust check to make sure the owner library is given 100%
-        agent_type = _LIBRARY_MAPPING.get(result.owner or "", None)
+        agent_type = _LIBRARY_MAPPING.get(result.owner, None)
+        if not agent_type:
+            raise ValueError(f"Library type: {agent_type} not supported.")
         dom_utility = DomUtilityFactory.create_dom_utility(utility_type=agent_type)
 
         robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(

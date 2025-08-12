@@ -1,5 +1,3 @@
-from pydantic_ai.usage import UsageLimits
-
 from RobotAid.utils.cfg import Cfg
 from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
 from RobotAid.utils.reponse_converters import convert_locator_to_browser
@@ -17,19 +15,14 @@ class BrowserLocatorAgent(BaseLocatorAgent):
         self,
         cfg: Cfg,
         dom_utility: BaseDomUtils,
-        usage_limits: UsageLimits = UsageLimits(
-        request_limit=5, total_tokens_limit=2000
-        ),
     ) -> None:
         """Initialize the BrowserLocatorAgent.
 
         Args:
             cfg: Instance of Cfg config class containing user defined app configuration.
-            usage_limits: Token and request limits for the agent. Defaults to
-                UsageLimits with request_limit=5 and total_tokens_limit=2000.
             dom_utility: Optional DOM utility instance for validation.
         """
-        super().__init__(cfg, dom_utility, usage_limits)
+        super().__init__(cfg, dom_utility)
 
     def _process_locator(self, locator: str) -> str:
         """Process locator for Browser library compatibility.
