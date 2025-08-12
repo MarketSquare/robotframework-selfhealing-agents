@@ -1,10 +1,8 @@
-from typing import TypeVar, Generic, ClassVar, Any
+from abc import abstractmethod, ABC
+from typing import ClassVar, Any
 
 
-T = TypeVar('T')
-
-
-class BasePromptAgent(Generic[T]):
+class BasePromptAgent(ABC):
 
     _system_msg: ClassVar[str]
 
@@ -14,9 +12,11 @@ class BasePromptAgent(Generic[T]):
             raise TypeError("Subclasses must define class attribute `_system_msg: str`")
 
     @classmethod
+    @abstractmethod
     def get_system_msg(cls, *args: Any, **kwargs: Any) -> str:
         ...
 
     @staticmethod
+    @abstractmethod
     def get_user_msg(*args: Any, **kwargs: Any) -> str:
         ...
