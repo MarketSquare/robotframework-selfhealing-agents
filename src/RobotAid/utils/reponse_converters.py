@@ -1,6 +1,6 @@
 import re
-from json import JSONDecodeError, JSONDecoder
 from typing import Any
+from json import JSONDecodeError, JSONDecoder
 
 from robot.api import logger
 

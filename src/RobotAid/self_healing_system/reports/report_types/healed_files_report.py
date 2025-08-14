@@ -1,22 +1,22 @@
-from typing import List, Tuple, Set
 from pathlib import Path
-
 from itertools import chain
+from typing import List, Tuple, Set
+
+from robot.parsing.model import VariableSection, File
 from robot.api.parsing import (
     get_model,
     get_resource_model,
     SettingSection,
     ResourceImport,
 )
-from robot.parsing.model import VariableSection, File
 
 from RobotAid.self_healing_system.reports.report_types.base_report import BaseReport
 from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
+from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
 from RobotAid.self_healing_system.reports.robot_model_visitors import (
     LocatorReplacer,
     VariablesReplacer
 )
-from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
 
 
 class HealedFilesReport(BaseReport):

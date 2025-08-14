@@ -1,6 +1,7 @@
 from openai import AsyncAzureOpenAI
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.azure import AzureProvider
+
 from RobotAid.utils.cfg import Cfg
 
 

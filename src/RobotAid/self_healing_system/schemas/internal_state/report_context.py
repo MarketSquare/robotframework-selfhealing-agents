@@ -1,5 +1,6 @@
 from typing import List
 from pathlib import Path
+
 from pydantic import BaseModel, Field
 
 from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData

@@ -1,6 +1,6 @@
 import difflib
-from typing import List, Set
 from pathlib import Path
+from typing import List, Set
 
 from RobotAid.self_healing_system.reports.css_styles import DIFF_CSS
 from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext

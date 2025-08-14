@@ -1,5 +1,5 @@
-from abc import abstractmethod, ABC
 from typing import ClassVar, Any
+from abc import abstractmethod, ABC
 
 
 class BasePromptAgent(ABC):

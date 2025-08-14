@@ -1,5 +1,3 @@
-from typing import Optional
-
 from bs4 import BeautifulSoup
 from robot.libraries.BuiltIn import BuiltIn
 

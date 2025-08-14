@@ -1,7 +1,6 @@
 import shutil
-
-from pathlib import Path
 from typing import List
+from pathlib import Path
 
 from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
 from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext

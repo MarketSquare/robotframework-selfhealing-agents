@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
-from dotenv import find_dotenv, load_dotenv
 from pydantic import Field, ConfigDict
+from dotenv import find_dotenv, load_dotenv
 from pydantic_settings import BaseSettings
 
 
@@ -79,6 +79,6 @@ class Cfg(BaseSettings):
         """Init.
 
         Args:
-            **values: Arbitrary values for initialization.
+            **values: Arbitrary values for static checker.
         """
         super().__init__(**values)

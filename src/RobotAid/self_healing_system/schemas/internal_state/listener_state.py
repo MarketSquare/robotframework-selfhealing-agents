@@ -1,4 +1,5 @@
 from typing import Dict, Any, List, Optional
+
 from pydantic import BaseModel, Field
 
 from RobotAid.utils.cfg import Cfg

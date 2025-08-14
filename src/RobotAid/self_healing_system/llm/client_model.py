@@ -1,4 +1,5 @@
 from typing import Optional
+
 from pydantic_ai.models.openai import OpenAIModel
 
 from RobotAid.utils.cfg import Cfg

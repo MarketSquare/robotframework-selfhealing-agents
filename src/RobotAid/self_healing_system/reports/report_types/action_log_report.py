@@ -1,8 +1,8 @@
 import html
-from pathlib import Path
 from typing import List
-from operator import attrgetter
+from pathlib import Path
 from itertools import groupby
+from operator import attrgetter
 
 from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
 from RobotAid.self_healing_system.reports.css_styles import ACTION_LOG_CSS

@@ -1,8 +1,8 @@
 import re
 from typing import List, Optional
 
-from bs4 import BeautifulSoup, Tag
 from lxml import etree
+from bs4 import BeautifulSoup, Tag
 
 
 class SoupDomUtils:

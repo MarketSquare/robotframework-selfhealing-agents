@@ -1,6 +1,8 @@
 from typing import Callable, ClassVar
+
 from pydantic_ai import RunContext
 
+from RobotAid.self_healing_system.agents.prompts.base_prompt_agent import BasePromptAgent
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 from RobotAid.self_healing_system.agents.prompts.locator.library_specific_additions import (
@@ -8,7 +10,6 @@ from RobotAid.self_healing_system.agents.prompts.locator.library_specific_additi
     get_system_msg_selenium,
     get_system_msg_appium
 )
-from RobotAid.self_healing_system.agents.prompts.base_prompt_agent import BasePromptAgent
 
 
 class PromptsLocatorGenerationAgent(BasePromptAgent):

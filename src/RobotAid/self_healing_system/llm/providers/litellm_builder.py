@@ -1,5 +1,6 @@
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
+
 from RobotAid.utils.cfg import Cfg
 
 
