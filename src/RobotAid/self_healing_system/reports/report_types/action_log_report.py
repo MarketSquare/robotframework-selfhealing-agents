@@ -61,7 +61,7 @@ class ActionLogReport(BaseReport):
             body_parts.append(summary + inner_header + "".join(rows) + inner_footer)
         footer: str = "</body></html>"
         content: str = header + "".join(body_parts) + footer
-        output_path: Path = self.out_dir / "action_log.html"
+        output_path: Path = self._out_dir / "action_log.html"
         try:
             output_path.write_text(content, encoding="utf-8")
         except OSError as e:
