@@ -1,36 +1,23 @@
-from typing import Optional
-
 from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 
 
 class AppiumDomUtils(BaseDomUtils):
-    """Appium library specific DOM utility implementation.
+    """Appium library-specific DOM utility implementation.
 
-    This class provides DOM interaction methods specific to the Robot Framework
-    AppiumLibrary for mobile application testing.
+    Provides DOM interaction methods tailored for Robot Framework's AppiumLibrary,
+    including locator validation, uniqueness checks, DOM extraction, and locator metadata.
+
+    Attributes:
+        _library_instance: Instance of the AppiumLibrary used for DOM interactions.
     """
-
-    def __init__(self, library_instance: Optional[object] = None):
-        """Initialize Appium DOM utilities.
-
-        Args:
-            library_instance: An instance of the AppiumLibrary.
-        """
-        if library_instance is None:
-            try:
-                library_instance = BuiltIn().get_library_instance("AppiumLibrary")
-            except Exception:
-                print(
-                    "AppiumLibrary is not available. Appium DOM utility will be limited."
-                )
-                library_instance = None
-
-        super().__init__(library_instance)
+    def __init__(self):
+        """Initializes AppiumDomUtils and retrieves the AppiumLibrary instance."""
+        self._library_instance = BuiltIn().get_library_instance("AppiumLibrary")
 
     def is_locator_valid(self, locator: str) -> bool:
-        """Check if the locator is valid using Appium library methods.
+        """Checks if the locator is valid using AppiumLibrary methods.
 
         Args:
             locator (str): The locator to check.
@@ -38,12 +25,12 @@ class AppiumDomUtils(BaseDomUtils):
         Returns:
             bool: True if the locator is valid, False otherwise.
         """
-        if self.library_instance is None:
+        if self._library_instance is None:
             return True
         try:
             # Use dynamic attribute access to handle different AppiumLibrary versions
-            if hasattr(self.library_instance, "get_webelements"):
-                elements = getattr(self.library_instance, "get_webelements")(locator)
+            if hasattr(self._library_instance, "get_webelements"):
+                elements = getattr(self._library_instance, "get_webelements")(locator)
             else:
                 return True  # Default to valid if method not found
             return len(elements) > 0
@@ -51,7 +38,7 @@ class AppiumDomUtils(BaseDomUtils):
             return False
 
     def is_locator_unique(self, locator: str) -> bool:
-        """Check if the locator is unique using Appium library methods.
+        """Checks if the locator uniquely identifies a single element.
 
         Args:
             locator (str): The locator to check.
@@ -59,65 +46,38 @@ class AppiumDomUtils(BaseDomUtils):
         Returns:
             bool: True if the locator is unique, False otherwise.
         """
-        if self.library_instance is None:
+        if self._library_instance is None:
             return True  # Skip validation if library is not available
 
         try:
             # Use dynamic attribute access to handle different AppiumLibrary versions
-            if hasattr(self.library_instance, "get_webelements"):
-                elements = getattr(self.library_instance, "get_webelements")(locator)
+            if hasattr(self._library_instance, "get_webelements"):
+                elements = getattr(self._library_instance, "get_webelements")(locator)
             else:
                 return True  # Default to valid if method not found
             return len(elements) == 1
         except Exception:
             return False
 
-    def is_locator_visible(self, locator: str) -> bool:
-        """Check if the locator is visible using Appium library methods.
-
-        Args:
-            locator (str): The locator to check.
-
-        Returns:
-            bool: True if the locator is visible, False otherwise.
-        """
-        if self.library_instance is None:
-            return True  # Skip validation if library is not available
-
-        try:
-            # Use dynamic attribute access for element visibility check
-            if hasattr(self.library_instance, "element_should_be_visible"):
-                # Try the should be visible method and catch exceptions
-                try:
-                    getattr(self.library_instance, "element_should_be_visible")(locator)
-                    return True
-                except Exception:
-                    return False
-            else:
-                return True  # Default to visible if method not found
-        except Exception:
-            return False
-
     def get_dom_tree(self) -> str:
-        """Retrieve the DOM tree using Appium library methods.
+        """Retrieves the DOM tree using AppiumLibrary.
 
-        Note: For mobile applications, this returns the page source which
-        contains the UI hierarchy in XML format.
+        For mobile applications, this returns the page source which contains the UI hierarchy in XML format.
 
         Returns:
             str: The DOM/UI tree as a string.
         """
-        if self.library_instance is None:
+        if self._library_instance is None:
             return "<hierarchy>AppiumLibrary not available</hierarchy>"
 
         try:
-            if hasattr(self.library_instance, "get_source"):
-                page_source = getattr(self.library_instance, "get_source")()
-            elif hasattr(self.library_instance, "get_page_source"):
-                page_source = getattr(self.library_instance, "get_page_source")()
+            if hasattr(self._library_instance, "get_source"):
+                page_source = getattr(self._library_instance, "get_source")()
+            elif hasattr(self._library_instance, "get_page_source"):
+                page_source = getattr(self._library_instance, "get_page_source")()
             else:
                 # Try to get the driver and get page source directly
-                driver = getattr(self.library_instance, "_current_application", None)
+                driver = getattr(self._library_instance, "_current_application", None)
                 if driver:
                     page_source = driver.page_source
                 else:
@@ -130,42 +90,43 @@ class AppiumDomUtils(BaseDomUtils):
             return f"<hierarchy>Error retrieving DOM tree: {str(e)}</hierarchy>"
 
     def get_library_type(self) -> str:
-        """Get the library type identifier.
+        """Returns the library type identifier.
 
         Returns:
-            str: The library type identifier.
+            str: The library type identifier ('appium').
         """
         return "appium"
 
     def get_locator_proposals(
         self, failed_locator: str, keyword_name: str
     ) -> list[str]:
-        """Get proposals for the given locator.
+        """Generates locator proposals for the given failed locator and keyword.
 
         Args:
-            locator: The locator to get proposals for.
+            failed_locator (str): The locator that failed.
+            keyword_name (str): The name of the keyword being executed.
 
         Returns:
-            A list of proposed locators.
+            List[str]: A list of proposed locator strings.
         """
         pass
 
     def get_locator_metadata(self, locator: str) -> list[dict]:
-        """Get metadata for the given locator.
+        """Retrieves metadata for the element(s) matching the given locator.
 
         Args:
-            locator: The locator to get metadata for.
+            locator (str): The locator to get metadata for.
 
         Returns:
-            A list of dictionaries containing metadata about elements matching the locator.
+            List[Dict]: A list of dictionaries containing metadata about the matched elements.
         """
-        if self.library_instance is None:
+        if self._library_instance is None:
             return []
 
         try:
             # Try to get elements using Appium library methods
-            if hasattr(self.library_instance, "get_webelements"):
-                elements = getattr(self.library_instance, "get_webelements")(locator)
+            if hasattr(self._library_instance, "get_webelements"):
+                elements = getattr(self._library_instance, "get_webelements")(locator)
             else:
                 return []
 

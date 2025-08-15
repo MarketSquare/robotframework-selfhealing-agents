@@ -1,61 +1,60 @@
-from typing import Optional
-
 from robot import result
-from robot.libraries.BuiltIn import BuiltIn
 from robot.utils.misc import seq2str
+from robot.libraries.BuiltIn import BuiltIn
 
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
-from RobotAid.self_healing_system.context_retrieving.dom_utils.dom_utility_factory import (
-    DomUtilityFactory,
-)
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 
 
 class RobotCtxRetriever:
-    """Retrieves context for the self-healing process of the LLM."""
+    """Retrieves context information for the self-healing process of the LLM.
 
+    This class provides static methods to extract and format the necessary context
+    from Robot Framework keyword results and DOM utilities for use in LLM-based
+    self-healing workflows.
+    """
     @staticmethod
-    def get_context(
-        result: result.Keyword, dom_utility: Optional[BaseDomUtils] = None
-    ) -> dict:
-        """Returns context for self-healing process of the LLM.
+    def get_context_payload(
+        result: result.Keyword, dom_utility: BaseDomUtils
+    ) -> PromptPayload:
+        """Builds and returns a context payload for the LLM self-healing process.
+
+        Extracts relevant information from the Robot Framework keyword result and
+        the provided DOM utility to construct a PromptPayload object.
 
         Args:
-            result: Keyword and additional information passed by robotframework listener.
-            dom_utility: Library-specific DOM utility. If not provided,
-                         it will be auto-detected based on the keyword result.
+            result: The keyword result and additional information passed by the Robot Framework listener.
+            dom_utility: The library-specific DOM utility instance.
 
         Returns:
-            Contains context for the self-healing process of the LLM.
+            A PromptPayload object containing context for the self-healing process.
         """
         robot_code_line: str = RobotCtxRetriever._format_keyword_call(result)
-
-        # Use provided DOM utility or create one based on the keyword result
-        if dom_utility is None:
-            utility_type = DomUtilityFactory.detect_library_from_keyword_result(result)
-            dom_utility = DomUtilityFactory.create_dom_utility(utility_type)
-
         dom_tree: str = dom_utility.get_dom_tree()
 
-        robot_ctx: dict = {
-            "robot_code_line": robot_code_line,
-            "error_msg": result.message,
-            "dom_tree": dom_tree,
-            "keyword_name": result.name,
-            "keyword_args": result.args,
-            "failed_locator": BuiltIn().replace_variables(result.args[0]),
-            "library_type": dom_utility.get_library_type(),
-        }
-        return robot_ctx
+        robot_ctx_payload: PromptPayload = PromptPayload(
+            robot_code_line=robot_code_line,
+            error_msg=result.message,
+            dom_tree=dom_tree,
+            keyword_name=result.name,
+            keyword_args=result.args,
+            failed_locator=BuiltIn().replace_variables(result.args[0]),
+            tried_locator_memory=[]
+        )
+        return robot_ctx_payload
 
     @staticmethod
     def _format_keyword_call(result: result.Keyword) -> str:
-        """Turns a Robot Keyword result into an one‐liner string.
+        """Formats a Robot Framework keyword result as a single-line string.
+
+        Converts the keyword call, including assignments and arguments, into a
+        one-liner string representation suitable for context extraction.
 
         Args:
-            result: Keyword and additional information passed by robotframework listener.
+            result: The keyword result and additional information passed by the Robot Framework listener.
 
         Returns:
-            Formatted Robot Keyword object to string.
+            A string representing the formatted Robot Framework keyword call.
         """
         assign_str: str = ""
         if getattr(result, "assign", None):

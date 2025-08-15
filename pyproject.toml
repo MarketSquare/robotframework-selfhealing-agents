@@ -7,11 +7,13 @@ license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
 dependencies = [
-    "pydantic-ai",
+    "pydantic-ai>=0.5.0",
     "robotframework >=7.1",
     "beautifulsoup4 >=4.13.4",
     "pydantic-settings >=2.9.1",
     "lxml>=6.0.0",
+    "robotframework-seleniumlibrary>=2.9.2",
+    "python-dotenv>=1.1.1"
 ]
 
 
@@ -28,3 +30,8 @@ invoke = "*"
 coverage = "*"
 robotframework-stacktrace = "*"
 mkdocs-material = "*"
+
+[project.entry-points."robot_aid.llm_model_providers"]
+openai = "RobotAid.self_healing_system.llm.providers.openai_builder:openai_builder"
+azure = "RobotAid.self_healing_system.llm.providers.azure_builder:azure_builder"
+litellm = "RobotAid.self_healing_system.llm.providers.litellm_builder:litellm_builder"

@@ -1,104 +1,62 @@
-from typing import Optional
-
-from pydantic_ai.usage import UsageLimits
-
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
-from RobotAid.self_healing_system.agents.prompts.prompts_locator import PromptsLocator
 from RobotAid.utils.reponse_converters import convert_locator_to_browser
-from RobotAid.self_healing_system.context_retrieving.frameworks.base_dom_utils import BaseDomUtils
+from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 
 
 class BrowserLocatorAgent(BaseLocatorAgent):
-    """Browser library specific locator agent implementation.
+    """Browser library-specific locator agent implementation.
 
     This agent is specialized for the Robot Framework Browser library (Playwright-based).
-    It handles Browser library specific locator formats and validation.
+    It handles Browser library-specific locator formats and validation.
     """
-
     def __init__(
         self,
         cfg: Cfg,
-        usage_limits: UsageLimits = UsageLimits(
-            request_limit=5, total_tokens_limit=2000
-        ),
-        dom_utility: Optional[BaseDomUtils] = None,
+        dom_utility: BaseDomUtils,
     ) -> None:
-        """Initialize the BrowserLocatorAgent.
+        """Initializes the BrowserLocatorAgent.
 
         Args:
-            cfg: Instance of Cfg config class containing user defined app configuration.
-            usage_limits: Token and request limits for the agent. Defaults to
-                UsageLimits with request_limit=5 and total_tokens_limit=2000.
-            dom_utility: Optional DOM utility instance for validation.
+            cfg (Cfg): Instance of Cfg config class containing user-defined app configuration.
+            dom_utility (BaseDomUtils): DOM utility instance for validation.
         """
-        super().__init__(cfg, usage_limits, dom_utility)
-
-    def _get_system_prompt(self) -> str:
-        """Get the Browser library specific system prompt.
-
-        Returns:
-            The system prompt containing Browser library specific instructions
-            for locator generation and formatting.
-        """
-        return (
-            f"{PromptsLocator.system_msg}\n"
-            "BROWSER LIBRARY SPECIFIC INSTRUCTIONS:\n"
-            "- Keywords like 'Fill Text', 'Enter Text' or 'Press Keys'  are always related to 'input' or 'textarea' elements.\n"
-            "- Keywords like 'Click' are often  related to 'button','checkbox', 'a' or 'input' elements.\n"
-            "- Keywords like 'Select' or 'Deselect' are often related to 'select' elements.\n"
-            "- Keywords like 'Check' or 'Uncheck' are often related to 'checkbox' elements.\n"
-            "- Prefix CSS selectors with 'css=' \n"
-            "- Prefix XPath expressions with 'xpath='\n"
-            '- Example response: {"suggestions": ["css=input[id=\'my_id\']", "xpath=//*[contains(text(),\'Login\')]", "css=button:has-text(\'Submit\')"]}\n'
-        )
+        super().__init__(cfg, dom_utility)
 
     def _process_locator(self, locator: str) -> str:
-        """Process locator for Browser library compatibility.
+        """Processes a locator for Browser library compatibility.
 
         Args:
-            locator: The raw locator string to process.
+            locator (str): The raw locator string to process.
 
         Returns:
-            The processed locator compatible with Browser library format.
+            str: The processed locator compatible with Browser library format.
         """
         return convert_locator_to_browser(locator)
 
     def _is_locator_valid(self, locator: str) -> bool:
-        """Validate locator using Browser library DOM utilities.
+        """Validates a locator using Browser library DOM utilities.
 
         Args:
-            locator: The locator string to validate.
+            locator (str): The locator string to validate.
 
         Returns:
-            True if the locator is valid and unique, False otherwise.
-            Returns True if DOM utility is not available.
+            bool: True if the locator is valid and unique, False otherwise. Returns True if DOM utility is not available.
         """
-        if self.dom_utility is None:
-            return True  # Skip validation if DOM utility is not available
-
         try:
-            return self.dom_utility.is_locator_unique(locator)
+            return self._dom_utility.is_locator_valid(locator)
         except Exception:
             return False
 
-    def get_agent_type(self) -> str:
-        """Get the agent type identifier.
-
-        Returns:
-            The string identifier for the browser agent type.
-        """
-        return "browser"
-
     @staticmethod
     def is_failed_locator_error(message: str) -> bool:
-        """Check if the locator error is due to a failed locator.
+        """Checks if the error message is due to a failed locator.
 
         Args:
-            message: The error message to check.
+            message (str): The error message to check.
 
         Returns:
-            True if the error is due to a failed locator, False otherwise.
+            bool: True if the error is due to a failed locator, False otherwise.
         """
         return (
             "waiting for locator" in message

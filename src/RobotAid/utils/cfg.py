@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
-from dotenv import find_dotenv, load_dotenv
 from pydantic import Field, ConfigDict
+from dotenv import find_dotenv, load_dotenv
 from pydantic_settings import BaseSettings
 
 
@@ -9,8 +9,11 @@ load_dotenv(find_dotenv(), override=True)
 
 
 class Cfg(BaseSettings):
-    """App settings configuration."""
+    """Application settings configuration.
 
+    Loads environment variables and provides strongly-typed configuration options for the application.
+    Uses Pydantic BaseSettings for validation and dotenv for environment variable loading.
+    """
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     enable_self_healing: bool = Field(
@@ -41,6 +44,15 @@ class Cfg(BaseSettings):
         "gpt-4o-mini", env="LOCATOR_AGENT_MODEL",
         description="Model selection for locator agent."
     )
+    request_limit: int = Field(
+        5, env="REQUEST_LIMIT",
+        description="Request limit for a each agent."
+    )
+    total_tokens_limit: int = Field(
+        2000, env="TOTAL_TOKENS_LIMIT",
+        description="Limit of total tokens for each request."
+    )
+
     azure_api_key: Optional[str] = Field(
         None, env="AZURE_API_KEY",
         description="Azure API key"
@@ -61,11 +73,15 @@ class Cfg(BaseSettings):
         None, env="BASE_URL",
         description="Base URL endpoint"
     )
+    litellm_api_key: Optional[str] = Field(
+        None, env="LITELLM_API_KEY",
+        description="LiteLLM API key"
+    )
 
     def __init__(self, **values: Any) -> None:
-        """Init.
+        """Initializes the Cfg settings object.
 
         Args:
-            **values: Arbitrary values for initialization.
+            **values: Arbitrary keyword arguments for settings initialization and static checking.
         """
         super().__init__(**values)

@@ -1,169 +1,94 @@
-"""Main Robot Framework listener for healing hooks."""
-
-from robot import result, running
 from robot.api import logger
+from robot import result, running
 from robot.api.interfaces import ListenerV3
-from robot.libraries.BuiltIn import BuiltIn
 
 from RobotAid.utils.cfg import Cfg
-from RobotAid.self_healing_system.kickoff_self_healing import KickoffSelfHealing
-from RobotAid.self_healing_system.reports.report_data import ReportData
+from RobotAid.self_healing_system.self_healing_engine import SelfHealingEngine
 from RobotAid.self_healing_system.reports.report_generator import ReportGenerator
-from RobotAid.self_healing_system.rerun import rerun_keyword_with_fixed_locator
-from RobotAid.self_healing_system.schemas.locator_healing import (
-    LocatorHealingResponse,
-    NoHealingNeededResponse,
-)
+from RobotAid.self_healing_system.schemas.internal_state.listener_state import ListenerState
 
 
 class RobotAid(ListenerV3):
-    """Robot Framework listener that provides self-healing capabilities."""
+    """Robot Framework listener that provides self-healing capabilities.
 
+    This listener integrates with Robot Framework to enable self-healing test execution.
+    It manages the internal state, coordinates the self-healing engine, and generates reports
+    based on test execution outcomes.
+
+    Attributes:
+        ROBOT_LIBRARY_SCOPE (str): The scope of the Robot Framework library ('GLOBAL').
+        ROBOT_LISTENER_API_VERSION (int): The Robot Framework listener API version (3).
+        ROBOT_LIBRARY_LISTENER (RobotAid): Reference to the listener instance (set to self).
+        _state (ListenerState): The internal state object shared with the self-healing engine.
+        _self_healing_engine (SelfHealingEngine): The self-healing engine instance.
+        _report_generator (ReportGenerator): The report generator instance.
+        _closed (bool): Whether the listener has been closed.
+    """
     ROBOT_LIBRARY_SCOPE = "GLOBAL"
     ROBOT_LISTENER_API_VERSION = 3
 
-    def __init__(self):
-        """Initialize the healing listener."""
-        self.cfg = Cfg()
+    def __init__(self) -> None:
+        """Initializes the RobotAid listener and its components.
 
-        self.ROBOT_LIBRARY_LISTENER = self
-        self.context = {}
-
-        self.report_info = list()
-        self.keyword_try_ctr = 0
-        self.suggestions = None
-        self.generate_suggestions = True
-        self.tried_locator_memory = list()
-        self.is_keyword_healed = False
+        The "_state" attribute of type ListenerState is shared and manipulated
+        in the self_healing_engine module.
+        """
+        self.ROBOT_LIBRARY_LISTENER: RobotAid = self
+        self._state: ListenerState = ListenerState(cfg=Cfg())   # type: ignore
+        self._self_healing_engine: SelfHealingEngine = SelfHealingEngine(self._state)
+        self._report_generator: ReportGenerator = ReportGenerator()
+        self._closed: bool = False
         logger.info(
-            f"RobotAid initialized with healing={'enabled' if self.cfg.enable_self_healing else 'disabled'}"
+            f"RobotAid initialized; healing="
+            f"{'enabled' if self._state.cfg.enable_self_healing else 'disabled'}"
         )
 
-    def _parse_boolean(self, value):
-        if isinstance(value, bool):
-            return value
-        if isinstance(value, str):
-            return value.lower() in ("true", "yes", "y", "1", "on")
-        return bool(value)
+    def start_test(
+        self, data: running.TestCase, result_: result.TestCase
+    ) -> None:
+        """Handles the start of a test case.
 
-    def start_test(self, data: running.TestCase, result: result.TestCase):
-        """Called when a test starts."""
-        if not self.cfg.enable_self_healing:
+        Invoked by Robot Framework when a test case starts. Delegates to the self-healing engine.
+
+        Args:
+            data: The running test case data.
+            result_: The result object for the test case.
+        """
+        self._self_healing_engine.start_test(data, result_)
+
+    def end_keyword(
+        self, data: running.Keyword, result_: result.Keyword
+    ) -> None:
+        """Handles the end of a keyword execution.
+
+        Invoked by Robot Framework when a keyword finishes execution. Delegates to the self-healing engine.
+
+        Args:
+            data: The running keyword data.
+            result_: The result object for the keyword.
+        """
+        self._self_healing_engine.end_keyword(data, result_)
+
+    def end_test(
+        self, data: running.TestCase, result_: result.TestCase
+    ) -> None:
+        """Handles the end of a test case.
+
+        Invoked by Robot Framework when a test case ends. Delegates to the self-healing engine.
+
+        Args:
+            data: The running test case data.
+            result_: The result object for the test case.
+        """
+        self._self_healing_engine.end_test(data, result_)
+
+    def close(self) -> None:
+        """Handles the closure of the test suite or all suites when scope is 'GLOBAL'.
+
+        Generates reports if report information is available and ensures closure is performed only once.
+        """
+        if self._closed:
             return
-        self.context["current_test"] = data.name
-        logger.debug(f"RobotAid: Monitoring test '{data.name}'")
-
-    def end_keyword(self, data: running.Keyword, result: result.Keyword):
-        """Called when a keyword finishes execution."""
-        self.is_keyword_healed = False
-        if not self.cfg.enable_self_healing:
-            return
-        # ToDo: Implement a more robust way to start self-healing
-        if result.failed and result.owner in [
-            "Browser",
-            "SeleniumLibrary",
-            "AppiumLibrary",
-        ]:
-            logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
-            pre_healing_process_data = data.deepcopy()
-            if self.keyword_try_ctr < self.cfg.max_retries:
-                if self.generate_suggestions:
-                    self._start_self_healing(result=result)
-                return_value = self._try_locator_suggestions(
-                    data=data
-                )  # Note: failing suggestions immediately re-trigger
-                #       end_keyword function
-
-                if self.is_keyword_healed:
-                    if return_value and result.assign:
-                        BuiltIn().set_local_variable(result.assign[0], return_value)
-                    result.status = "PASS"  # ToDo: Check what happens if there are no suggestions. Will it always pass?
-
-                    self._append_report_info(
-                        data=pre_healing_process_data,
-                        healed_locator=self.tried_locator_memory[-1],
-                        tried_locator_memory=self.tried_locator_memory,
-                        status_healed=result.status,
-                    )
-
-            self.keyword_try_ctr = 0
-            self.suggestions = None
-            self.generate_suggestions = True
-            self.tried_locator_memory = list()
-            return
-
-    def end_test(self, data: running.TestCase, result: result.TestCase):
-        """Called when a test ends."""
-        if not self.cfg.enable_self_healing:
-            return
-
-        if result.failed:
-            logger.info(
-                f"RobotAid: Test '{data.name}' failed - collecting information for healing"
-            )
-            # This would store information for post-execution healing
-
-    def close(self):
-        if self.report_info:    # close() method is called twice, resulting in removal of previous reports
-            ReportGenerator().generate_reports(report_info=self.report_info)
-
-    def _start_self_healing(self, result: result.Keyword) -> None:
-        """Starts the self-healing process via pydanticAI agentic system. Sets class attributes for further processing."""
-        locator_suggestions: LocatorHealingResponse | str | NoHealingNeededResponse = (
-            KickoffSelfHealing.kickoff_healing(
-                result=result,
-                cfg=self.cfg,
-                tried_locator_memory=self.tried_locator_memory,
-            )
-        )
-        # Only proceed with healing, if response type is LocatorHealingResponse
-        if isinstance(locator_suggestions, LocatorHealingResponse):
-            self.suggestions = locator_suggestions.suggestions
-            self.generate_suggestions = False
-            self.keyword_try_ctr += 1
-
-        elif isinstance(locator_suggestions, NoHealingNeededResponse):
-            self.suggestions = None
-            self.generate_suggestions = True
-            return
-
-    def _try_locator_suggestions(self, data: running.Keyword) -> None:
-        """Reruns a locator suggestion that is stored in the class attribute list."""
-        current_suggestion = None
-        try:
-            current_suggestion = self.suggestions[0]
-            self.suggestions.pop(0)
-            if len(self.suggestions) == 0:
-                self.suggestions = None
-                self.generate_suggestions = True
-        except:
-            pass
-
-        if current_suggestion:
-            self.tried_locator_memory.append(current_suggestion)
-            return_value = rerun_keyword_with_fixed_locator(data, current_suggestion)
-            self.is_keyword_healed = True
-            return return_value
-
-    def _append_report_info(
-        self,
-        data: running.Keyword,
-        healed_locator: str,
-        tried_locator_memory: list,
-        status_healed: str,
-    ):
-        self.report_info.append(
-            ReportData(
-                file=data.source.parts[-1],
-                keyword_source=str(data.source),
-                test_name=data.parent.name,
-                keyword=data.name,
-                keyword_args=data.args,
-                lineno=data.lineno,
-                failed_locator=BuiltIn().replace_variables(data.args[0]),
-                healed_locator=healed_locator
-                if status_healed == "PASS"
-                else "Locator not healed.",
-                tried_locators=tried_locator_memory,
-            )
-        )
+        self._closed = True
+        if self._state.report_info:
+            self._report_generator.generate_reports(self._state.report_info)
