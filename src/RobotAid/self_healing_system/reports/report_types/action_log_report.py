@@ -4,9 +4,10 @@ from pathlib import Path
 from itertools import groupby
 from operator import attrgetter
 
-from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
 from RobotAid.self_healing_system.reports.css_styles import ACTION_LOG_CSS
 from RobotAid.self_healing_system.reports.report_types.base_report import BaseReport
+from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
+from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
 
 
 class ActionLogReport(BaseReport):
@@ -27,24 +28,24 @@ class ActionLogReport(BaseReport):
             "<html><head><meta charset='utf-8'><title>Locator Healing Report</title>"
             f"{ACTION_LOG_CSS}</head><body><h1>Locator Healing Report</h1>"
         )
-        groups = sorted(report_context.report_info, key=attrgetter("file"))
+        groups: List[ReportData] = sorted(report_context.report_info, key=attrgetter("file"))
         body_parts: List[str] = []
         for suite, entries in groupby(groups, key=attrgetter("file")):
-            entries_list = list(entries)
-            path = html.escape(entries_list[0].keyword_source)
-            summary = (
+            entries_list: List[ReportData] = list(entries)
+            path: str = html.escape(entries_list[0].keyword_source)
+            summary: str = (
                 f"<details><summary>{html.escape(suite)}"
                 f"<div class='path'>{path}</div></summary>"
             )
-            inner_header = (
+            inner_header: str = (
                 "<table class='inner'>"
                 "<tr><th>Test</th><th>Keyword</th><th>Keyword Args</th><th>Line Number</th>"
                 "<th>Failed Locator</th><th>Healed Locator</th><th>Tried Locators</th></tr>"
             )
             rows: List[str] = []
             for e in entries_list:
-                args = ", ".join(html.escape(str(a)) for a in e.keyword_args)
-                tried = "<br>".join(html.escape(l) for l in e.tried_locators)
+                args: str = ", ".join(html.escape(str(a)) for a in e.keyword_args)
+                tried: str = "<br>".join(html.escape(l) for l in e.tried_locators)
                 rows.append(
                     "<tr>"
                     f"<td>{html.escape(e.test_name)}</td>"
@@ -56,10 +57,10 @@ class ActionLogReport(BaseReport):
                     f"<td>{tried}</td>"
                     "</tr>"
                 )
-            inner_footer = "</table></details>"
+            inner_footer: str = "</table></details>"
             body_parts.append(summary + inner_header + "".join(rows) + inner_footer)
         footer: str = "</body></html>"
-        content = header + "".join(body_parts) + footer
+        content: str = header + "".join(body_parts) + footer
         output_path: Path = self.out_dir / "action_log.html"
         try:
             output_path.write_text(content, encoding="utf-8")

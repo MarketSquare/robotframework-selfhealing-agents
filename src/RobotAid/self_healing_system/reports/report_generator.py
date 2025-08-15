@@ -19,12 +19,12 @@ class ReportGenerator:
     def __init__(self) -> None:
         """Initialize report directories under the project workspace."""
         workspace_dir: Path = Path(__file__).resolve().parents[4]
-        self.base_dir = workspace_dir / "reports"
+        self.base_dir: Path = workspace_dir / "reports"
         if self.base_dir.exists():
             shutil.rmtree(self.base_dir)
         self.base_dir.mkdir(parents=True)
 
-        self.report_types = [
+        self.report_types: List = [
             ActionLogReport(self.base_dir),
             HealedFilesReport(self.base_dir),
             DiffFilesReport(self.base_dir)
@@ -36,6 +36,6 @@ class ReportGenerator:
         Args:
             report_info: List of data objects representing healing events.
         """
-        ctx = ReportContext(report_info=report_info)
+        ctx: ReportContext = ReportContext(report_info=report_info)
         for rt in self.report_types:
-            ctx = rt.generate_report(ctx)
+            ctx: ReportContext = rt.generate_report(ctx)

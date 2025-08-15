@@ -3,6 +3,7 @@ from robot.libraries.BuiltIn import BuiltIn
 from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 
 
+# ToDo: Type-Hints and Docstrings when Appium support is final
 class AppiumDomUtils(BaseDomUtils):
     """Appium library specific DOM utility implementation.
 

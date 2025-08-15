@@ -1,8 +1,7 @@
 import re
-from typing import List, Optional
-
+from typing import List
 from lxml import etree
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Tag, ResultSet
 
 
 class SoupDomUtils:
@@ -19,7 +18,7 @@ class SoupDomUtils:
     @staticmethod
     def get_selector_count(soup: BeautifulSoup, selector: str) -> int:
         try:
-            elements = soup.select(selector)
+            elements: ResultSet = soup.select(selector)
             return len(elements)
         except Exception:
             return 0
@@ -28,7 +27,7 @@ class SoupDomUtils:
     def is_selector_unique(soup: BeautifulSoup, selector: str) -> bool:
         """Check if the CSS selector matches only one element."""
         try:
-            elements = soup.select(selector)
+            elements: ResultSet = soup.select(selector)
             return len(elements) == 1
         except Exception:
             return False
@@ -37,7 +36,7 @@ class SoupDomUtils:
     def has_child_dialog_without_open(element: Tag) -> bool:
         """Check if any parent of the given element is a <dialog> without the 'open' attribute."""
         try:
-            dialog = [
+            dialog: List[Tag] = [
                 x for x in element.children if isinstance(x, Tag) and x.name == "dialog"
             ]
             for d in dialog:
@@ -56,7 +55,7 @@ class SoupDomUtils:
         if tag.name != "div":
             return False
 
-        parent = tag.find_parent("li")
+        parent: Tag | None = tag.find_parent("li")
         return parent is not None
 
     @staticmethod
@@ -70,7 +69,7 @@ class SoupDomUtils:
     def has_parent_dialog_without_open(element: Tag) -> bool:
         """Check if any parent of the given element is a <dialog> without the 'open' attribute."""
         try:
-            dialog = [
+            dialog: List[Tag] = [
                 x for x in element.parents if isinstance(x, Tag) and x.name == "dialog"
             ]
             for d in dialog:
@@ -87,7 +86,7 @@ class SoupDomUtils:
             return True
 
         # Check if the element is the lowest of its type in this branch
-        tag_name = element.name
+        tag_name: str = element.name
         if not element.find_all(tag_name):
             return True
 
@@ -107,8 +106,8 @@ class SoupDomUtils:
         check_children: bool = True,
         check_text: bool = True,
         only_return_unique_selectors: bool = True,
-        text_exclusions: Optional[List[str]] = None,
-    ) -> Optional[str]:
+        text_exclusions: List[str] | None = None,
+    ) -> str | None:
         steps: List[str] = []
         text_steps: List[str] = []
 
@@ -121,25 +120,25 @@ class SoupDomUtils:
 
         # Step 2: ID
         if element.get("id"):
-            id_selector = f"#{element['id']}"
+            id_selector: str = f"#{element['id']}"
             if SoupDomUtils.is_selector_unique(soup, f"{element.name}{id_selector}"):
                 return f"{element.name}{id_selector}"
             steps.append(id_selector)
 
         if element.get("name"):
-            name_selector = f'[name="{element["name"]}"]'
+            name_selector: str = f'[name="{element["name"]}"]'
             if SoupDomUtils.is_selector_unique(soup, f"{element.name}{name_selector}"):
                 return f"{element.name}{name_selector}"
             steps.append(name_selector)
 
         if element.get("type"):
-            type_selector = f'[type="{element["type"]}"]'
+            type_selector: str = f'[type="{element["type"]}"]'
             if SoupDomUtils.is_selector_unique(soup, f"{element.name}{type_selector}"):
                 return f"{element.name}{type_selector}"
             steps.append(type_selector)
 
         if element.get("placeholder"):
-            placeholder_selector = f'[placeholder="{element["placeholder"]}"]'
+            placeholder_selector: str = f'[placeholder="{element["placeholder"]}"]'
             if SoupDomUtils.is_selector_unique(
                 soup, f"{element.name}{placeholder_selector}"
             ):
@@ -147,15 +146,15 @@ class SoupDomUtils:
             steps.append(placeholder_selector)
 
         if element.get("role"):
-            role_selector = f'[role="{element["role"]}"]'
+            role_selector: str = f'[role="{element["role"]}"]'
             if SoupDomUtils.is_selector_unique(soup, f"{element.name}{role_selector}"):
                 return f"{element.name}{role_selector}"
             steps.append(role_selector)
 
         if element.get("class"):
-            filtered_classes = [x for x in element["class"] if "hidden" not in x]
+            filtered_classes: List[str] = [x for x in element["class"] if "hidden" not in x]
             class_list: List[str] = []
-            class_selector: Optional[str] = None
+            class_selector: str | None = None
             for single_class in filtered_classes:
                 class_list.append(single_class)
                 class_selector = "." + ".".join(class_list)
@@ -173,10 +172,10 @@ class SoupDomUtils:
             if element.text.strip():
                 element_contains_text = True
                 if element.string and element.string not in text_exclusions:
-                    sanitized_text = SoupDomUtils.clean_text_for_selector(
+                    sanitized_text: str = SoupDomUtils.clean_text_for_selector(
                         element.string
                     )
-                    text_selector = f':-soup-contains-own("{sanitized_text}")'
+                    text_selector: str = f':-soup-contains-own("{sanitized_text}")'
                     selector_count = SoupDomUtils.get_selector_count(
                         soup, f"{''.join(steps)}{text_selector}"
                     )
@@ -204,7 +203,7 @@ class SoupDomUtils:
         # Special check for items inside li/ul
         if element.find_parent("li"):
             if element.find_parent("ul"):
-                ul_parent_selector = SoupDomUtils.generate_unique_css_selector(
+                ul_parent_selector: str | None = SoupDomUtils.generate_unique_css_selector(
                     element.find_parent("ul"),
                     soup,
                     check_parents=True,
@@ -212,7 +211,7 @@ class SoupDomUtils:
                     check_text=False,
                     only_return_unique_selectors=False,
                 )
-                li_parent_selector = SoupDomUtils.generate_unique_css_selector(
+                li_parent_selector: str | None = SoupDomUtils.generate_unique_css_selector(
                     element.find_parent("li"),
                     soup,
                     check_parents=False,
@@ -220,7 +219,7 @@ class SoupDomUtils:
                     check_text=False,
                     only_return_unique_selectors=False,
                 )
-                ul_li_selector = (
+                ul_li_selector: str = (
                     f"{ul_parent_selector} > {li_parent_selector} {''.join(steps)}"
                 )
                 if SoupDomUtils.is_selector_unique(soup, ul_li_selector):
@@ -234,16 +233,16 @@ class SoupDomUtils:
                 check_text=False,
                 only_return_unique_selectors=False,
             )
-            ul_selector = f"{ul_parent_selector} > {''.join(steps)}"
+            ul_selector: str = f"{ul_parent_selector} > {''.join(steps)}"
             if SoupDomUtils.is_selector_unique(soup, ul_selector):
                 return ul_selector
 
         if check_siblings:
             # Step 7: Sibling Relationships
-            siblings = element.find_previous_siblings()
+            siblings: ResultSet = element.find_previous_siblings()
             for sibling in siblings:
                 if element_contains_text:
-                    previous_sibling_selector = (
+                    previous_sibling_selector: str | None = (
                         SoupDomUtils.generate_unique_css_selector(
                             sibling,
                             soup,
@@ -278,7 +277,7 @@ class SoupDomUtils:
 
             siblings = element.find_next_siblings()
             for sibling in siblings:
-                next_sibling_selector = SoupDomUtils.generate_unique_css_selector(
+                next_sibling_selector: str | None = SoupDomUtils.generate_unique_css_selector(
                     sibling,
                     soup,
                     check_siblings=False,
@@ -287,7 +286,7 @@ class SoupDomUtils:
                     only_return_unique_selectors=False,
                 )
                 if next_sibling_selector:
-                    sibling_selector = (
+                    sibling_selector: str = (
                         f"{''.join(steps)}:has(+ {next_sibling_selector})"
                     )
                     if SoupDomUtils.is_selector_unique(soup, sibling_selector):
@@ -307,7 +306,7 @@ class SoupDomUtils:
                     parent_level += 1
                     if parent_level <= max_level:
                         if element_contains_text:
-                            parent_selector = SoupDomUtils.generate_unique_css_selector(
+                            parent_selector: str | None = SoupDomUtils.generate_unique_css_selector(
                                 parent,
                                 soup,
                                 check_children=False,
@@ -329,8 +328,8 @@ class SoupDomUtils:
                             )
                         if parent_selector:
                             parent_selectors.append(parent_selector)
-                            parent_child_selector = f"{' > '.join(reversed(parent_selectors))} > {''.join(steps)}"
-                            current_parent_child_selector = (
+                            parent_child_selector: str = f"{' > '.join(reversed(parent_selectors))} > {''.join(steps)}"
+                            current_parent_child_selector: str = (
                                 f"{parent_selector} {''.join(steps)}"
                             )
                             if SoupDomUtils.is_selector_unique(
@@ -346,22 +345,22 @@ class SoupDomUtils:
             if SoupDomUtils.is_selector_unique(soup, "".join(steps)):
                 return "".join(steps)
             else:
-                parent = element.find_parent()
-                siblings = parent.find_all(element.name) if parent else []
+                parent: Tag | None = element.find_parent()
+                siblings: List[Tag] = parent.find_all(element.name) if parent else []
                 if len(siblings) > 1:
-                    index = siblings.index(element) + 1
+                    index: int = siblings.index(element) + 1
                     return f"{''.join(steps)}:nth-of-type({index})"
         else:
             return "".join(steps)
 
     @staticmethod
-    def has_display_none(tag):
-        style = tag.get("style", "")
+    def has_display_none(tag: Tag) -> bool:
+        style: str = tag.get("style", "")
         return "display: none" in style
 
     @staticmethod
-    def get_simplified_dom_tree(source):
-        soup = BeautifulSoup(source, "html.parser")
+    def get_simplified_dom_tree(source: str) -> str | None:
+        soup: BeautifulSoup = BeautifulSoup(source, "html.parser")
 
         for elem in soup.find_all("script"):
             elem.decompose()
@@ -388,7 +387,7 @@ class SoupDomUtils:
             elem.decompose()
 
         # Find all elements with 'display: none'
-        hidden_elements = soup.find_all(SoupDomUtils().has_display_none)
+        hidden_elements: ResultSet = soup.find_all(SoupDomUtils().has_display_none)
         for element in hidden_elements:
             element.decompose()
 
@@ -415,7 +414,7 @@ class SoupDomUtils:
             del img_tag["alt"]
             del img_tag["src"]
 
-        attributes_to_keep = [
+        attributes_to_keep: List[str] = [
             "id",
             "class",
             "value",
@@ -433,26 +432,26 @@ class SoupDomUtils:
 
     @staticmethod
     def generate_unique_xpath_selector(
-            element,
-            soup,
-            check_parents=True,
-            check_siblings=True,
-            check_children=True,
-            check_text=True,
-            only_return_unique_selectors=True,
-    ):
+            element: Tag | None,
+            soup: BeautifulSoup,
+            check_parents: bool = True,
+            check_siblings: bool = True,
+            check_children: bool = True,
+            check_text: bool = True,
+            only_return_unique_selectors: bool = True,
+    ) -> str | None:
         """Generate a unique XPath for the given element."""
         if element is None:
             return ""
 
         # Step 1: Tag
-        steps = []
-        tag_xpath = f"{element.name}"
+        steps: List[str] = []
+        tag_xpath: str = f"{element.name}"
         steps.append(tag_xpath)
 
         if element.get("content-desc"):
-            content_desc_xpath = f"[@content-desc='{element['content-desc']}']"
-            content_desc_xpath_with_prefix = f"//{element.name}{content_desc_xpath}"
+            content_desc_xpath: str = f"[@content-desc='{element['content-desc']}']"
+            content_desc_xpath_with_prefix: str = f"//{element.name}{content_desc_xpath}"
             if SoupDomUtils.is_xpath_unique(soup, content_desc_xpath_with_prefix):
                 return content_desc_xpath_with_prefix
             if SoupDomUtils.is_xpath_multiple(soup, content_desc_xpath_with_prefix):
@@ -470,9 +469,9 @@ class SoupDomUtils:
             # Step 4: Text Content
             if element.text.strip():
                 for text in element.stripped_strings:
-                    sanitized_text = SoupDomUtils.clean_text_for_xpath(text)
+                    sanitized_text: str = SoupDomUtils.clean_text_for_xpath(text)
                     if '"' in sanitized_text:
-                        text_xpath = f"[contains(text(), '{sanitized_text}')]"
+                        text_xpath: str = f"[contains(text(), '{sanitized_text}')]"
                     elif "'" in sanitized_text:
                         text_xpath = f'[contains(text(), "{sanitized_text}")]'
                     else:
@@ -492,40 +491,40 @@ class SoupDomUtils:
                     return f"//{element.name}{text_xpath}"
         # Step 2: ID
         if element.get("id"):
-            id_xpath = f"[@id='{element['id']}']"
-            id_xpath_with_prefix = f"//{element.name}{id_xpath}"
+            id_xpath: str = f"[@id='{element['id']}']"
+            id_xpath_with_prefix: str = f"//{element.name}{id_xpath}"
             if SoupDomUtils.is_xpath_unique(soup, id_xpath_with_prefix):
                 return id_xpath_with_prefix
             if SoupDomUtils.is_xpath_multiple(soup, id_xpath_with_prefix):
                 steps.append(id_xpath)
 
         if element.get("name"):
-            name_xpath = f"[@name='{element['name']}']"
-            name_xpath_with_prefix = f"//{element.name}{name_xpath}"
+            name_xpath: str = f"[@name='{element['name']}']"
+            name_xpath_with_prefix: str = f"//{element.name}{name_xpath}"
             if SoupDomUtils.is_xpath_unique(soup, name_xpath_with_prefix):
                 return name_xpath_with_prefix
             if SoupDomUtils.is_xpath_multiple(soup, name_xpath_with_prefix):
                 steps.append(name_xpath)
 
         if element.get("type"):
-            type_xpath = f"[@type='{element['type']}']"
-            type_xpath_with_prefix = f"//{element.name}{type_xpath}"
+            type_xpath: str = f"[@type='{element['type']}']"
+            type_xpath_with_prefix: str = f"//{element.name}{type_xpath}"
             if SoupDomUtils.is_xpath_unique(soup, type_xpath_with_prefix):
                 return type_xpath_with_prefix
             if SoupDomUtils.is_xpath_multiple(soup, type_xpath_with_prefix):
                 steps.append(type_xpath)
 
         if element.get("placeholder"):
-            placeholder_xpath = f"[@placeholder='{element['placeholder']}']"
-            placeholder_xpath_with_prefix = f"//{element.name}{placeholder_xpath}"
+            placeholder_xpath: str = f"[@placeholder='{element['placeholder']}']"
+            placeholder_xpath_with_prefix: str = f"//{element.name}{placeholder_xpath}"
             if SoupDomUtils.is_xpath_unique(soup, placeholder_xpath_with_prefix):
                 return placeholder_xpath_with_prefix
             if SoupDomUtils.is_xpath_multiple(soup, placeholder_xpath_with_prefix):
                 steps.append(placeholder_xpath)
 
         if element.get("role"):
-            role_xpath = f"[@role='{element['role']}']"
-            role_xpath_with_prefix = f"//{element.name}{role_xpath}"
+            role_xpath: str = f"[@role='{element['role']}']"
+            role_xpath_with_prefix: str = f"//{element.name}{role_xpath}"
             if SoupDomUtils.is_xpath_unique(soup, role_xpath_with_prefix):
                 return role_xpath_with_prefix
             if SoupDomUtils.is_xpath_multiple(soup, role_xpath_with_prefix):
@@ -535,14 +534,14 @@ class SoupDomUtils:
         if element.get("class"):
             # Build an XPath condition for all classes using "and"
             if isinstance(element["class"], list):
-                filtered_classes = [x for x in element["class"] if "hidden" not in x]
-                class_conditions = " and ".join(
+                filtered_classes: List[str] = [x for x in element["class"] if "hidden" not in x]
+                class_conditions: str = " and ".join(
                     [f"contains(@class, '{cls}')" for cls in filtered_classes]
                 )
-                class_xpath = f"[{class_conditions}]"
+                class_xpath: str = f"[{class_conditions}]"
             if isinstance(element["class"], str):
                 class_xpath = f"[@class='{element['class']}']"
-            class_xpath_with_prefix = f"//{element.name}{class_xpath}"
+            class_xpath_with_prefix: str = f"//{element.name}{class_xpath}"
             if SoupDomUtils.is_xpath_unique(soup, class_xpath_with_prefix):
                 return class_xpath_with_prefix
             if SoupDomUtils.is_xpath_multiple(soup, class_xpath_with_prefix):
@@ -553,7 +552,7 @@ class SoupDomUtils:
 
             if element.text.strip():
                 for text in element.stripped_strings:
-                    element_contains_text = True
+                    element_contains_text: bool = True
                     sanitized_text = SoupDomUtils.clean_text_for_xpath(text)
                     if '"' in sanitized_text:
                         text_xpath = f"[contains(text(), '{sanitized_text}')]"
@@ -589,12 +588,12 @@ class SoupDomUtils:
 
         if check_parents:
             # Step 5: Parent Relationships
-            parent = element.parent
+            parent: Tag | None = element.parent
             if parent:
-                parent_xpath = SoupDomUtils.generate_unique_xpath_selector(parent, soup)
+                parent_xpath: str | None = SoupDomUtils.generate_unique_xpath_selector(parent, soup)
                 if parent_xpath:
-                    index = parent.find_all(element.name).index(element) + 1
-                    parent_child_xpath = f"{parent_xpath}/{element.name}[{index}]"
+                    index: int = parent.find_all(element.name).index(element) + 1
+                    parent_child_xpath: str = f"{parent_xpath}/{element.name}[{index}]"
                     if SoupDomUtils.is_xpath_unique(soup, parent_child_xpath):
                         return parent_child_xpath
 
@@ -610,7 +609,7 @@ class SoupDomUtils:
                     check_children=False,
                 )
                 if previous_sibling_selector:
-                    sibling_selector = (
+                    sibling_selector: str = (
                         f"{previous_sibling_selector}/following-sibling::{''.join(steps)}"
                     )
                     if SoupDomUtils.is_xpath_unique(soup, sibling_selector):
@@ -633,10 +632,10 @@ class SoupDomUtils:
                         return sibling_selector
 
         if check_parents:
-            parent_level = 0
-            max_level = 10
+            parent_level: int = 0
+            max_level: int = 10
             # Step 5: Parent and Sibling Relationships
-            parent_selectors = []
+            parent_selectors: List[str] = []
             for parent in element.parents:
                 if (
                         parent
@@ -694,7 +693,7 @@ class SoupDomUtils:
                 return f"//{''.join(steps)}"
 
     @staticmethod
-    def is_xpath_unique(soup, xpath):
+    def is_xpath_unique(soup: BeautifulSoup, xpath: str) -> bool:
         """Check if the XPath selector matches only one element."""
         try:
             if soup.is_xml:
@@ -706,7 +705,7 @@ class SoupDomUtils:
             return False
         try:
             # Use the XPath to find matching elements
-            elements = tree.xpath(xpath)
+            elements: List[etree._Element] = tree.xpath(xpath)
             # Return True if exactly one element matches
             return len(elements) == 1
         except Exception as e:
@@ -714,7 +713,7 @@ class SoupDomUtils:
             return False
 
     @staticmethod
-    def is_xpath_multiple(soup, xpath):
+    def is_xpath_multiple(soup: BeautifulSoup, xpath: str) -> bool:
         """Check if the XPath selector matches multiple elements."""
         try:
             # Parse the HTML content using lxml
@@ -727,7 +726,7 @@ class SoupDomUtils:
                 return False
         try:
             # Use the XPath to find matching elements
-            elements = tree.xpath(xpath)
+            elements: List[etree._Element] = tree.xpath(xpath)
             # Return True if more than one element matches
             return len(elements) > 1
         except Exception as e:
@@ -735,6 +734,6 @@ class SoupDomUtils:
             return False
 
     @staticmethod
-    def clean_text_for_xpath(text):
+    def clean_text_for_xpath(text: str) -> str:
         """Sanitize text for use in an XPath expression."""
         return re.sub(r"\s+", " ", text.strip())

@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Dict
 
 from robot.api.parsing import ModelTransformer
 from robot.parsing.model import VariableSection
@@ -14,7 +14,7 @@ class LocatorReplacer(ModelTransformer):
             replacements: List of (old_locator, new_locator) pairs.
         """
         super().__init__()
-        self.replacements: dict[str, str] = dict(replacements)
+        self.replacements: Dict[str, str] = dict(replacements)
 
     def visit_KeywordCall(self, node: Any) -> Any:
         """Replace matching token values in a KeywordCall node.
@@ -41,7 +41,7 @@ class VariablesReplacer(ModelTransformer):
             replacements: List of (variable_name, new_value) pairs.
         """
         super().__init__()
-        self.replacements: dict[str, str] = dict(replacements)
+        self.replacements: Dict[str, str] = dict(replacements)
 
     def visit_VariableSection(self, node: VariableSection) -> Any:
         """Replace variable values in the VariableSection of a resource.

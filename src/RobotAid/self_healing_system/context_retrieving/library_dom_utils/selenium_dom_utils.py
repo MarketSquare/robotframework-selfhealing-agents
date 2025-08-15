@@ -1,5 +1,8 @@
-from bs4 import BeautifulSoup
+from typing import List, Dict
+
 from robot.libraries.BuiltIn import BuiltIn
+from bs4 import BeautifulSoup, ResultSet, Tag
+from selenium.webdriver.remote.webelement import WebElement
 
 from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
@@ -48,7 +51,7 @@ class SeleniumDomUtils(BaseDomUtils):
 
         try:
             # Use dynamic attribute access to handle different SeleniumLibrary versions
-            elements = getattr(self.library_instance, "get_webelements")(locator)
+            elements: List[WebElement] = getattr(self.library_instance, "get_webelements")(locator)
             return len(elements) == 1
         except Exception:
             return False
@@ -63,7 +66,7 @@ class SeleniumDomUtils(BaseDomUtils):
             return "<html><body>SeleniumLibrary not available</body></html>"
 
         try:
-            page_source = getattr(self.library_instance, "get_source")()
+            page_source: str = getattr(self.library_instance, "get_source")()
 
             soup: BeautifulSoup = BeautifulSoup(page_source, "html.parser")
             source: str = SoupDomUtils().get_simplified_dom_tree(
@@ -94,17 +97,17 @@ class SeleniumDomUtils(BaseDomUtils):
         if self.library_instance is None:
             return False
         try:
-            element = getattr(self.library_instance, "get_webelement")(locator)
+            element: WebElement = getattr(self.library_instance, "get_webelement")(locator)
 
             # Get tag name using element property
-            tag = element.tag_name.lower()
+            tag: str = element.tag_name.lower()
 
             # Check basic clickable tags
             if tag == "button" or tag == "a" or tag == "select":
                 return True
             elif tag == "input":
                 # Check input type for clickable input elements
-                input_type = getattr(self.library_instance, "execute_javascript")(
+                input_type: str = getattr(self.library_instance, "execute_javascript")(
                     "return arguments[0].type;", "ARGUMENTS", element
                 )
                 if input_type in [
@@ -118,7 +121,7 @@ class SeleniumDomUtils(BaseDomUtils):
                     return True
 
             # Check for custom/framework-specific clickable elements
-            other_clickable_tags = [
+            other_clickable_tags: List[str] = [
                 "mat-button",  # Angular Material
                 "mat-radio-button",
                 "mat-checkbox",
@@ -135,7 +138,7 @@ class SeleniumDomUtils(BaseDomUtils):
                 return True
 
             # Check cursor style as final indicator
-            cursor_style = getattr(self.library_instance, "execute_javascript")(
+            cursor_style: str = getattr(self.library_instance, "execute_javascript")(
                 "return window.getComputedStyle(arguments[0]).getPropertyValue('cursor');",
                 "ARGUMENTS",
                 element,
@@ -149,7 +152,7 @@ class SeleniumDomUtils(BaseDomUtils):
 
     def get_locator_proposals(
         self, failed_locator: str, keyword_name: str
-    ) -> list[str]:
+    ) -> List[str]:
         """Get proposals for the given locator.
 
         Args:
@@ -158,8 +161,8 @@ class SeleniumDomUtils(BaseDomUtils):
         Returns:
             A list of proposed locators.
         """
-        dom_tree = self.get_dom_tree()
-        soup = BeautifulSoup(dom_tree, "html.parser")
+        dom_tree: str = self.get_dom_tree()
+        soup: BeautifulSoup = BeautifulSoup(dom_tree, "html.parser")
 
         match keyword_name:
             case (
@@ -173,8 +176,8 @@ class SeleniumDomUtils(BaseDomUtils):
                 | "Textfield Value Should Be"
                 | "Clear Text"
             ):
-                element_types = ["textarea", "input"]
-                elements = soup.find_all(element_types)
+                element_types: List[str] = ["textarea", "input"]
+                elements: ResultSet = soup.find_all(element_types)
             case (
                 "Click Button"
                 | "Click Link"
@@ -182,7 +185,7 @@ class SeleniumDomUtils(BaseDomUtils):
                 | "Click Image"
                 | "Click Element At Coordinates"
             ):
-                element_types = [
+                element_types: List[str] = [
                     "a",
                     "button",
                     "checkbox",
@@ -192,18 +195,18 @@ class SeleniumDomUtils(BaseDomUtils):
                     "li",
                     SoupDomUtils.has_direct_text,
                 ]
-                elements = soup.find_all(element_types)
+                elements: ResultSet = soup.find_all(element_types)
             case s if "list" in s.lower():
-                element_types = ["select"]
-                elements = soup.find_all(element_types)
+                element_types: List[str] = ["select"]
+                elements: ResultSet = soup.find_all(element_types)
             case c if "checkbox" in c.lower():
-                element_types = ["input", "button", "checkbox"]
-                elements = soup.find_all(element_types)
+                element_types: List[str] = ["input", "button", "checkbox"]
+                elements: ResultSet = soup.find_all(element_types)
             case "Get Text" | "Element Text Should Be" | "Element Text Should Not Be":
-                element_types = ["label", "div", "span", SoupDomUtils.has_direct_text]
-                elements = soup.find_all(element_types)
+                element_types: List[str] = ["label", "div", "span", SoupDomUtils.has_direct_text]
+                elements: ResultSet = soup.find_all(element_types)
 
-        filtered_elements = [
+        filtered_elements: List[Tag] = [
             elem
             for elem in elements
             if (
@@ -216,18 +219,18 @@ class SeleniumDomUtils(BaseDomUtils):
             )
         ]
 
-        locators = []
+        locators: List = []
         # Generate and display unique selectors
         for elem in filtered_elements:
             try:
-                locator = SeleniumDomUtils._get_locator(elem, soup)
+                locator: str | None = SeleniumDomUtils._get_locator(elem, soup)
             except Exception:
                 locator = None
             if locator:
                 locators.append(locator)
         return locators
 
-    def get_locator_metadata(self, locator: str) -> list[dict]:
+    def get_locator_metadata(self, locator: str) -> List[Dict]:
         """Get metadata for the given locator.
 
         Args:
@@ -240,11 +243,11 @@ class SeleniumDomUtils(BaseDomUtils):
             return []
 
         try:
-            element = getattr(self.library_instance, "get_webelement")(locator)
-            metadata_list = []
+            element: WebElement = getattr(self.library_instance, "get_webelement")(locator)
+            metadata_list: List = []
 
             if element:
-                metadata = {}
+                metadata: Dict = {}
 
                 # Properties (retrieved via JavaScript execution for consistency)
                 property_list = [
@@ -374,8 +377,8 @@ class SeleniumDomUtils(BaseDomUtils):
             return []
 
     @staticmethod
-    def _get_locator(elem, soup):
-        selector = SoupDomUtils.generate_unique_xpath_selector(elem, soup)
+    def _get_locator(elem: Tag, soup: BeautifulSoup) -> str | None:
+        selector: str = SoupDomUtils.generate_unique_xpath_selector(elem, soup)
         if selector:
             return "xpath:" + selector
         return None

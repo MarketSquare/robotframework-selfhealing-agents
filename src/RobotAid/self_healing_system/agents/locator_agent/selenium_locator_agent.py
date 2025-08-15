@@ -81,12 +81,12 @@ class SeleniumLocatorAgent(BaseLocatorAgent):
         Returns:
             The converted locator compatible with Selenium library.
         """
-        locator = locator.strip()
+        locator: str = locator.strip()
         if locator.startswith("css="):
-            locator = "css:" + locator[4:]
+            locator: str = "css:" + locator[4:]
         elif locator.startswith("xpath="):
-            locator = "xpath:" + locator[6:]
-        locator = locator.replace(":has-text", ":contains")
-        locator = locator.replace(":text(", "text()=")
+            locator: str = "xpath:" + locator[6:]
+        locator: str = locator.replace(":has-text", ":contains")
+        locator: str = locator.replace(":text(", "text()=")
 
         return locator

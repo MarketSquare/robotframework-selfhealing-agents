@@ -40,7 +40,7 @@ class BaseLocatorAgent(ABC):
                 UsageLimits with request_limit=5 and total_tokens_limit=2000.
             dom_utility: Optional DOM utility instance for validation.
         """
-        self.cfg = cfg
+        self.cfg: Cfg = cfg
         self.usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
         self._dom_utility: BaseDomUtils = dom_utility
         self.use_llm_for_locator_generation = cfg.use_llm_for_locator_generation

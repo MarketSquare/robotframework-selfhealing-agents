@@ -75,7 +75,7 @@ class HealedFilesReport(BaseReport):
             # written keywords if locators exists in these arguments AND are defined in external resources.
             # This will ultimately include the (original_locator, healed_locator) information of the imported
             # resource files for the inline args in the parent file.
-            model = get_model(source_path)
+            model: File = get_model(source_path)
             setting: SettingSection = next(
                 s for s in model.sections if isinstance(s, SettingSection)
             )
@@ -165,7 +165,7 @@ class HealedFilesReport(BaseReport):
                         sec for sec in res_model.sections if isinstance(sec, VariableSection)
                     ).body
                 }
-                unpacked_tuples = list(chain.from_iterable(defined))
+                unpacked_tuples: List[str] = list(chain.from_iterable(defined))
                 if any(var in unpacked_tuples for var, _ in replacements):
                     res_dir: Path = self.out_dir / res_path.parent.name
                     res_dir.mkdir(parents=True, exist_ok=True)

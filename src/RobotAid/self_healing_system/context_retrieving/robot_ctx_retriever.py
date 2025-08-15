@@ -1,5 +1,3 @@
-from typing import Optional
-
 from robot import result
 from robot.utils.misc import seq2str
 from robot.libraries.BuiltIn import BuiltIn
@@ -13,7 +11,7 @@ class RobotCtxRetriever:
 
     @staticmethod
     def get_context_payload(
-        result: result.Keyword, dom_utility: Optional[BaseDomUtils] = None
+        result: result.Keyword, dom_utility: BaseDomUtils
     ) -> PromptPayload:
         """Returns context for self-healing process of the LLM.
 

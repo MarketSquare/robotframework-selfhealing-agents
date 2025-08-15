@@ -41,7 +41,7 @@ class DomUtilityFactory:
         Raises:
             ValueError: If the utility type is not supported.
         """
-        dom_utility = _DOM_UTILITY_TYPE.get(agent_type)
+        dom_utility: Type[BaseDomUtils] = _DOM_UTILITY_TYPE.get(agent_type)
         if dom_utility is None:
             raise ValueError(f"Unsupported DOM utility type: {dom_utility}")
         return dom_utility()

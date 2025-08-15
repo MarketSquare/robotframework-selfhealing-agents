@@ -1,5 +1,7 @@
-from bs4 import BeautifulSoup
+from typing import List, Dict
+
 from robot.libraries.BuiltIn import BuiltIn
+from bs4 import BeautifulSoup, ResultSet, Tag
 
 from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
@@ -29,7 +31,7 @@ class BrowserDomUtils(BaseDomUtils):
             return True
         try:
             # Use dynamic attribute access to handle different Browser library versions
-            elements = getattr(self.library_instance, "get_elements")(locator)
+            elements: List[str] = getattr(self.library_instance, "get_elements")(locator)
             return len(elements) > 0
         except Exception:
             return False
@@ -153,7 +155,7 @@ class BrowserDomUtils(BaseDomUtils):
         """
         return "browser"
 
-    def is_element_clickable(self, locator: str) -> bool:
+    def is_element_clickable(self, locator: str) -> bool | None:
         """Check if the element identified by the locator is clickable using Browser library methods.
 
         Args:
@@ -166,16 +168,16 @@ class BrowserDomUtils(BaseDomUtils):
         if self.library_instance is None:
             return False
         try:
-            element = getattr(self.library_instance, "get_element")(locator)
+            element: str = getattr(self.library_instance, "get_element")(locator)
             # Use get_property_value to check the tagName
-            tag = getattr(self.library_instance, "get_property")(
+            tag: str = getattr(self.library_instance, "get_property")(
                 element, "tagName"
             ).lower()
 
             if tag == "button" or tag == "a" or tag == "select":
                 return True
             elif tag == "input":
-                type = getattr(self.library_instance, "evaluate_javascript")(
+                type: str = getattr(self.library_instance, "evaluate_javascript")(
                     locator, f"(elem) => elem.{'type'}"
                 )
                 if (
@@ -188,7 +190,7 @@ class BrowserDomUtils(BaseDomUtils):
                 ):
                     return True
 
-            other_clickable_tags = [
+            other_clickable_tags: List[str] = [
                 "mat-button",  # Angular Material
                 "mat-radio-button",
                 "mat-checkbox",
@@ -202,7 +204,7 @@ class BrowserDomUtils(BaseDomUtils):
             if tag in other_clickable_tags:
                 return True
 
-            cursor_style = getattr(self.library_instance, "get_style")(
+            cursor_style: str = getattr(self.library_instance, "get_style")(
                 locator, "cursor"
             )
             if cursor_style == "pointer":
@@ -222,8 +224,8 @@ class BrowserDomUtils(BaseDomUtils):
         Returns:
             A list of proposed locators.
         """
-        dom_tree = self.get_dom_tree()
-        soup = BeautifulSoup(dom_tree, "html.parser")
+        dom_tree: str = self.get_dom_tree()
+        soup: BeautifulSoup = BeautifulSoup(dom_tree, "html.parser")
 
         match keyword_name:
             case (
@@ -234,10 +236,10 @@ class BrowserDomUtils(BaseDomUtils):
                 | "Type Secret"
                 | "Clear Text"
             ):
-                element_types = ["textarea", "input"]
-                elements = soup.find_all(element_types)
+                element_types: List[str] = ["textarea", "input"]
+                elements: ResultSet = soup.find_all(element_types)
             case "Click" | "Click With Options":
-                element_types = [
+                element_types: List[str] = [
                     "a",
                     "button",
                     "checkbox",
@@ -247,18 +249,18 @@ class BrowserDomUtils(BaseDomUtils):
                     "li",
                     SoupDomUtils.has_direct_text,
                 ]
-                elements = soup.find_all(element_types)
+                elements: ResultSet = soup.find_all(element_types)
             case "Select Options By" | "Deselect Options":
-                element_types = ["select"]
-                elements = soup.find_all(element_types)
+                element_types: List[str] = ["select"]
+                elements: ResultSet = soup.find_all(element_types)
             case "Check Checkbox" | "Uncheck Checkbox":
-                element_types = ["input", "button", "checkbox"]
-                elements = soup.find_all(element_types)
+                element_types: List[str] = ["input", "button", "checkbox"]
+                elements: ResultSet = soup.find_all(element_types)
             case "Get Text":
-                element_types = ["label", "div", "span", SoupDomUtils.has_direct_text]
-                elements = soup.find_all(element_types)
+                element_types: List[str] = ["label", "div", "span", SoupDomUtils.has_direct_text]
+                elements: ResultSet = soup.find_all(element_types)
 
-        filtered_elements = [
+        filtered_elements: List[Tag] = [
             elem
             for elem in elements
             if (
@@ -271,11 +273,11 @@ class BrowserDomUtils(BaseDomUtils):
             )
         ]
 
-        locators = []
+        locators: List = []
         # Generate and display unique selectors
         for elem in filtered_elements:
             try:
-                locator = BrowserDomUtils._get_locator(elem, soup)
+                locator: str | None = BrowserDomUtils._get_locator(elem, soup)
             except Exception:
                 locator = None
             if locator:
@@ -295,14 +297,14 @@ class BrowserDomUtils(BaseDomUtils):
             return []
 
         try:
-            elements = getattr(self.library_instance, "get_elements")(locator)
-            metadata_list = []
+            elements: List[str] = getattr(self.library_instance, "get_elements")(locator)
+            metadata_list: List = []
 
             for element in elements:
-                metadata = {}
+                metadata: Dict = {}
 
                 # Properties (retrieved via evaluate_javascript)
-                property_list = [
+                property_list: List[str] = [
                     "tagName",
                     "childElementCount",
                     "innerText",
@@ -312,7 +314,7 @@ class BrowserDomUtils(BaseDomUtils):
                 ]
                 for property in property_list:
                     try:
-                        value = getattr(self.library_instance, "evaluate_javascript")(
+                        value: str = getattr(self.library_instance, "evaluate_javascript")(
                             element, f"(elem) => elem.{property}"
                         )
                         if value:
@@ -321,7 +323,7 @@ class BrowserDomUtils(BaseDomUtils):
                         pass
 
                 # Additional properties with parent/sibling context
-                additional_properties = [
+                additional_properties: List[str] = [
                     "parentElement.tagName",
                     "parentElement.innerText",
                     "previousSibling.tagName",
@@ -331,7 +333,7 @@ class BrowserDomUtils(BaseDomUtils):
                 ]
                 for property in additional_properties:
                     try:
-                        value = getattr(self.library_instance, "evaluate_javascript")(
+                        value: str = getattr(self.library_instance, "evaluate_javascript")(
                             element, f"(elem) => elem.{property}"
                         )
                         if value:
@@ -340,7 +342,7 @@ class BrowserDomUtils(BaseDomUtils):
                         pass
 
                 # Attributes (retrieved via get_attribute)
-                allowed_attributes = [
+                allowed_attributes: List[str] = [
                     "id",
                     "class",
                     "placeholder",
@@ -349,13 +351,13 @@ class BrowserDomUtils(BaseDomUtils):
                     "title",
                 ]
                 try:
-                    attribute_list = getattr(
+                    attribute_list: List[str] = getattr(
                         self.library_instance, "get_attribute_names"
                     )(element)
                     for attribute in allowed_attributes:
                         if attribute in attribute_list:
                             try:
-                                value = getattr(self.library_instance, "get_attribute")(
+                                value: str = getattr(self.library_instance, "get_attribute")(
                                     element, attribute
                                 )
                                 if value:
@@ -366,7 +368,7 @@ class BrowserDomUtils(BaseDomUtils):
                     # Fallback: try to get common attributes directly
                     for attribute in allowed_attributes:
                         try:
-                            value = getattr(self.library_instance, "get_attribute")(
+                            value: str = getattr(self.library_instance, "get_attribute")(
                                 element, attribute
                             )
                             if value:
@@ -404,8 +406,8 @@ class BrowserDomUtils(BaseDomUtils):
             return []
 
     @staticmethod
-    def _get_locator(elem, soup):
-        selector = SoupDomUtils.generate_unique_css_selector(elem, soup)
+    def _get_locator(elem: Tag, soup: BeautifulSoup) -> str | None:
+        selector: str = SoupDomUtils.generate_unique_css_selector(elem, soup)
         if selector:
             return "css=" + selector
         # else:

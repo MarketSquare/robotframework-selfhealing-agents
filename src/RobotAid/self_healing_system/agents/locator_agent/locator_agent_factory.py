@@ -43,8 +43,8 @@ class LocatorAgentFactory:
         Raises:
             ValueError: If the agent type is not supported.
         """
-        agent = _AGENT_MAPPING.get(agent_type)
+        agent: Type[BaseLocatorAgent] = _AGENT_MAPPING.get(agent_type)
         if agent is None:
-            supported = ", ".join(sorted(_AGENT_MAPPING.keys()))
+            supported: str = ", ".join(sorted(_AGENT_MAPPING.keys()))
             raise ValueError(f"Unsupported agent type: {agent}. Supported types: {supported}")
         return agent(cfg=cfg, dom_utility=dom_utility)

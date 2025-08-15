@@ -19,7 +19,7 @@ class RobotAid(ListenerV3):
 
         ToDo: note here in docstrings that state is shared mutable var between listener and SelfHealingEngine
         """
-        self.ROBOT_LIBRARY_LISTENER = self
+        self.ROBOT_LIBRARY_LISTENER: RobotAid = self
         self._state: ListenerState = ListenerState(cfg=Cfg())   # type: ignore
         self._self_healing_engine: SelfHealingEngine = SelfHealingEngine(self._state)
         self._report_generator: ReportGenerator = ReportGenerator()

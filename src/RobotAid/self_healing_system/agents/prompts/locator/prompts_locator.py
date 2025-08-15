@@ -33,8 +33,8 @@ class PromptsLocatorGenerationAgent(BasePromptAgent):
 
     @classmethod
     def get_system_msg(cls, dom_utility: BaseDomUtils):
-        library_type = dom_utility.get_library_type()
-        func = cls._library_func_mapping_system_msg.get(library_type)
+        library_type: str = dom_utility.get_library_type()
+        func: Callable = cls._library_func_mapping_system_msg.get(library_type)
         if func is None:
             raise ValueError(f"Unknown library: {library_type}")
         return func(cls._system_msg)     # type: ignore
