@@ -4,66 +4,68 @@ from abc import ABC, abstractmethod
 class BaseDomUtils(ABC):
     """Abstract base class for library-specific DOM utilities.
 
-    This class defines the common interface that all DOM utility implementations
-    must follow, ensuring consistency across different Robot Framework library_dom_utils.
+    Defines the common interface that all DOM utility implementations
+    must follow, ensuring consistency across different Robot Framework DOM utilities.
     """
-
     @abstractmethod
     def __init__(self):
-        """Initialize the DOM utility with a library instance."""
+        """Initializes the DOM utility.
+
+        This method should set up any required library-specific state.
+        """
         pass
 
     @abstractmethod
     def is_locator_valid(self, locator: str) -> bool:
-        """Check if the given locator is valid in the DOM.
+        """Checks if the given locator is valid in the DOM.
 
         Args:
-            locator: The locator to check.
+            locator (str): The locator to check.
 
         Returns:
-            True if the locator is valid, False otherwise.
+            bool: True if the locator is valid, False otherwise.
         """
         pass
 
     @abstractmethod
     def is_locator_unique(self, locator: str) -> bool:
-        """Check if the given locator is unique in the DOM.
+        """Checks if the given locator is unique in the DOM.
 
         Args:
-            locator: The locator to check.
+            locator (str): The locator to check.
 
         Returns:
-            True if the locator is unique, False otherwise.
+            bool: True if the locator is unique, False otherwise.
         """
         pass
 
     @abstractmethod
     def get_dom_tree(self) -> str:
-        """Retrieve the DOM tree of the current page.
+        """Retrieves the DOM tree of the current page.
 
         Returns:
-            The DOM tree as a string.
+            str: The DOM tree as a string.
         """
         pass
 
     @abstractmethod
     def get_library_type(self) -> str:
-        """Get the library type identifier.
+        """Gets the library type identifier.
 
         Returns:
-            The library type (e.g., 'browser', 'selenium', 'appium').
+            str: The library type (e.g., 'browser', 'selenium', 'appium').
         """
         pass
 
     @abstractmethod
     def is_element_clickable(self, locator: str) -> bool:
-        """Check if the element identified by the locator is clickable.
+        """Checks if the element identified by the locator is clickable.
 
         Args:
-            locator: The locator to check.
+            locator (str): The locator to check.
 
         Returns:
-            True if the element is clickable, False otherwise.
+            bool: True if the element is clickable, False otherwise.
         """
         pass
 
@@ -71,25 +73,26 @@ class BaseDomUtils(ABC):
     def get_locator_proposals(
         self, failed_locator: str, keyword_name: str
     ) -> list[str]:
-        """Get proposals for the given locator.
+        """Gets proposals for the given locator.
 
         Args:
-            locator: The locator to get proposals for.
+            failed_locator (str): The locator to get proposals for.
+            keyword_name (str): The name of the keyword where the locator failed.
 
         Returns:
-            A list of proposed locators.
+            list[str]: A list of proposed locators.
         """
         pass
 
     @abstractmethod
     def get_locator_metadata(self, locator: str) -> dict:
-        """Get metadata for the given locator.
+        """Gets metadata for the given locator.
 
         Args:
-            locator: The locator to get metadata for.
+            locator (str): The locator to get metadata for.
 
         Returns:
-            A dictionary containing metadata about elements matching the locator.
-            The dictionary may contain keys like 'tag', 'id', 'class', 'text', 'attributes', etc.
+            dict: A dictionary containing metadata about elements matching the locator.
+                The dictionary may contain keys like 'tag', 'id', 'class', 'text', 'attributes', etc.
         """
         pass

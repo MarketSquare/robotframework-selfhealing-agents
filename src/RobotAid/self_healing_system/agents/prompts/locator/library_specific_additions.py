@@ -1,9 +1,15 @@
 def get_system_msg_browser(system_msg: str) -> str:
-    """Get the Browser library specific system prompt.
+    """Returns the Browser library-specific system prompt for locator generation.
+
+    Appends Browser library-specific instructions to the provided base system message,
+    including keyword-element associations and selector prefixing.
+
+    Args:
+        system_msg (str): The base system message to extend.
 
     Returns:
-        The system prompt containing Browser library specific instructions
-        for locator generation and formatting.
+        str: The system prompt containing Browser library-specific instructions
+            for locator generation and formatting.
     """
     return (
         f"{system_msg}\n"
@@ -19,11 +25,17 @@ def get_system_msg_browser(system_msg: str) -> str:
 
 
 def get_system_msg_selenium(system_msg: str) -> str:
-    """Get the Selenium library specific system prompt.
+    """Returns the Selenium library-specific system prompt for locator generation.
+
+    Appends Selenium library-specific instructions to the provided base system message,
+    including keyword-element associations and selector prefixing.
+
+    Args:
+        system_msg (str): The base system message to extend.
 
     Returns:
-        The system prompt containing Selenium library specific instructions
-        for locator generation and formatting.
+        str: The system prompt containing Selenium library-specific instructions
+            for locator generation and formatting.
     """
     return (
         f"{system_msg}\n"
@@ -40,10 +52,14 @@ def get_system_msg_selenium(system_msg: str) -> str:
 
 # ToDo: implement appium support
 def get_system_msg_appium(system_msg: str) -> None:
-    """Get the Selenium library specific system prompt.
+    """Returns the Appium library-specific system prompt for locator generation.
+
+    Currently not implemented.
+
+    Args:
+        system_msg (str): The base system message to extend.
 
     Returns:
-        The system prompt containing Selenium library specific instructions
-        for locator generation and formatting.
+        None: Appium-specific instructions are not yet implemented.
     """
     return None

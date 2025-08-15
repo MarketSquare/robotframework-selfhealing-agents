@@ -11,15 +11,31 @@ from RobotAid.self_healing_system.schemas.internal_state.report_context import R
 
 
 class ActionLogReport(BaseReport):
+    """Generates an HTML action log summarizing locator healing events.
 
+    This report creates an HTML table that groups and displays all locator healing
+    events, including test names, keywords, arguments, line numbers, failed and healed
+    locators, and all tried locators. The report is saved in the reports directory.
+    """
     def __init__(self, base_dir: Path) -> None:
+        """Initializes the ActionLogReport with the given base directory.
+
+        Args:
+            base_dir: The base directory where the action log will be saved.
+        """
         super().__init__(base_dir, "action_log")
 
     def _generate_report(self, report_context: ReportContext) -> ReportContext:
         """Writes an HTML table summarizing each locator healing event.
 
+        Groups healing events by file and generates a detailed HTML report
+        with all relevant information for each event.
+
         Args:
-            report_info: List of data objects representing healing events.
+            report_context: The context object containing healing event data.
+
+        Returns:
+            The updated ReportContext after generating the action log.
 
         Raises:
             RuntimeError: If writing to the output file fails.

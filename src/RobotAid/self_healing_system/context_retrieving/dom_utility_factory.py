@@ -20,20 +20,18 @@ _DOM_UTILITY_TYPE: Final[Mapping[str, Type[BaseDomUtils]]] = {
 
 
 class DomUtilityFactory:
-    """Factory class for creating library-specific DOM utilities.
+    """Factory for creating library-specific DOM utility instances.
 
-    This factory provides a centralized way to create the appropriate DOM utility
-    instance based on the library type, making the system easily extensible for
-    new Robot Framework library_dom_utils.
+    Provides a centralized way to instantiate the appropriate DOM utility
+    based on the library type (e.g., 'browser', 'selenium', 'appium').
     """
-
     @staticmethod
     def create_dom_utility(agent_type: str) -> BaseDomUtils:
-        """Create a DOM utility instance based on the specified type.
+        """Creates a DOM utility instance based on the specified type.
 
         Args:
-            agent_type: The type of DOM utility to create. Can be a DomUtilityType enum,
-                         a string ('browser', 'selenium', 'appium'), or None for auto-detection.
+            agent_type (str): The type of DOM utility to create. Should be one of
+                'browser', 'selenium', or 'appium'.
 
         Returns:
             BaseDomUtils: An instance of the appropriate DOM utility class.

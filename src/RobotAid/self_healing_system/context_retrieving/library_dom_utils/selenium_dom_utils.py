@@ -13,8 +13,10 @@ class SeleniumDomUtils(BaseDomUtils):
 
     This class provides DOM interaction methods specific to the Robot Framework
     SeleniumLibrary.
-    """
 
+    Attributes:
+        _library_instance: Instance of the SeleniumLibrary used for DOM interactions.
+    """
     def __init__(self):
         """Initialize Selenium DOM utilities."""
         self._library_instance = BuiltIn().get_library_instance("SeleniumLibrary")

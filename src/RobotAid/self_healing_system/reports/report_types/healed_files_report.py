@@ -20,18 +20,30 @@ from RobotAid.self_healing_system.reports.robot_model_visitors import (
 
 
 class HealedFilesReport(BaseReport):
+    """Generates healed Robot Framework test suites and resource files.
 
+    This report applies locator and variable replacements to test suites and their
+    imported resources, saving the healed versions to the reports directory.
+    """
     def __init__(self, base_dir: Path) -> None:
+        """Initializes the HealedFilesReport with the given base directory.
+
+        Args:
+            base_dir: The base directory where healed files will be saved.
+        """
         super().__init__(base_dir, "healed_files")
 
     def _generate_report(self, report_context: ReportContext) -> ReportContext:
         """Applies healed locators to test suites and external resources, then saves them.
 
+        Iterates over all source files referenced in the report context, applies locator
+        and variable replacements, and saves the healed files to the output directory.
+
         Args:
-            report_info: List of data objects representing healing events.
+            report_context: The context object containing healing event data.
 
         Returns:
-            A list of paths to external original resource files.
+            The updated ReportContext after applying replacements.
 
         Raises:
             RuntimeError: If saving healed suites fails.
@@ -51,7 +63,10 @@ class HealedFilesReport(BaseReport):
             report_info: List[ReportData],
             source_path: Path
     ) -> List[Tuple[str, str]]:
-        """Build a list of original-to-healed locator pairs for a file.
+        """Builds a list of original-to-healed locator pairs for a file.
+
+        Collects all locator replacements relevant to the given source file, including
+        those from imported resources.
 
         Args:
             report_info: List of data objects representing healing events.
@@ -89,18 +104,15 @@ class HealedFilesReport(BaseReport):
             source_path: Path,
             replacements: List[Tuple[str, str]],
     ) -> None:
-        """Applies locator replacements to a robot.api.parsing (common) model and saves it.
-        Note: In robot.api.parsing exists get_model() and get_resource_model(), depending on the
-              file imported having only a VariableSection.
+        """Applies locator and variable replacements to a Robot Framework file and saves it.
 
-        Retrieves the AST for the suite or resource at `source_path`, applies the given
-        keyword locator replacements and variable replacements, and writes the healed
-        model back to the reports directory under a folder named for its parent.
+        Loads the AST for the suite or resource at `source_path`, applies the given
+        keyword locator and variable replacements, and writes the healed model to
+        the reports directory.
 
         Args:
             source_path: Path to the original Robot Framework file (suite or resource).
             replacements: List of (original_locator, healed_locator) tuples to apply.
-            var_repls: List of (variable_name, new_value) tuples to apply in variable sections.
 
         Raises:
             RuntimeError: If the healed model cannot be saved.
@@ -125,22 +137,16 @@ class HealedFilesReport(BaseReport):
         replacements: List[Tuple[str, str]],
         report_context: ReportContext
     ) -> None:
-        """Applies locator replacements to a robot.api.parsing resource model and saves it.
-        Note: In robot.api.parsing exists get_model() and get_resource_model(), depending on the
-              file imported having only a VariableSection.
+        """Applies variable replacements to imported resource files and saves them.
 
-        Each resource imported by the suite at `source_path` is loaded, and variable replacements
-        are applied when their definitions match. If a healed version of the same resource
-        already exists in the reports directory, it is reloaded and used as the basis for further
-        replacements.
+        For each resource imported by the suite at `source_path`, loads the resource,
+        applies variable replacements if definitions match, and saves the healed resource
+        to the reports directory. Updates the report context with paths to healed resources.
 
         Args:
             source_path: Path to the file containing resource imports.
-            replacements: List of (old_value, new_value) pairs for resource vars.
-            report_context: Existing list of healed resource paths to extend.
-
-        Returns:
-            The updated list of Paths to healed external resources.
+            replacements: List of (old_value, new_value) pairs for resource variables.
+            report_context: The current report context to update with healed resource paths.
         """
         try:
             model: File = get_model(str(source_path))

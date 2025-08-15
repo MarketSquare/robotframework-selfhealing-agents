@@ -12,8 +12,10 @@ class BrowserDomUtils(BaseDomUtils):
 
     This class provides DOM interaction methods specific to the Robot Framework
     Browser library (Playwright-based).
-    """
 
+    Attributes:
+        _library_instance: Instance of the Browser library used for DOM interactions.
+    """
     def __init__(self):
         """Initialize Browser DOM utilities."""
         self._library_instance = BuiltIn().get_library_instance("Browser")
@@ -407,6 +409,19 @@ class BrowserDomUtils(BaseDomUtils):
 
     @staticmethod
     def _get_locator(elem: Tag, soup: BeautifulSoup) -> str | None:
+        """Generates a unique CSS locator string for the given element.
+
+        Attempts to generate a unique CSS selector for the provided BeautifulSoup Tag
+        within the given soup. If a unique selector is found, returns it as a string
+        prefixed with 'css='. Otherwise, returns None.
+
+        Args:
+            elem (Tag): The BeautifulSoup Tag element for which to generate the locator.
+            soup (BeautifulSoup): The BeautifulSoup object representing the DOM.
+
+        Returns:
+            str | None: The unique CSS locator string prefixed with 'css=', or None if not found.
+        """
         selector: str = SoupDomUtils.generate_unique_css_selector(elem, soup)
         if selector:
             return "css=" + selector

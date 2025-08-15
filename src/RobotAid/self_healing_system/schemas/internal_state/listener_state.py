@@ -7,12 +7,18 @@ from RobotAid.self_healing_system.schemas.internal_state.report_data import Repo
 
 
 class ListenerState(BaseModel):
-    """Schema for listener state handling.
+    """Schema for maintaining listener state in the self-healing system.
 
     Attributes:
-        TODO
+        cfg (Cfg): Configuration object for the self-healing system.
+        context (Dict[str, Any]): Dictionary for storing contextual information during execution.
+        report_info (List[ReportData]): List of ReportData objects representing healing events.
+        retry_count (int): Number of retries attempted by the self-healing system.
+        suggestions (Optional[List[str]]): List of locator suggestions for healing.
+        should_generate_locators (bool): Indicates if locator suggestions should be generated.
+        tried_locators (List[str]): List of locators that have been tried.
+        healed (bool): Indicates if the current locator has been healed.
     """
-
     cfg: Cfg = Field(..., description="Configuration pydantic class.")
     context: Dict[str, Any] = Field(default_factory=dict, description="Context dictionary.")
     report_info: List[ReportData] = Field(

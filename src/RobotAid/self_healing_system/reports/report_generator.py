@@ -11,14 +11,23 @@ from RobotAid.self_healing_system.reports.report_types.diff_files_report import 
 
 
 class ReportGenerator:
-    """Generates action log, healed Robot Framework test suites (and/or resources) and diff files with the respective
-       changes.
+    """Generates reports for self-healing events in Robot Framework test suites.
 
-       Uses "Chain-of-Responsibility + Context Object" pattern
+    This class creates action logs, healed Robot Framework test suites or resources,
+    and diff files that document the changes made during self-healing. It uses the
+    "Chain-of-Responsibility" and "Context Object" design patterns to process and
+    generate multiple report types in sequence.
+
+    Attributes:
+        _base_dir (Path): The base directory where all reports are generated.
+        _report_types (List[BaseReport]): List of report type handlers used to generate different reports.
     """
-
     def __init__(self) -> None:
-        """Initialize report directories under the project workspace."""
+        """Initializes the ReportGenerator and sets up the report directories.
+
+        The reports directory is created under the project workspace. If it already
+        exists, it is removed and recreated to ensure a clean state for each run.
+        """
         workspace_dir: Path = Path(__file__).resolve().parents[4]
         self._base_dir: Path = workspace_dir / "reports"
         if self._base_dir.exists():
@@ -32,10 +41,13 @@ class ReportGenerator:
         ]
 
     def generate_reports(self, report_info: List[ReportData]) -> None:
-        """Generate action log, healed .robot and .resource files, and diff files for given report data.
+        """Generates all report types for the provided healing event data.
+
+        This method processes the given list of healing events and generates
+        action logs, healed .robot and .resource files, and diff files.
 
         Args:
-            report_info: List of data objects representing healing events.
+            report_info: A list of ReportData objects representing healing events.
         """
         ctx: ReportContext = ReportContext(report_info=report_info)
         for rt in self._report_types:

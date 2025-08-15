@@ -23,22 +23,23 @@ class BaseLocatorAgent(ABC):
     Defines the common interface and shared functionality for all locator agent flavors.
 
     Attributes:
-        cfg: Instance of Cfg config class containing user defined app configuration.
-        usage_limits: Usage token and request limits.
-        dom_utility: DOM utility instance for the specific library.
+        _usage_limits (UsageLimits): Usage token and request limits.
+        _dom_utility (BaseDomUtils): DOM utility instance for the specific library.
+        _use_llm_for_locator_generation (bool): Whether to use LLM for locator generation.
+        generation_agent (Optional[Agent[PromptPayload, LocatorHealingResponse]]): Agent for LLM-based locator
+                                                                                   generation.
+        selection_agent (Optional[Agent[PromptPayload, str]]): Agent for DOM-based locator selection.
     """
     def __init__(
         self,
         cfg: Cfg,
         dom_utility: BaseDomUtils
     ) -> None:
-        """Initialize the BaseLocatorAgent.
+        """Initializes the BaseLocatorAgent.
 
         Args:
-            cfg: Instance of Cfg config class containing user defined app configuration.
-            usage_limits: Token and request limits for the agent. Defaults to
-                UsageLimits with request_limit=5 and total_tokens_limit=2000.
-            dom_utility: Optional DOM utility instance for validation.
+            cfg (Cfg): Instance of Cfg config class containing user-defined app configuration.
+            dom_utility (BaseDomUtils): DOM utility instance for validation.
         """
         self._usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
         self._dom_utility: BaseDomUtils = dom_utility
@@ -79,10 +80,9 @@ class BaseLocatorAgent(ABC):
             )
 
     def _setup_output_validation(self) -> None:
-        """Set up output validation for the generation agent.
+        """Sets up output validation for the generation agent.
 
-        Configures the output validator that processes and validates
-        the locator healing response from the LLM.
+        Configures the output validator that processes and validates the locator healing response from the LLM.
         """
         if self.generation_agent is None:
             return
@@ -95,10 +95,11 @@ class BaseLocatorAgent(ABC):
             """Validates the output of the locator agent.
 
             Args:
-                output: Output from the locator agent.
+                ctx (RunContext[PromptPayload]): The tool context.
+                output (LocatorHealingResponse): Output from the locator agent.
 
             Returns:
-                Validated output with processed and sorted locators.
+                LocatorHealingResponse: Validated output with processed and sorted locators.
 
             Raises:
                 ModelRetry: If the output is invalid or contains no valid locators.
@@ -169,13 +170,13 @@ class BaseLocatorAgent(ABC):
     async def heal_async(
         self, ctx: RunContext[PromptPayload]
     ) -> LocatorHealingResponse | str:
-        """Generates suggestions for fixing broken locator.
+        """Generates suggestions for fixing a broken locator.
 
         Args:
-            ctx: PydanticAI context containing the prompt payload.
+            ctx (RunContext[PromptPayload]): PydanticAI context containing the prompt payload.
 
         Returns:
-            List of repaired locator suggestions.
+            LocatorHealingResponse | str: List of repaired locator suggestions.
 
         Raises:
             ModelRetry: If the response is not of the expected type.
@@ -188,7 +189,17 @@ class BaseLocatorAgent(ABC):
     async def _heal_with_llm(
         self, ctx: RunContext[PromptPayload]
     ) -> LocatorHealingResponse:
-        """Generate locator suggestions using LLM approach."""
+        """Generates locator suggestions using the LLM approach.
+
+        Args:
+            ctx (RunContext[PromptPayload]): PydanticAI context containing the prompt payload.
+
+        Returns:
+            LocatorHealingResponse: List of repaired locator suggestions.
+
+        Raises:
+            ModelRetry: If the response is not of the expected type.
+        """
         response: AgentRunResult[
             LocatorHealingResponse
         ] = await self.generation_agent.run(
@@ -206,7 +217,17 @@ class BaseLocatorAgent(ABC):
     async def _heal_with_dom_utils(
         self, ctx: RunContext[PromptPayload]
     ) -> LocatorHealingResponse:
-        """Generate locator suggestions using DOM utilities approach."""
+        """Generates locator suggestions using DOM utilities approach.
+
+        Args:
+            ctx (RunContext[PromptPayload]): PydanticAI context containing the prompt payload.
+
+        Returns:
+            LocatorHealingResponse: List of repaired locator suggestions.
+
+        Raises:
+            ModelRetry: If locator proposals cannot be generated or selection fails.
+        """
         try:
             failed_locator = ctx.deps.failed_locator
             keyword_name = ctx.deps.keyword_name
@@ -316,24 +337,24 @@ class BaseLocatorAgent(ABC):
 
     @abstractmethod
     def _process_locator(self, locator: str) -> str:
-        """Process the locator to make it compatible with the target library.
+        """Processes the locator to make it compatible with the target library.
 
         Args:
-            locator: The raw locator from the LLM.
+            locator (str): The raw locator from the LLM.
 
         Returns:
-            The processed locator compatible with the target library.
+            str: The processed locator compatible with the target library.
         """
         pass
 
     def _is_locator_valid(self, locator: str) -> bool:
-        """Check if the locator is valid and unique in the current context.
+        """Checks if the locator is valid and unique in the current context.
 
         Args:
-            locator: The locator to validate.
+            locator (str): The locator to validate.
 
         Returns:
-            True if the locator is valid and unique, False otherwise.
+            bool: True if the locator is valid and unique, False otherwise.
         """
         try:
             return self._dom_utility.is_locator_valid(locator)
@@ -341,13 +362,13 @@ class BaseLocatorAgent(ABC):
             return False
 
     def _is_locator_unique(self, locator: str) -> bool:
-        """Check if the locator is unique in the current context.
+        """Checks if the locator is unique in the current context.
 
         Args:
-            locator: The locator to check.
+            locator (str): The locator to check.
 
         Returns:
-            True if the locator is unique, False otherwise.
+            bool: True if the locator is unique, False otherwise.
         """
         try:
             return self._dom_utility.is_locator_unique(locator)
@@ -355,13 +376,13 @@ class BaseLocatorAgent(ABC):
             return False
 
     def _is_element_clickable(self, locator: str) -> bool:
-        """Check if the element identified by the locator is clickable.
+        """Checks if the element identified by the locator is clickable.
 
         Args:
-            locator: The locator to check.
+            locator (str): The locator to check.
 
         Returns:
-            True if the element is clickable, False otherwise.
+            bool: True if the element is clickable, False otherwise.
         """
         try:
             return self._dom_utility.is_element_clickable(locator)
@@ -369,13 +390,13 @@ class BaseLocatorAgent(ABC):
             return False
 
     def _sort_locators(self, locators: list[str]) -> list[str]:
-        """Sort locators based on their uniqueness and validity.
+        """Sorts locators based on their uniqueness and validity.
 
         Args:
-            locators: List of locators to sort.
+            locators (list[str]): List of locators to sort.
 
         Returns:
-            Sorted list of locators with unique locators first.
+            list[str]: Sorted list of locators with unique locators first.
         """
         valid_locators = [loc for loc in locators if self._is_locator_valid(loc)]
         return sorted(
@@ -383,25 +404,25 @@ class BaseLocatorAgent(ABC):
         )
 
     def _filter_clickable_locators(self, locators: list[str]) -> list[str]:
-        """Filter locators to only include clickable ones.
+        """Filters locators to only include clickable ones.
 
         Args:
-            locators: List of locators to filter.
+            locators (list[str]): List of locators to filter.
 
         Returns:
-            List of locators that are clickable.
+            list[str]: List of locators that are clickable.
         """
         return [loc for loc in locators if self._is_element_clickable(loc)]
 
     @staticmethod
     @abstractmethod
     def is_failed_locator_error(message: str) -> bool:
-        """Check if the locator error is due to a failed locator.
+        """Checks if the locator error is due to a failed locator.
 
         Args:
-            message: The error message to check.
+            message (str): The error message to check.
 
         Returns:
-            True if the error is due to a failed locator, False otherwise.
+            bool: True if the error is due to a failed locator, False otherwise.
         """
         pass

@@ -9,8 +9,11 @@ load_dotenv(find_dotenv(), override=True)
 
 
 class Cfg(BaseSettings):
-    """App settings configuration."""
+    """Application settings configuration.
 
+    Loads environment variables and provides strongly-typed configuration options for the application.
+    Uses Pydantic BaseSettings for validation and dotenv for environment variable loading.
+    """
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     enable_self_healing: bool = Field(
@@ -76,9 +79,9 @@ class Cfg(BaseSettings):
     )
 
     def __init__(self, **values: Any) -> None:
-        """Init.
+        """Initializes the Cfg settings object.
 
         Args:
-            **values: Arbitrary values for static checker.
+            **values: Arbitrary keyword arguments for settings initialization and static checking.
         """
         super().__init__(**values)

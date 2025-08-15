@@ -28,9 +28,11 @@ _LIBRARY_MAPPING: Final[dict[str, str]] = {
 
 
 class KickoffMultiAgentSystem:
-    """Core class for kickoff the self-healing-system for broken robotframework tests."""
+    """Core class for initiating the self-healing system for broken Robot Framework tests.
 
-
+    This class coordinates the multi-agent system responsible for self-healing failed Robot Framework keywords.
+    It retrieves the necessary context, instantiates the appropriate agents, and triggers the healing process.
+    """
     @staticmethod
     def kickoff_healing(
         result: result.Keyword,
@@ -38,15 +40,16 @@ class KickoffMultiAgentSystem:
         cfg: Cfg,
         tried_locator_memory: List[str],
     ) -> LocatorHealingResponse | str | NoHealingNeededResponse:
-        """Instantiates the multi-agent system, retrieves context and kicks off self-healing-system.
+        """Instantiates the multi-agent system, retrieves context, and initiates the self-healing process.
 
         Args:
-            result: Keyword and additional information passed by robotframework listener.
-            cfg: Instance of Cfg config class containing user defined app configuration.
-            tried_locator_memory: Memory list of executed locator suggestions that still failed.
+            result: The keyword result and additional information passed by the Robot Framework listener.
+            cfg: An instance of the Cfg config class containing user-defined application configuration.
+            tried_locator_memory: A list of locator suggestions that have already been tried and failed.
 
         Returns:
-            List of suggestions for healing the current robotframework test.
+            A LocatorHealingResponse with suggestions for healing the current Robot Framework test,
+             a string message, or a NoHealingNeededResponse if no healing is required.
         """
         agent_type: str = _LIBRARY_MAPPING.get(result.owner, None)
         if agent_type is None:

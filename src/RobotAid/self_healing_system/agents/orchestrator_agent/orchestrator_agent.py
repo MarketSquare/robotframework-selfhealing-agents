@@ -17,21 +17,23 @@ class OrchestratorAgent:
     """Routes raw failure text to the appropriate healing tool.
 
     Attributes:
-        cfg: Instance of Cfg config class containing user defined app configuration.
-        locator_agent: LocatorAgent instance.
+        _cfg (Cfg): Instance of Cfg config class containing user-defined app configuration.
+        _locator_agent (BaseLocatorAgent): LocatorAgent instance for handling locator healing.
+        _usage_limits (UsageLimits): Usage limits for the orchestrator agent.
+        _agent (Agent[PromptPayload, str]): The underlying agent for orchestrating healing.
     """
-
     def __init__(
         self,
         cfg: Cfg,
         locator_agent: BaseLocatorAgent,
     ) -> None:
-        """Initialize the OrchestratorAgent.
+        """Initializes the OrchestratorAgent.
 
         Args:
-            cfg: Instance of Cfg config class containing user defined app configuration.
-            locator_agent: LocatorAgent instance for handling locator healing.
+            cfg (Cfg): Instance of Cfg config class containing user-defined app configuration.
+            locator_agent (BaseLocatorAgent): LocatorAgent instance for handling locator healing.
         """
+        self._cfg = cfg
         self._locator_agent: BaseLocatorAgent = locator_agent
         self._usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
         self._agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
@@ -48,13 +50,14 @@ class OrchestratorAgent:
     async def run_async(
         self, robot_ctx_payload: PromptPayload
     ) -> str | LocatorHealingResponse | NoHealingNeededResponse:
-        """Run orchestration asynchronously.
+        """Runs orchestration asynchronously to provide locator healing suggestions.
 
         Args:
-            robot_ctx_payload: Contains context for the self-healing process of the LLM.
+            robot_ctx_payload (PromptPayload): Contains context for the self-healing process of the LLM.
 
         Returns:
-            List of repaired locator suggestions.
+            str | LocatorHealingResponse | NoHealingNeededResponse: List of repaired locator suggestions
+                                                                    or a message if no healing is needed.
         """
         if not self._locator_agent.is_failed_locator_error(robot_ctx_payload.error_msg):
             return NoHealingNeededResponse(message=robot_ctx_payload.error_msg)
@@ -68,13 +71,13 @@ class OrchestratorAgent:
         return response.output
 
     async def _get_healed_locators(self, ctx: RunContext[PromptPayload]) -> str:
-        """Get a list of healed locator suggestions for a broken locator.
+        """Gets a list of healed locator suggestions for a broken locator.
 
         Args:
-            ctx: PydanticAI tool context.
+            ctx (RunContext[PromptPayload]): PydanticAI tool context.
 
         Returns:
-            List of repaired locator suggestions in JSON format.
+            str: List of repaired locator suggestions in JSON format.
 
         Raises:
             ModelRetry: If locator healing fails.

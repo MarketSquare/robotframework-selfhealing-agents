@@ -23,18 +23,51 @@ _ALLOWED_LIBRARIES: Final[frozenset] = frozenset(
 
 
 class SelfHealingEngine:
+    """Engine for self-healing test execution in Robot Framework.
 
+    This class manages the self-healing process for test execution failures in Robot Framework.
+    It monitors test and keyword execution, triggers locator healing when necessary, and records
+    healing attempts and results for reporting.
+
+    Attributes:
+        _listener_state (ListenerState): The shared ListenerState object for maintaining state across the test run.
+    """
     def __init__(self, listener_state: ListenerState):
+        """Initializes the SelfHealingEngine.
+
+        Args:
+            listener_state: The shared ListenerState object for maintaining state across the test run.
+        """
         self._listener_state: ListenerState = listener_state
 
     def start_test(self, data: running.TestCase, result_: result.TestCase) -> None:
-        """Called when a test starts."""
+        """Handles the start of a test case.
+
+        Invoked by listener when a test case starts. Sets up context for self-healing if enabled.
+
+        Args:
+            data: The running test case data.
+            result_: The result object for the test case.
+        """
         if not self._listener_state.cfg.enable_self_healing:
             return
         self._listener_state.context["current_test"] = data.name
         logger.debug(f"RobotAid: Monitoring test '{data.name}'")
 
     def end_keyword(self, data: running.Keyword, result_: result.Keyword) -> Any:
+        """Handles the end of a keyword execution and triggers self-healing if needed.
+
+        Invoked by listener when a keyword is ended.
+        If a keyword fails and is from an allowed library, attempts locator healing and reruns the keyword
+        with suggested locators. Updates the result and records the healing attempt if successful.
+
+        Args:
+            data: The running keyword data.
+            result_: The result object for the keyword.
+
+        Returns:
+            None or the return value of the healed keyword execution.
+        """
         if not self._listener_state.cfg.enable_self_healing:
             return None
         self._listener_state.healed = False
@@ -62,7 +95,14 @@ class SelfHealingEngine:
         return None
 
     def end_test(self, data: running.TestCase, result_: result.TestCase) -> None:
-        """Called when a test ends."""
+        """Handles the end of a test case.
+
+        Invoked by listener when a test case ends. Collects information for post-execution healing if needed.
+
+        Args:
+            data: The running test case data.
+            result_: The result object for the test case.
+        """
         if not self._listener_state.cfg.enable_self_healing:
             return
 
@@ -73,8 +113,12 @@ class SelfHealingEngine:
             # This would store information for post-execution healing
 
     def _initiate_healing(self, result_: result.Keyword) -> None:
-        """Starts the self-healing process via pydanticAI agentic system.
-           Sets class attributes for further processing.
+        """Starts the self-healing process using the agentic system.
+
+        Invokes the multi-agent system to generate locator suggestions and updates the listener state accordingly.
+
+        Args:
+            result_: The result object for the failed keyword.
         """
         locator_suggestions: LocatorHealingResponse | str | NoHealingNeededResponse = (
             KickoffMultiAgentSystem.kickoff_healing(
@@ -95,7 +139,17 @@ class SelfHealingEngine:
             return
 
     def _try_locator_suggestions(self, data: running.Keyword) -> Any:
-        """Reruns a locator suggestion that is stored in the class attribute list."""
+        """Attempts to rerun a keyword with suggested locators.
+
+        Pops a locator suggestion from the list and reruns the keyword with it. Updates healing state and
+        returns the result of the rerun.
+
+        Args:
+            data: The running keyword data.
+
+        Returns:
+            The return value of the rerun keyword, or None if no suggestions remain.
+        """
         if not self._listener_state.suggestions:
             return None
         try:
@@ -115,6 +169,17 @@ class SelfHealingEngine:
             *,
             suggested_locator: str | None
     )-> str | None:
+        """Reruns a keyword with a suggested locator argument.
+
+        Modifies the keyword arguments to use the suggested locator and executes the keyword again.
+
+        Args:
+            data: The running keyword data.
+            suggested_locator: The locator string to use for rerunning the keyword.
+
+        Returns:
+            The return value of the rerun keyword, or None if no locator is provided.
+        """
         if suggested_locator:
             data.args = list(data.args)
             data.args[0] = suggested_locator
@@ -136,6 +201,15 @@ class SelfHealingEngine:
         healed_locator: str,
         status: str,
     ) -> None:
+        """Records the result of a healing attempt for reporting.
+
+        Appends a ReportData object to the listener state's report info list.
+
+        Args:
+            data: The running keyword data.
+            healed_locator: The locator used for healing, if successful.
+            status: The status of the keyword execution (e.g., 'PASS').
+        """
         args = data.args
         failed_locator: str = BuiltIn().replace_variables(args[0]) if args else ""
         self._listener_state.report_info.append(
@@ -153,6 +227,10 @@ class SelfHealingEngine:
         )
 
     def _reset_state(self) -> None:
+        """Resets the healing state for the next keyword or test.
+
+        Clears locator suggestions, resets retry count, and prepares for the next healing attempt.
+        """
         self._listener_state.retry_count = 0
         self._listener_state.suggestions = None
         self._listener_state.should_generate_locators = True

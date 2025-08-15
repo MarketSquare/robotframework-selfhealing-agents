@@ -13,7 +13,15 @@ from RobotAid.self_healing_system.agents.prompts.locator.library_specific_additi
 
 
 class PromptsLocatorGenerationAgent(BasePromptAgent):
+    """Agent for generating new locator suggestions for self-healing in Robot Framework.
 
+    Provides system and user message generation for suggesting new locators
+    when a locator fails, ensuring only unique and untried locators are proposed.
+
+    Attributes:
+        _system_msg (ClassVar[str]): Class-level system message describing the agent's role and output format.
+        _library_func_mapping_system_msg (dict[str, Callable[[], str]]): Mapping of library types to their system message generator functions.
+    """
     _system_msg: ClassVar[str] = (
         "You are a xpath and css selector self-healing tool.\n"
         "You will provide a fixed_locator for a failed_locator.\n"
@@ -33,6 +41,17 @@ class PromptsLocatorGenerationAgent(BasePromptAgent):
 
     @classmethod
     def get_system_msg(cls, dom_utility: BaseDomUtils):
+        """Returns the system message for the locator generation agent, customized per library.
+
+        Args:
+            dom_utility (BaseDomUtils): The DOM utility instance to determine the library type.
+
+        Returns:
+            str: The system message string for the agent.
+
+        Raises:
+            ValueError: If the library type is unknown.
+        """
         library_type: str = dom_utility.get_library_type()
         func: Callable = cls._library_func_mapping_system_msg.get(library_type)
         if func is None:
@@ -41,13 +60,13 @@ class PromptsLocatorGenerationAgent(BasePromptAgent):
 
     @staticmethod
     def get_user_msg(ctx: RunContext[PromptPayload]) -> str:
-        """Assembles user message (a.k.a. user prompt) based on context.
+        """Assembles the user message (prompt) for locator generation based on context.
 
         Args:
-            ctx (RunContext): PydanticAI context. Contains information about keyword failure.
+            ctx (RunContext): PydanticAI context containing information about the keyword failure.
 
         Returns:
-            (str): Assembled user message (a.k.a. user prompt) based on context.
+            str: The assembled user message for locator generation.
         """
         return (
             f"Error message: `{ctx.deps.error_msg}`\n\n"
@@ -59,7 +78,14 @@ class PromptsLocatorGenerationAgent(BasePromptAgent):
 
 
 class PromptsLocatorSelectionAgent(BasePromptAgent):
+    """Agent for selecting the best locator from a list of suggestions for self-healing.
 
+    Provides system and user message generation for choosing the most appropriate locator
+    from a set of suggestions, based on context and metadata.
+
+    Attributes:
+        _system_msg (ClassVar[str]): Class-level system message describing the agent's role and output format.
+    """
     _system_msg: ClassVar[str] = (
         "You are a locator selection tool for Robot Framework self-healing.\n"
         "Your task is to choose the best locator from the provided suggestions.\n"
@@ -70,19 +96,26 @@ class PromptsLocatorSelectionAgent(BasePromptAgent):
 
     @classmethod
     def get_system_msg(cls) -> str:
+        """Returns the system message for the locator selection agent.
+
+        Returns:
+            str: The system message string for the agent.
+        """
         return cls._system_msg
 
     @staticmethod
     def get_user_msg(
         ctx: RunContext[PromptPayload], suggestions: list, metadata: list
     ) -> str:
-        """Assembles user message (a.k.a. user prompt) for choosing a locator.
+        """Assembles the user message (prompt) for choosing a locator.
 
         Args:
-            ctx (RunContext): PydanticAI context. Contains information about keyword failure.
+            ctx (RunContext): PydanticAI context containing information about the keyword failure.
+            suggestions (list): List of locator suggestions to choose from.
+            metadata (list): List of metadata dictionaries for each suggestion.
 
         Returns:
-            (str): Assembled user message (a.k.a. user prompt) for choosing a locator.
+            str: The assembled user message for locator selection.
         """
         return (
             f"Failed locator: `{ctx.deps.failed_locator}`\n\n"

@@ -5,18 +5,32 @@ from bs4 import BeautifulSoup, Tag, ResultSet
 
 
 class SoupDomUtils:
-    """
-    A utility class to operate on the DOM of a web page using BeautifulSoup.
-    It provides methods to check, extract and manipulate HTML elements.
-    """
-
+    """Utility class for operating on the DOM of a web page using BeautifulSoup."""
     @staticmethod
     def clean_text_for_selector(text: str) -> str:
-        """Sanitize text for use in a CSS selector."""
+        """Sanitizes text for use in a CSS selector.
+
+        Removes leading/trailing whitespace and collapses internal whitespace to a single space.
+
+        Args:
+            text (str): The text to sanitize.
+
+        Returns:
+            str: The sanitized text suitable for use in a CSS selector.
+        """
         return re.sub(r"\s+", " ", text.strip())
 
     @staticmethod
     def get_selector_count(soup: BeautifulSoup, selector: str) -> int:
+        """Returns the number of elements matching a CSS selector.
+
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the DOM.
+            selector (str): The CSS selector to match.
+
+        Returns:
+            int: The number of elements matching the selector, or 0 if an error occurs.
+        """
         try:
             elements: ResultSet = soup.select(selector)
             return len(elements)
@@ -25,7 +39,15 @@ class SoupDomUtils:
 
     @staticmethod
     def is_selector_unique(soup: BeautifulSoup, selector: str) -> bool:
-        """Check if the CSS selector matches only one element."""
+        """Checks if the CSS selector matches exactly one element.
+
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the DOM.
+            selector (str): The CSS selector to check.
+
+        Returns:
+            bool: True if exactly one element matches the selector, False otherwise.
+        """
         try:
             elements: ResultSet = soup.select(selector)
             return len(elements) == 1
@@ -34,7 +56,14 @@ class SoupDomUtils:
 
     @staticmethod
     def has_child_dialog_without_open(element: Tag) -> bool:
-        """Check if any parent of the given element is a <dialog> without the 'open' attribute."""
+        """Checks if any child of the given element is a <dialog> without the 'open' attribute.
+
+        Args:
+            element (Tag): The BeautifulSoup Tag to check.
+
+        Returns:
+            bool: True if a child <dialog> exists without the 'open' attribute, False otherwise.
+        """
         try:
             dialog: List[Tag] = [
                 x for x in element.children if isinstance(x, Tag) and x.name == "dialog"
@@ -48,10 +77,26 @@ class SoupDomUtils:
 
     @staticmethod
     def is_headline(tag: Tag) -> bool:
+        """Checks if the tag is a headline element (h1-h6).
+
+        Args:
+            tag (Tag): The BeautifulSoup Tag to check.
+
+        Returns:
+            bool: True if the tag is a headline element, False otherwise.
+        """
         return tag.name in ["h1", "h2", "h3", "h4", "h5", "h6"]
 
     @staticmethod
     def is_div_in_li(tag: Tag) -> bool:
+        """Checks if the tag is a <div> inside a <li> element.
+
+        Args:
+            tag (Tag): The BeautifulSoup Tag to check.
+
+        Returns:
+            bool: True if the tag is a <div> within a <li>, False otherwise.
+        """
         if tag.name != "div":
             return False
 
@@ -60,6 +105,14 @@ class SoupDomUtils:
 
     @staticmethod
     def is_p(tag: Tag) -> bool:
+        """Checks if the tag is a <p> (paragraph) element.
+
+        Args:
+            tag (Tag): The BeautifulSoup Tag to check.
+
+        Returns:
+            bool: True if the tag is a <p> element, False otherwise.
+        """
         if tag.name == "p":
             return True
         else:
@@ -67,7 +120,14 @@ class SoupDomUtils:
 
     @staticmethod
     def has_parent_dialog_without_open(element: Tag) -> bool:
-        """Check if any parent of the given element is a <dialog> without the 'open' attribute."""
+        """Checks if any parent of the given element is a <dialog> without the 'open' attribute.
+
+        Args:
+            element (Tag): The BeautifulSoup Tag to check.
+
+        Returns:
+            bool: True if a parent <dialog> exists without the 'open' attribute, False otherwise.
+        """
         try:
             dialog: List[Tag] = [
                 x for x in element.parents if isinstance(x, Tag) and x.name == "dialog"
@@ -81,6 +141,17 @@ class SoupDomUtils:
 
     @staticmethod
     def is_leaf_or_lowest(element: Tag) -> bool:
+        """Checks if the element is a leaf or the lowest of its type in the DOM branch.
+
+        An element is considered a leaf if it has no child elements. It is considered
+        the lowest of its type if there are no descendants of the same tag name.
+
+        Args:
+            element (Tag): The BeautifulSoup Tag to check.
+
+        Returns:
+            bool: True if the element is a leaf or the lowest of its type, False otherwise.
+        """
         # Check if the element has no child elements (leaf)
         if not element.find():
             return True
@@ -94,6 +165,14 @@ class SoupDomUtils:
 
     @staticmethod
     def has_direct_text(tag: Tag) -> bool:
+        """Checks if the tag has any direct text (not in its children).
+
+        Args:
+            tag (Tag): The BeautifulSoup Tag to check.
+
+        Returns:
+            bool: True if the tag has direct text and no child elements, False otherwise.
+        """
         # Check if the tag has any direct text (not in its children)
         return tag.string is not None and tag.string.strip() and not tag.find()
 
@@ -109,6 +188,25 @@ class SoupDomUtils:
         only_return_unique_selectors: bool = True,
         text_exclusions: List[str] | None = None,
     ) -> str | None:
+        """Generates a unique CSS selector for the given element within the soup.
+
+        Attempts to build a selector using tag name, attributes, text content, and
+        relationships to parents and siblings. Returns the selector if it uniquely
+        identifies the element in the DOM.
+
+        Args:
+            element (Tag): The BeautifulSoup Tag for which to generate the selector.
+            soup (BeautifulSoup): The BeautifulSoup object representing the DOM.
+            check_parents (bool): Whether to include parent relationships in the selector.
+            check_siblings (bool): Whether to include sibling relationships in the selector.
+            check_children (bool): Whether to include child relationships in the selector.
+            check_text (bool): Whether to include text content in the selector.
+            only_return_unique_selectors (bool): If True, only return selectors that are unique.
+            text_exclusions (List[str] | None): List of text strings to exclude from selector generation.
+
+        Returns:
+            str | None: A unique CSS selector string if found, otherwise None.
+        """
         steps: List[str] = []
         text_steps: List[str] = []
 
@@ -356,11 +454,30 @@ class SoupDomUtils:
 
     @staticmethod
     def has_display_none(tag: Tag) -> bool:
+        """Checks if the tag has a style attribute with 'display: none'.
+
+        Args:
+            tag (Tag): The BeautifulSoup Tag to check.
+
+        Returns:
+            bool: True if the tag has 'display: none' in its style attribute, False otherwise.
+        """
         style: str = tag.get("style", "")
         return "display: none" in style
 
     @staticmethod
     def get_simplified_dom_tree(source: str) -> str | None:
+        """Returns a simplified DOM tree as a string, removing non-essential elements and attributes.
+
+        Parses the HTML source, removes scripts, SVGs, templates, navigation, hidden elements,
+        and unnecessary attributes to produce a cleaner DOM representation for analysis.
+
+        Args:
+            source (str): The HTML source code as a string.
+
+        Returns:
+            str | None: The simplified DOM tree as a string, or None if no <body> is present.
+        """
         soup: BeautifulSoup = BeautifulSoup(source, "html.parser")
 
         for elem in soup.find_all("script"):
@@ -442,7 +559,23 @@ class SoupDomUtils:
             check_text: bool = True,
             only_return_unique_selectors: bool = True,
     ) -> str | None:
-        """Generate a unique XPath for the given element."""
+        """Generates a unique XPath selector for the given element within the soup.
+
+        Attempts to build an XPath using tag name, attributes, text content, and relationships
+        to parents and siblings. Returns the XPath if it uniquely identifies the element in the DOM.
+
+        Args:
+            element (Tag | None): The BeautifulSoup Tag for which to generate the XPath.
+            soup (BeautifulSoup): The BeautifulSoup object representing the DOM.
+            check_parents (bool): Whether to include parent relationships in the XPath.
+            check_siblings (bool): Whether to include sibling relationships in the XPath.
+            check_children (bool): Whether to include child relationships in the XPath.
+            check_text (bool): Whether to include text content in the XPath.
+            only_return_unique_selectors (bool): If True, only return selectors that are unique.
+
+        Returns:
+            str | None: A unique XPath selector string if found, otherwise None.
+        """
         if element is None:
             return ""
 
@@ -696,7 +829,15 @@ class SoupDomUtils:
 
     @staticmethod
     def is_xpath_unique(soup: BeautifulSoup, xpath: str) -> bool:
-        """Check if the XPath selector matches only one element."""
+        """Checks if the XPath selector matches exactly one element in the DOM.
+
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the DOM.
+            xpath (str): The XPath selector to check.
+
+        Returns:
+            bool: True if exactly one element matches the XPath, False otherwise.
+        """
         try:
             if soup.is_xml:
                 tree = etree.XML(str(soup.hierarchy), parser=etree.HTMLParser())
@@ -716,7 +857,15 @@ class SoupDomUtils:
 
     @staticmethod
     def is_xpath_multiple(soup: BeautifulSoup, xpath: str) -> bool:
-        """Check if the XPath selector matches multiple elements."""
+        """Checks if the XPath selector matches multiple elements in the DOM.
+
+        Args:
+            soup (BeautifulSoup): The BeautifulSoup object representing the DOM.
+            xpath (str): The XPath selector to check.
+
+        Returns:
+            bool: True if more than one element matches the XPath, False otherwise.
+        """
         try:
             # Parse the HTML content using lxml
             tree = etree.HTML(str(soup), parser=etree.HTMLParser())
@@ -737,5 +886,14 @@ class SoupDomUtils:
 
     @staticmethod
     def clean_text_for_xpath(text: str) -> str:
-        """Sanitize text for use in an XPath expression."""
+        """Sanitizes text for use in an XPath expression.
+
+        Removes leading/trailing whitespace and collapses internal whitespace to a single space.
+
+        Args:
+            text (str): The text to sanitize.
+
+        Returns:
+            str: The sanitized text suitable for use in an XPath expression.
+        """
         return re.sub(r"\s+", " ", text.strip())
