@@ -78,7 +78,7 @@ class SelfHealingEngine:
         """
         locator_suggestions: LocatorHealingResponse | str | NoHealingNeededResponse = (
             KickoffMultiAgentSystem.kickoff_healing(
-                result=result_,
+                result_,
                 cfg=self._listener_state.cfg,
                 tried_locator_memory=self._listener_state.tried_locators,
             )
@@ -103,20 +103,21 @@ class SelfHealingEngine:
         except IndexError:
             return None
         self._listener_state.tried_locators.append(suggestion)
-        result: Any = self._rerun_keyword_with_fixed_locator(data, suggestion)
+        result: Any = self._rerun_keyword_with_suggested_locator(data, suggested_locator=suggestion)
         self._listener_state.healed = True
         if not self._listener_state.suggestions:
             self._should_generate_locators = True
         return result
 
     @staticmethod
-    def _rerun_keyword_with_fixed_locator(
+    def _rerun_keyword_with_suggested_locator(
             data: running.Keyword,
-            fixed_locator: str | None
+            *,
+            suggested_locator: str | None
     )-> str | None:
-        if fixed_locator:
+        if suggested_locator:
             data.args = list(data.args)
-            data.args[0] = fixed_locator
+            data.args[0] = suggested_locator
         try:
             logger.info(
                 f"Re-trying Keyword '{data.name}' with arguments '{data.args}'.",

@@ -101,6 +101,7 @@ class SoupDomUtils:
     def generate_unique_css_selector(
         element: Tag,
         soup: BeautifulSoup,
+        *,
         check_parents: bool = True,
         check_siblings: bool = True,
         check_children: bool = True,
@@ -434,6 +435,7 @@ class SoupDomUtils:
     def generate_unique_xpath_selector(
             element: Tag | None,
             soup: BeautifulSoup,
+            *,
             check_parents: bool = True,
             check_siblings: bool = True,
             check_children: bool = True,

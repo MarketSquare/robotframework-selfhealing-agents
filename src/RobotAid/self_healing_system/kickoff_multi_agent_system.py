@@ -1,5 +1,5 @@
 import asyncio
-from typing import List
+from typing import List, Final
 
 from robot import result
 from robot.api import logger
@@ -20,7 +20,7 @@ from RobotAid.self_healing_system.schemas.api.locator_healing import (
 )
 
 
-_LIBRARY_MAPPING = {
+_LIBRARY_MAPPING: Final[dict[str, str]] = {
     "SeleniumLibrary": "selenium",
     "Browser": "browser",
     "AppiumLibrary": "appium",
@@ -34,6 +34,7 @@ class KickoffMultiAgentSystem:
     @staticmethod
     def kickoff_healing(
         result: result.Keyword,
+        *,
         cfg: Cfg,
         tried_locator_memory: List[str],
     ) -> LocatorHealingResponse | str | NoHealingNeededResponse:
@@ -50,22 +51,17 @@ class KickoffMultiAgentSystem:
         agent_type: str = _LIBRARY_MAPPING.get(result.owner, None)
         if agent_type is None:
             raise ValueError(f"Library type: {agent_type} not supported.")
-        dom_utility: BaseDomUtils = DomUtilityFactory.create_dom_utility(agent_type=agent_type)
+        dom_utility: BaseDomUtils = DomUtilityFactory.create_dom_utility(agent_type)
 
-        robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(
-            result=result, dom_utility=dom_utility
-        )
+        robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(result, dom_utility)
         robot_ctx_payload.tried_locator_memory = tried_locator_memory
 
         locator_agent: BaseLocatorAgent = LocatorAgentFactory.create_agent(agent_type, cfg, dom_utility)
 
-        orchestrator_agent: OrchestratorAgent = OrchestratorAgent(
-            locator_agent=locator_agent,
-            cfg=cfg,
-        )
+        orchestrator_agent: OrchestratorAgent = OrchestratorAgent(cfg, locator_agent)
 
         response = asyncio.get_event_loop().run_until_complete(
-            orchestrator_agent.run_async(robot_ctx_payload=robot_ctx_payload)
+            orchestrator_agent.run_async(robot_ctx_payload)
         )
         logger.debug(f"{response}")
         return response

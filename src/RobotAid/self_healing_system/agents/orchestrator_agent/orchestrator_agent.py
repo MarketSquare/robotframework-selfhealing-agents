@@ -84,6 +84,6 @@ class OrchestratorAgent:
             '{"suggestions": ["#btn-login-fixed", "input[type=\'submit\']", "css=.btn-login"]}'
         """
         try:
-            return await self._locator_agent.heal_async(ctx=ctx)
+            return await self._locator_agent.heal_async(ctx)
         except Exception as e:
             raise ModelRetry(f"Locator healing failed: {str(e)}")

@@ -192,7 +192,7 @@ class BaseLocatorAgent(ABC):
         response: AgentRunResult[
             LocatorHealingResponse
         ] = await self.generation_agent.run(
-            PromptsLocatorGenerationAgent.get_user_msg(ctx=ctx),
+            PromptsLocatorGenerationAgent.get_user_msg(ctx),
             deps=ctx.deps,
             usage_limits=self._usage_limits,
             model_settings={"temperature": 0.1},

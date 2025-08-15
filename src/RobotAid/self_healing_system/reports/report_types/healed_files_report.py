@@ -42,15 +42,8 @@ class HealedFilesReport(BaseReport):
             replacements: List[Tuple[str, str]] = (
                 self._get_replacements_for_file(report_context.report_info, source_path)
             )
-            self._replace_in_common_model(
-                source_path=source_path,
-                replacements=replacements,
-            )
-            self._replace_in_resource_model(
-                source_path=source_path,
-                replacements=replacements,
-                report_context=report_context,
-            )
+            self._replace_in_common_model(source_path, replacements)
+            self._replace_in_resource_model(source_path, replacements, report_context)
         return report_context
 
     @staticmethod

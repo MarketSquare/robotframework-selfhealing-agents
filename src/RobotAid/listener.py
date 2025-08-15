@@ -52,6 +52,4 @@ class RobotAid(ListenerV3):
             return
         self._closed = True
         if self._state.report_info:
-            self._report_generator.generate_reports(
-                report_info=self._state.report_info
-            )
+            self._report_generator.generate_reports(self._state.report_info)
