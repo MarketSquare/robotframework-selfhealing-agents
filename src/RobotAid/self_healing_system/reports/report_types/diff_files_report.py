@@ -25,7 +25,7 @@ class DiffFilesReport(BaseReport):
         sources: Set[Path] = {Path(entry.keyword_source) for entry in report_context.report_info}
         all_paths: Set[Path] = sources.union(report_context.external_resource_paths)
         for original_path in all_paths:
-            healed_dir: Path = self.base_dir / "healed_files" / original_path.parent.name
+            healed_dir: Path = self._base_dir / "healed_files" / original_path.parent.name
             healed_file: Path = healed_dir / original_path.name
             try:
                 original_lines: List[str] = original_path.read_text(encoding="utf-8").splitlines()
@@ -43,7 +43,7 @@ class DiffFilesReport(BaseReport):
             )
             diff_html: str = diff_html.replace("</head>", f"{DIFF_CSS}</head>", 1)
 
-            diff_dir: Path = self.out_dir / original_path.parent.name
+            diff_dir: Path = self._out_dir / original_path.parent.name
             diff_dir.mkdir(parents=True, exist_ok=True)
             diff_path: Path = diff_dir / f"{original_path.stem}_diff.html"
             try:

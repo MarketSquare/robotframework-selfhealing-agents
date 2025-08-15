@@ -2,6 +2,7 @@ import shutil
 from typing import List
 from pathlib import Path
 
+from RobotAid.self_healing_system.reports.report_types.base_report import BaseReport
 from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
 from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
 from RobotAid.self_healing_system.reports.report_types.action_log_report import ActionLogReport
@@ -19,15 +20,15 @@ class ReportGenerator:
     def __init__(self) -> None:
         """Initialize report directories under the project workspace."""
         workspace_dir: Path = Path(__file__).resolve().parents[4]
-        self.base_dir: Path = workspace_dir / "reports"
-        if self.base_dir.exists():
-            shutil.rmtree(self.base_dir)
-        self.base_dir.mkdir(parents=True)
+        self._base_dir: Path = workspace_dir / "reports"
+        if self._base_dir.exists():
+            shutil.rmtree(self._base_dir)
+        self._base_dir.mkdir(parents=True)
 
-        self.report_types: List = [
-            ActionLogReport(self.base_dir),
-            HealedFilesReport(self.base_dir),
-            DiffFilesReport(self.base_dir)
+        self._report_types: List[BaseReport] = [
+            ActionLogReport(self._base_dir),
+            HealedFilesReport(self._base_dir),
+            DiffFilesReport(self._base_dir)
         ]
 
     def generate_reports(self, report_info: List[ReportData]) -> None:
@@ -37,5 +38,5 @@ class ReportGenerator:
             report_info: List of data objects representing healing events.
         """
         ctx: ReportContext = ReportContext(report_info=report_info)
-        for rt in self.report_types:
+        for rt in self._report_types:
             ctx: ReportContext = rt.generate_report(ctx)

@@ -17,7 +17,7 @@ class SeleniumDomUtils(BaseDomUtils):
 
     def __init__(self):
         """Initialize Selenium DOM utilities."""
-        self.library_instance = BuiltIn().get_library_instance("SeleniumLibrary")
+        self._library_instance = BuiltIn().get_library_instance("SeleniumLibrary")
 
     def is_locator_valid(self, locator: str) -> bool:
         """Check if the locator is valid using Selenium library methods.
@@ -28,11 +28,11 @@ class SeleniumDomUtils(BaseDomUtils):
         Returns:
             True if the locator is valid, False otherwise.
         """
-        if self.library_instance is None:
+        if self._library_instance is None:
             return True
         try:
             # Use dynamic attribute access to handle different SeleniumLibrary versions
-            getattr(self.library_instance, "get_webelement")(locator)
+            getattr(self._library_instance, "get_webelement")(locator)
             return True
         except Exception:
             return False
@@ -46,12 +46,12 @@ class SeleniumDomUtils(BaseDomUtils):
         Returns:
             True if the locator is unique, False otherwise.
         """
-        if self.library_instance is None:
+        if self._library_instance is None:
             return True  # Skip validation if library is not available
 
         try:
             # Use dynamic attribute access to handle different SeleniumLibrary versions
-            elements: List[WebElement] = getattr(self.library_instance, "get_webelements")(locator)
+            elements: List[WebElement] = getattr(self._library_instance, "get_webelements")(locator)
             return len(elements) == 1
         except Exception:
             return False
@@ -62,11 +62,11 @@ class SeleniumDomUtils(BaseDomUtils):
         Returns:
             str: The DOM tree as a string.
         """
-        if self.library_instance is None:
+        if self._library_instance is None:
             return "<html><body>SeleniumLibrary not available</body></html>"
 
         try:
-            page_source: str = getattr(self.library_instance, "get_source")()
+            page_source: str = getattr(self._library_instance, "get_source")()
 
             soup: BeautifulSoup = BeautifulSoup(page_source, "html.parser")
             source: str = SoupDomUtils().get_simplified_dom_tree(
@@ -94,10 +94,10 @@ class SeleniumDomUtils(BaseDomUtils):
         Returns:
             True if the element is clickable, False otherwise.
         """
-        if self.library_instance is None:
+        if self._library_instance is None:
             return False
         try:
-            element: WebElement = getattr(self.library_instance, "get_webelement")(locator)
+            element: WebElement = getattr(self._library_instance, "get_webelement")(locator)
 
             # Get tag name using element property
             tag: str = element.tag_name.lower()
@@ -107,7 +107,7 @@ class SeleniumDomUtils(BaseDomUtils):
                 return True
             elif tag == "input":
                 # Check input type for clickable input elements
-                input_type: str = getattr(self.library_instance, "execute_javascript")(
+                input_type: str = getattr(self._library_instance, "execute_javascript")(
                     "return arguments[0].type;", "ARGUMENTS", element
                 )
                 if input_type in [
@@ -138,7 +138,7 @@ class SeleniumDomUtils(BaseDomUtils):
                 return True
 
             # Check cursor style as final indicator
-            cursor_style: str = getattr(self.library_instance, "execute_javascript")(
+            cursor_style: str = getattr(self._library_instance, "execute_javascript")(
                 "return window.getComputedStyle(arguments[0]).getPropertyValue('cursor');",
                 "ARGUMENTS",
                 element,
@@ -239,11 +239,11 @@ class SeleniumDomUtils(BaseDomUtils):
         Returns:
             A list of dictionaries containing metadata about elements matching the locator.
         """
-        if self.library_instance is None:
+        if self._library_instance is None:
             return []
 
         try:
-            element: WebElement = getattr(self.library_instance, "get_webelement")(locator)
+            element: WebElement = getattr(self._library_instance, "get_webelement")(locator)
             metadata_list: List = []
 
             if element:
@@ -260,7 +260,7 @@ class SeleniumDomUtils(BaseDomUtils):
                 ]
                 for property in property_list:
                     try:
-                        value = getattr(self.library_instance, "execute_javascript")(
+                        value = getattr(self._library_instance, "execute_javascript")(
                             f"return arguments[0].{property};", "ARGUMENTS", element
                         )
                         if value:
@@ -279,7 +279,7 @@ class SeleniumDomUtils(BaseDomUtils):
                 ]
                 for property in additional_properties:
                     try:
-                        value = getattr(self.library_instance, "execute_javascript")(
+                        value = getattr(self._library_instance, "execute_javascript")(
                             f"return arguments[0].{property};", "ARGUMENTS", element
                         )
                         if value:
@@ -332,7 +332,7 @@ class SeleniumDomUtils(BaseDomUtils):
                         cursor_clickable = False
                         try:
                             cursor_style = getattr(
-                                self.library_instance, "execute_javascript"
+                                self._library_instance, "execute_javascript"
                             )(
                                 "return window.getComputedStyle(arguments[0]).getPropertyValue('cursor');",
                                 "ARGUMENTS",
@@ -346,7 +346,7 @@ class SeleniumDomUtils(BaseDomUtils):
                         value_clickable = False
                         try:
                             value = getattr(
-                                self.library_instance, "execute_javascript"
+                                self._library_instance, "execute_javascript"
                             )("return arguments[0].value;", "ARGUMENTS", element)
                             value_clickable = value in ["on", "off"]
                         except Exception:
@@ -355,7 +355,7 @@ class SeleniumDomUtils(BaseDomUtils):
                         checked_clickable = False
                         try:
                             checked = getattr(
-                                self.library_instance, "execute_javascript"
+                                self._library_instance, "execute_javascript"
                             )("return arguments[0].checked;", "ARGUMENTS", element)
                             checked_clickable = (
                                 checked is not None and str(checked) != ""

@@ -40,10 +40,9 @@ class BaseLocatorAgent(ABC):
                 UsageLimits with request_limit=5 and total_tokens_limit=2000.
             dom_utility: Optional DOM utility instance for validation.
         """
-        self.cfg: Cfg = cfg
-        self.usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
+        self._usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
         self._dom_utility: BaseDomUtils = dom_utility
-        self.use_llm_for_locator_generation = cfg.use_llm_for_locator_generation
+        self._use_llm_for_locator_generation = cfg.use_llm_for_locator_generation
 
         # Initialize agent attributes
         self.generation_agent: Optional[
@@ -52,7 +51,7 @@ class BaseLocatorAgent(ABC):
         self.selection_agent: Optional[Agent[PromptPayload, str]] = None
 
         # Only create LLM agent if LLM generation is enabled
-        if self.use_llm_for_locator_generation:
+        if self._use_llm_for_locator_generation:
             self.generation_agent = Agent[PromptPayload, LocatorHealingResponse](
                 model=get_client_model(
                     provider=cfg.locator_agent_provider,
@@ -181,7 +180,7 @@ class BaseLocatorAgent(ABC):
         Raises:
             ModelRetry: If the response is not of the expected type.
         """
-        if self.use_llm_for_locator_generation:
+        if self._use_llm_for_locator_generation:
             return await self._heal_with_llm(ctx)
         else:
             return await self._heal_with_dom_utils(ctx)
@@ -195,7 +194,7 @@ class BaseLocatorAgent(ABC):
         ] = await self.generation_agent.run(
             PromptsLocatorGenerationAgent.get_user_msg(ctx=ctx),
             deps=ctx.deps,
-            usage_limits=self.usage_limits,
+            usage_limits=self._usage_limits,
             model_settings={"temperature": 0.1},
         )
         if not isinstance(response.output, LocatorHealingResponse):
@@ -286,7 +285,7 @@ class BaseLocatorAgent(ABC):
                     metadata=metadata_list,
                 ),
                 deps=ctx.deps,
-                usage_limits=self.usage_limits,
+                usage_limits=self._usage_limits,
                 model_settings={"temperature": 0.1},
             )
 

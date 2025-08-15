@@ -32,9 +32,9 @@ class OrchestratorAgent:
             cfg: Instance of Cfg config class containing user defined app configuration.
             locator_agent: LocatorAgent instance for handling locator healing.
         """
-        self.locator_agent: BaseLocatorAgent = locator_agent
-        self.usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
-        self.agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
+        self._locator_agent: BaseLocatorAgent = locator_agent
+        self._usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
+        self._agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
             model=get_client_model(
                 provider=cfg.orchestrator_agent_provider,
                 model=cfg.orchestrator_agent_model,
@@ -56,13 +56,13 @@ class OrchestratorAgent:
         Returns:
             List of repaired locator suggestions.
         """
-        if not self.locator_agent.is_failed_locator_error(robot_ctx_payload.error_msg):
+        if not self._locator_agent.is_failed_locator_error(robot_ctx_payload.error_msg):
             return NoHealingNeededResponse(message=robot_ctx_payload.error_msg)
 
-        response: AgentRunResult = await self.agent.run(
+        response: AgentRunResult = await self._agent.run(
             PromptsOrchestrator.get_user_msg(robot_ctx_payload),
             deps=robot_ctx_payload,
-            usage_limits=self.usage_limits,
+            usage_limits=self._usage_limits,
             model_settings={"temperature": 0.1, "parallel_tool_calls": False},
         )
         return response.output
@@ -84,6 +84,6 @@ class OrchestratorAgent:
             '{"suggestions": ["#btn-login-fixed", "input[type=\'submit\']", "css=.btn-login"]}'
         """
         try:
-            return await self.locator_agent.heal_async(ctx=ctx)
+            return await self._locator_agent.heal_async(ctx=ctx)
         except Exception as e:
             raise ModelRetry(f"Locator healing failed: {str(e)}")

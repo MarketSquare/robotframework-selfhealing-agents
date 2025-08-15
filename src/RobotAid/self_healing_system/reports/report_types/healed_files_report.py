@@ -116,7 +116,7 @@ class HealedFilesReport(BaseReport):
         LocatorReplacer(replacements).visit(model)
         VariablesReplacer(replacements).visit(model)
 
-        suite_output_dir: Path = self.out_dir / source_path.parent.name
+        suite_output_dir: Path = self._out_dir / source_path.parent.name
         suite_output_dir.mkdir(parents=True, exist_ok=True)
         suite_output_file: Path = suite_output_dir / source_path.name
         try:
@@ -167,7 +167,7 @@ class HealedFilesReport(BaseReport):
                 }
                 unpacked_tuples: List[str] = list(chain.from_iterable(defined))
                 if any(var in unpacked_tuples for var, _ in replacements):
-                    res_dir: Path = self.out_dir / res_path.parent.name
+                    res_dir: Path = self._out_dir / res_path.parent.name
                     res_dir.mkdir(parents=True, exist_ok=True)
                     res_out: Path = res_dir / res_path.name
                     if res_out.exists():

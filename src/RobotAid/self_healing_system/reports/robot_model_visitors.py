@@ -14,7 +14,7 @@ class LocatorReplacer(ModelTransformer):
             replacements: List of (old_locator, new_locator) pairs.
         """
         super().__init__()
-        self.replacements: Dict[str, str] = dict(replacements)
+        self._replacements: Dict[str, str] = dict(replacements)
 
     def visit_KeywordCall(self, node: Any) -> Any:
         """Replace matching token values in a KeywordCall node.
@@ -26,8 +26,8 @@ class LocatorReplacer(ModelTransformer):
             The modified node with locators replaced.
         """
         for token in node.tokens[1:]:
-            if token.value in self.replacements:
-                token.value = self.replacements[token.value]
+            if token.value in self._replacements:
+                token.value = self._replacements[token.value]
         return node
 
 
@@ -41,7 +41,7 @@ class VariablesReplacer(ModelTransformer):
             replacements: List of (variable_name, new_value) pairs.
         """
         super().__init__()
-        self.replacements: Dict[str, str] = dict(replacements)
+        self._replacements: Dict[str, str] = dict(replacements)
 
     def visit_VariableSection(self, node: VariableSection) -> Any:
         """Replace variable values in the VariableSection of a resource.
@@ -55,8 +55,8 @@ class VariablesReplacer(ModelTransformer):
         for variable in node.body:
             try:
                 name_token: str = variable.tokens[2].value
-                if name_token in self.replacements:
-                    variable.tokens[2].value = self.replacements[name_token]
+                if name_token in self._replacements:
+                    variable.tokens[2].value = self._replacements[name_token]
             except:
                 pass
         return self.generic_visit(node)
