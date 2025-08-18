@@ -44,7 +44,8 @@ def initialize_logger() -> None:
     logs_dir.mkdir(parents=True, exist_ok=True)
     log_file_path: Path = logs_dir / "info.log"
 
-    logger: logging.Logger = logging.getLogger()
+    logger: logging.Logger = logging.getLogger("RobotAid")
+    logger.propagate = False
     logger.setLevel(logging.INFO)
 
     if not any(isinstance(h, logging.FileHandler) for h in logger.handlers):
@@ -72,7 +73,8 @@ def log(func: Callable[..., Any]) -> Callable[..., Any]:
     if asyncio.iscoroutinefunction(func):
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
-            logger: logging.Logger = logging.getLogger()
+            logger: logging.Logger = logging.getLogger("RobotAid")
+            logger.propagate = False
             safe_kwargs: Dict[str, Any] = _redact_sensitive_kwargs(kwargs)
             logger.info(f"Calling async function: {func.__name__} with args: {args}, kwargs: {safe_kwargs}")
             try:
@@ -86,7 +88,8 @@ def log(func: Callable[..., Any]) -> Callable[..., Any]:
     else:
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
-            logger: logging.Logger = logging.getLogger()
+            logger: logging.Logger = logging.getLogger("RobotAid")
+            logger.propagate = False
             safe_kwargs: Dict[str, Any] = _redact_sensitive_kwargs(kwargs)
             logger.info(f"Calling function: {func.__name__} with args: {args}, kwargs: {safe_kwargs}")
             try:
