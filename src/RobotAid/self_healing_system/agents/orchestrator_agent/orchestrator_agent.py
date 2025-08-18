@@ -1,3 +1,4 @@
+from robot.api import logger
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai import Agent, ModelRetry, RunContext
@@ -68,6 +69,7 @@ class OrchestratorAgent:
             usage_limits=self._usage_limits,
             model_settings={"temperature": 0.1, "parallel_tool_calls": False},
         )
+        self._catch_token_limit_exceedance(response.output)
         return response.output
 
     async def _get_healed_locators(self, ctx: RunContext[PromptPayload]) -> str:
@@ -90,3 +92,13 @@ class OrchestratorAgent:
             return await self._locator_agent.heal_async(ctx)
         except Exception as e:
             raise ModelRetry(f"Locator healing failed: {str(e)}")
+
+    @staticmethod
+    def _catch_token_limit_exceedance(response_output: str) -> None:
+        """Logs error in log.html of robot if token limit is exceeded.
+
+        Args:
+            response_output (str): The response from the LLM request.
+        """
+        if "error" in response_output:
+            logger.info(response_output)
