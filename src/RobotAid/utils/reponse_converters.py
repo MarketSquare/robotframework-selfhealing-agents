@@ -1,10 +1,11 @@
 import re
-from typing import Any
+from typing import Any, Callable
 from json import JSONDecodeError, JSONDecoder
 
-from robot.api import logger
+from RobotAid.utils.logging import log
 
 
+@log
 def extract_json_objects(text: str, decoder: JSONDecoder = JSONDecoder()) -> Any:
     """Extracts JSON objects or arrays from a text string, handling common LLM formatting issues.
 
@@ -74,6 +75,7 @@ def extract_json_objects(text: str, decoder: JSONDecoder = JSONDecoder()) -> Any
     return results
 
 
+@log
 def convert_response_to_list(response: str) -> list:
     """Converts a JSON response string to a list of strings.
 
@@ -97,10 +99,10 @@ def convert_response_to_list(response: str) -> list:
         # Otherwise, return all items as strings
         return [str(item) for item in json_data]
     except Exception as e:
-        logger.error(f"Error converting response to list: {e}")
         return []
 
 
+@log
 def convert_response_to_dict(response: str) -> dict:
     """Converts a JSON response string to a dictionary.
 
@@ -118,13 +120,12 @@ def convert_response_to_dict(response: str) -> dict:
         if isinstance(json_data, dict):
             return json_data
         else:
-            logger.error("Response is not a valid JSON object.")
             return {}
     except Exception as e:
-        logger.error(f"Error converting response to dict: {e}")
         return {}
 
 
+@log
 def convert_locator_to_browser(locator: str) -> str:
     """Converts a locator string to a format compatible with the Browser Library.
 

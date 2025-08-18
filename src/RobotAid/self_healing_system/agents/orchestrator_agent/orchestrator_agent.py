@@ -1,9 +1,10 @@
-from robot.api import logger
+from robot.api import logger as rf_logger
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai import Agent, ModelRetry, RunContext
 
 from RobotAid.utils.cfg import Cfg
+from RobotAid.utils.logging import log
 from RobotAid.self_healing_system.llm.client_model import get_client_model
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
@@ -48,6 +49,7 @@ class OrchestratorAgent:
             output_type=[self._get_healed_locators, str],
         )
 
+    @log
     async def run_async(
         self, robot_ctx_payload: PromptPayload
     ) -> str | LocatorHealingResponse | NoHealingNeededResponse:
@@ -72,6 +74,7 @@ class OrchestratorAgent:
         self._catch_token_limit_exceedance(response.output)
         return response.output
 
+    @log
     async def _get_healed_locators(self, ctx: RunContext[PromptPayload]) -> str:
         """Gets a list of healed locator suggestions for a broken locator.
 
@@ -94,6 +97,7 @@ class OrchestratorAgent:
             raise ModelRetry(f"Locator healing failed: {str(e)}")
 
     @staticmethod
+    @log
     def _catch_token_limit_exceedance(response_output: str) -> None:
         """Logs error in log.html of robot if token limit is exceeded.
 
@@ -101,4 +105,4 @@ class OrchestratorAgent:
             response_output (str): The response from the LLM request.
         """
         if "error" in response_output:
-            logger.info(response_output)
+            rf_logger.info(response_output)

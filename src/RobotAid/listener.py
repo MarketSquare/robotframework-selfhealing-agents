@@ -1,5 +1,5 @@
-from robot.api import logger
 from robot import result, running
+from robot.api import logger as rf_logger
 from robot.api.interfaces import ListenerV3
 
 from RobotAid.utils.cfg import Cfg
@@ -38,7 +38,7 @@ class RobotAid(ListenerV3):
         self._self_healing_engine: SelfHealingEngine = SelfHealingEngine(self._state)
         self._report_generator: ReportGenerator = ReportGenerator()
         self._closed: bool = False
-        logger.info(
+        rf_logger.info(
             f"RobotAid initialized; healing="
             f"{'enabled' if self._state.cfg.enable_self_healing else 'disabled'}"
         )

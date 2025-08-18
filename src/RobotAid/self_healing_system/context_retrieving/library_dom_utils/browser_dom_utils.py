@@ -3,8 +3,9 @@ from typing import List, Dict
 from robot.libraries.BuiltIn import BuiltIn
 from bs4 import BeautifulSoup, ResultSet, Tag
 
-from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
+from RobotAid.utils.logging import log
 from RobotAid.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
+from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 
 
 class BrowserDomUtils(BaseDomUtils):
@@ -215,6 +216,7 @@ class BrowserDomUtils(BaseDomUtils):
         except Exception:
             return False
 
+    @log
     def get_locator_proposals(
         self, failed_locator: str, keyword_name: str
     ) -> list[str]:

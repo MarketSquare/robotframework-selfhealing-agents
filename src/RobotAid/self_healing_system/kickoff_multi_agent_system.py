@@ -2,9 +2,9 @@ import asyncio
 from typing import List, Final
 
 from robot import result
-from robot.api import logger
 
 from RobotAid.utils.cfg import Cfg
+from RobotAid.utils.logging import log
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 from RobotAid.self_healing_system.context_retrieving.robot_ctx_retriever import RobotCtxRetriever
 from RobotAid.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
@@ -34,6 +34,7 @@ class KickoffMultiAgentSystem:
     It retrieves the necessary context, instantiates the appropriate agents, and triggers the healing process.
     """
     @staticmethod
+    @log
     def kickoff_healing(
         result: result.Keyword,
         *,
@@ -66,5 +67,4 @@ class KickoffMultiAgentSystem:
         response = asyncio.get_event_loop().run_until_complete(
             orchestrator_agent.run_async(robot_ctx_payload)
         )
-        logger.debug(f"{response}")
         return response
