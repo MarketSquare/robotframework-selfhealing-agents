@@ -2,6 +2,7 @@ import shutil
 from typing import List
 from pathlib import Path
 
+from RobotAid.utils.logging import log
 from RobotAid.self_healing_system.reports.report_types.base_report import BaseReport
 from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
 from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
@@ -40,6 +41,7 @@ class ReportGenerator:
             DiffFilesReport(self._base_dir)
         ]
 
+    @log
     def generate_reports(self, report_info: List[ReportData]) -> None:
         """Generates all report types for the provided healing event data.
 

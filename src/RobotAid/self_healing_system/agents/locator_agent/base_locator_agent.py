@@ -1,12 +1,13 @@
 from typing import Optional
 from abc import ABC, abstractmethod
 
-from robot.api import logger
+from robot.api import logger as rf_logger
 from pydantic_ai.usage import UsageLimits
 from pydantic_ai.agent import AgentRunResult
 from pydantic_ai import Agent, ModelRetry, RunContext
 
 from RobotAid.utils.cfg import Cfg
+from RobotAid.utils.logging import log
 from RobotAid.self_healing_system.llm.client_model import get_client_model
 from RobotAid.self_healing_system.schemas.api.locator_healing import LocatorHealingResponse
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
@@ -88,6 +89,7 @@ class BaseLocatorAgent(ABC):
             return
 
         @self.generation_agent.output_validator
+        @log
         async def validate_output(
             ctx: RunContext[PromptPayload],
             output: LocatorHealingResponse,
@@ -147,16 +149,16 @@ class BaseLocatorAgent(ABC):
                 if keyword_name and any(
                     keyword in keyword_name.lower() for keyword in clickable_keywords
                 ):
-                    logger.info(
+                    rf_logger.info(
                         f"Filtering clickable locators for keyword '{keyword_name}'",
                         also_console=True,
                     )
-                    logger.info(
+                    rf_logger.info(
                         f"Locators before filtering: {suggestions}",
                         also_console=True,
                     )
                     suggestions = self._filter_clickable_locators(suggestions)
-                    logger.info(
+                    rf_logger.info(
                         f"Locators after filtering: {suggestions}",
                         also_console=True,
                     )
@@ -167,6 +169,7 @@ class BaseLocatorAgent(ABC):
             except Exception as e:
                 raise ModelRetry(f"Invalid locator healing response: {str(e)}") from e
 
+    @log
     async def heal_async(
         self, ctx: RunContext[PromptPayload]
     ) -> LocatorHealingResponse | str:
@@ -186,6 +189,7 @@ class BaseLocatorAgent(ABC):
         else:
             return await self._heal_with_dom_utils(ctx)
 
+    @log
     async def _heal_with_llm(
         self, ctx: RunContext[PromptPayload]
     ) -> LocatorHealingResponse:
@@ -214,6 +218,7 @@ class BaseLocatorAgent(ABC):
             )
         return response.output
 
+    @log
     async def _heal_with_dom_utils(
         self, ctx: RunContext[PromptPayload]
     ) -> LocatorHealingResponse:
@@ -280,16 +285,16 @@ class BaseLocatorAgent(ABC):
             if keyword_name and any(
                 keyword in keyword_name.lower() for keyword in clickable_keywords
             ):
-                logger.info(
+                rf_logger.info(
                     f"Filtering clickable locators for keyword '{keyword_name}'",
                     also_console=True,
                 )
-                logger.info(
+                rf_logger.info(
                     f"Locators before filtering: {sorted_proposals}",
                     also_console=True,
                 )
                 sorted_proposals = self._filter_clickable_locators(sorted_proposals)
-                logger.info(
+                rf_logger.info(
                     f"Locators after filtering: {sorted_proposals}",
                     also_console=True,
                 )

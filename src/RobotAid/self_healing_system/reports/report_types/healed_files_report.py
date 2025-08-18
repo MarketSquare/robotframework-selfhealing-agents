@@ -10,6 +10,7 @@ from robot.api.parsing import (
     ResourceImport,
 )
 
+from RobotAid.utils.logging import log
 from RobotAid.self_healing_system.reports.report_types.base_report import BaseReport
 from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
 from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
@@ -33,6 +34,7 @@ class HealedFilesReport(BaseReport):
         """
         super().__init__(base_dir, "healed_files")
 
+    @log
     def _generate_report(self, report_context: ReportContext) -> ReportContext:
         """Applies healed locators to test suites and external resources, then saves them.
 

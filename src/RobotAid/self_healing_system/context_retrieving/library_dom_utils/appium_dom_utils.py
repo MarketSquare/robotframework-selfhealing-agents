@@ -1,5 +1,6 @@
 from robot.libraries.BuiltIn import BuiltIn
 
+from RobotAid.utils.logging import log
 from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 
 
@@ -97,6 +98,7 @@ class AppiumDomUtils(BaseDomUtils):
         """
         return "appium"
 
+    @log
     def get_locator_proposals(
         self, failed_locator: str, keyword_name: str
     ) -> list[str]:

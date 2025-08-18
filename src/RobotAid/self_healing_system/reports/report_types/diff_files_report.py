@@ -2,6 +2,7 @@ import difflib
 from pathlib import Path
 from typing import List, Set
 
+from RobotAid.utils.logging import log
 from RobotAid.self_healing_system.reports.css_styles import DIFF_CSS
 from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
 from RobotAid.self_healing_system.reports.report_types.base_report import BaseReport
@@ -22,6 +23,7 @@ class DiffFilesReport(BaseReport):
         """
         super().__init__(base_dir, "diff_files")
 
+    @log
     def _generate_report(self, report_context: ReportContext) -> ReportContext:
         """Generates HTML diff files between original and healed suites/resources.
 

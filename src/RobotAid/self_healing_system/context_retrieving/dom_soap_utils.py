@@ -3,6 +3,8 @@ from typing import List
 from lxml import etree
 from bs4 import BeautifulSoup, Tag, ResultSet
 
+from RobotAid.utils.logging import log
+
 
 class SoupDomUtils:
     """Utility class for operating on the DOM of a web page using BeautifulSoup."""
@@ -177,6 +179,7 @@ class SoupDomUtils:
         return tag.string is not None and tag.string.strip() and not tag.find()
 
     @staticmethod
+    @log
     def generate_unique_css_selector(
         element: Tag,
         soup: BeautifulSoup,
@@ -466,6 +469,7 @@ class SoupDomUtils:
         return "display: none" in style
 
     @staticmethod
+    @log
     def get_simplified_dom_tree(source: str) -> str | None:
         """Returns a simplified DOM tree as a string, removing non-essential elements and attributes.
 
@@ -549,6 +553,7 @@ class SoupDomUtils:
         return str(soup.body)
 
     @staticmethod
+    @log
     def generate_unique_xpath_selector(
             element: Tag | None,
             soup: BeautifulSoup,

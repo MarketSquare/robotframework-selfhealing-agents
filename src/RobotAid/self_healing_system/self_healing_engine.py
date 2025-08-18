@@ -1,9 +1,10 @@
 from typing import Final, Any
 
-from robot.api import logger
 from robot import result, running
+from robot.api import logger as rf_logger
 from robot.libraries.BuiltIn import BuiltIn
 
+from RobotAid.utils.logging import initialize_logger
 from RobotAid.utils.logfire_init import init_logfire
 from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
 from RobotAid.self_healing_system.kickoff_multi_agent_system import KickoffMultiAgentSystem
@@ -15,6 +16,7 @@ from RobotAid.self_healing_system.schemas.api.locator_healing import (
 
 
 init_logfire()
+initialize_logger()
 
 
 _ALLOWED_LIBRARIES: Final[frozenset] = frozenset(
@@ -52,7 +54,7 @@ class SelfHealingEngine:
         if not self._listener_state.cfg.enable_self_healing:
             return
         self._listener_state.context["current_test"] = data.name
-        logger.debug(f"RobotAid: Monitoring test '{data.name}'")
+        rf_logger.debug(f"RobotAid: Monitoring test '{data.name}'")
 
     def end_keyword(self, data: running.Keyword, result_: result.Keyword) -> Any:
         """Handles the end of a keyword execution and triggers self-healing if needed.
@@ -74,7 +76,7 @@ class SelfHealingEngine:
 
         # ToDo: Implement a more robust way to start self-healing
         if result_.failed and result_.owner in _ALLOWED_LIBRARIES:
-            logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
+            rf_logger.debug(f"RobotAid: Detected failure in keyword '{data.name}'")
             pre_healing_data: running.Keyword = data.deepcopy()
             if self._listener_state.retry_count < self._listener_state.cfg.max_retries:
                 if self._listener_state.should_generate_locators:
@@ -107,7 +109,7 @@ class SelfHealingEngine:
             return
 
         if result_.failed:
-            logger.info(
+            rf_logger.info(
                 f"RobotAid: Test '{data.name}' failed - collecting information for healing"
             )
             # This would store information for post-execution healing
@@ -184,7 +186,7 @@ class SelfHealingEngine:
             data.args = list(data.args)
             data.args[0] = suggested_locator
         try:
-            logger.info(
+            rf_logger.info(
                 f"Re-trying Keyword '{data.name}' with arguments '{data.args}'.",
                 also_console=True,
             )
@@ -192,7 +194,7 @@ class SelfHealingEngine:
             # BuiltIn().run_keyword("Take Screenshot")      # TODO: discuss if this is valuable for other RF-error types
             return return_value
         except Exception as e:
-            logger.debug(f"Unexpected error: {e}")
+            rf_logger.debug(f"Unexpected error: {e}")
             raise
 
     def _record_report(

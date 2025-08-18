@@ -2,6 +2,7 @@ from robot import result
 from robot.utils.misc import seq2str
 from robot.libraries.BuiltIn import BuiltIn
 
+from RobotAid.utils.logging import log
 from RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 from RobotAid.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
 
@@ -14,6 +15,7 @@ class RobotCtxRetriever:
     self-healing workflows.
     """
     @staticmethod
+    @log
     def get_context_payload(
         result: result.Keyword, dom_utility: BaseDomUtils
     ) -> PromptPayload:

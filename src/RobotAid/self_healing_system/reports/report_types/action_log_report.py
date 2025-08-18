@@ -4,6 +4,7 @@ from pathlib import Path
 from itertools import groupby
 from operator import attrgetter
 
+from RobotAid.utils.logging import log
 from RobotAid.self_healing_system.reports.css_styles import ACTION_LOG_CSS
 from RobotAid.self_healing_system.reports.report_types.base_report import BaseReport
 from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
@@ -25,6 +26,7 @@ class ActionLogReport(BaseReport):
         """
         super().__init__(base_dir, "action_log")
 
+    @log
     def _generate_report(self, report_context: ReportContext) -> ReportContext:
         """Writes an HTML table summarizing each locator healing event.
 
