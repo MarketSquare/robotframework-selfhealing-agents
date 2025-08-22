@@ -49,7 +49,7 @@ class Cfg(BaseSettings):
         description="Request limit for a each agent."
     )
     total_tokens_limit: int = Field(
-        2000, env="TOTAL_TOKENS_LIMIT",
+        6000, env="TOTAL_TOKENS_LIMIT",
         description="Limit of total tokens for each request."
     )
 
