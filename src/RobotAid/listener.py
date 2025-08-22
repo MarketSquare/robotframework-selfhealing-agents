@@ -91,4 +91,7 @@ class RobotAid(ListenerV3):
             return
         self._closed = True
         if self._state.report_info:
-            self._report_generator.generate_reports(self._state.report_info)
+            try:
+                self._report_generator.generate_reports(self._state.report_info)
+            except Exception as e:
+                rf_logger.warn(f"Report generation failed: {e}")
