@@ -1,41 +1,68 @@
-def init_logfire():
-    """Initializes Logfire logging with custom scrubbing for sensitive data.
+from typing import Optional
 
-    Attempts to import and configure the Logfire library. If Logfire is not installed,
-    the configuration is skipped. Sets up a custom scrubbing callback to handle
-    sensitive data patterns in log messages and instruments Pydantic AI for logging.
+
+def init_logfire() -> None:
+    """
+    Initialize Logfire with CI-safe defaults and custom scrubbing.
+
+    Behavior:
+        - Imports Logfire lazily so the application can run without it.
+        - Registers a scrubbing callback that selectively unsanitizes known
+          demo values ("Password", "credit-card") from specific paths.
+        - Configures Logfire to send data only if a token is present; if a
+          configuration error occurs, disables sending entirely.
+        - Attempts to instrument Pydantic AI; failures are ignored.
+
+    This function never raises if Logfire is missing or misconfigured, which
+    makes it safe to call in CI environments without tokens.
+
+    Returns:
+        None
     """
     try:
         import logfire
+        from logfire.exceptions import LogfireConfigError
 
-        def scrubbing_callback(m: logfire.ScrubMatch):
-            """Callback for scrubbing sensitive data in Logfire logs.
-
-            This function is invoked by Logfire when a potential sensitive data match
-            is found. It checks the match path and pattern, and returns the value if
-            specific patterns are matched.
+        def scrubbing_callback(m: logfire.ScrubMatch) -> Optional[str]:
+            """
+            Selectively return matched values for known, non-sensitive demos.
 
             Args:
-                m: A ScrubMatch object containing information about the matched pattern.
+                m: The Logfire ScrubMatch describing the match, including
+                   its path, the regex match object, and the original value.
 
             Returns:
-                The matched value if the path and pattern correspond to known sensitive
-                data fields, otherwise None.
+                The original matched value to bypass scrubbing for the
+                whitelisted demo fields, or None to keep the default scrubbing.
             """
             if (
                 m.path == ("attributes", "all_messages_events", 0, "content")
                 and m.pattern_match.group(0) == "Password"
             ):
                 return m.value
-
             if (
                 m.path == ("attributes", "all_messages_events", 1, "content")
                 and m.pattern_match.group(0) == "credit-card"
             ):
                 return m.value
+            return None
 
-        logfire.configure(scrubbing=logfire.ScrubbingOptions(callback=scrubbing_callback))
+        try:
+            logfire.configure(
+                send_to_logfire="if-token-present",
+                scrubbing=logfire.ScrubbingOptions(callback=scrubbing_callback),
+                console=logfire.ConsoleOptions(show_project_link=False),
+            )
+        except LogfireConfigError:
+            logfire.configure(
+                send_to_logfire=False,
+                scrubbing=logfire.ScrubbingOptions(callback=scrubbing_callback),
+                console=logfire.ConsoleOptions(show_project_link=False),
+            )
 
-        logfire.instrument_pydantic_ai()
+        try:
+            logfire.instrument_pydantic_ai()
+        except Exception:
+            pass
     except ImportError:
         print("Logfire is not installed. Skipping logfire configuration.")
