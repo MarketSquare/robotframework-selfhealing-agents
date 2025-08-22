@@ -182,7 +182,9 @@ class SelfHealingEngine:
         Returns:
             The return value of the rerun keyword, or None if no locator is provided.
         """
-        if suggested_locator:
+        if suggested_locator is None:
+            return None
+        else:
             data.args = list(data.args)
             data.args[0] = suggested_locator
         try:
