@@ -29,8 +29,7 @@ class ReportGenerator:
         The reports directory is created under the project workspace. If it already
         exists, it is removed and recreated to ensure a clean state for each run.
         """
-        workspace_dir: Path = Path(__file__).resolve().parents[4]
-        self._base_dir: Path = workspace_dir / "reports"
+        self._base_dir: Path = Path.cwd() / "RobotAid" / "reports"
         if self._base_dir.exists():
             shutil.rmtree(self._base_dir)
         self._base_dir.mkdir(parents=True)
