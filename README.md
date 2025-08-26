@@ -98,26 +98,6 @@ Login with valid credentials
     Select Options By    css=select#continent    label    Africa
     Click    css=button#submitbutton
 
-Not a broken locator error
-    New Page    https://automationintesting.com/selenium/testpage/
-    Run Keyword And Expect Error    Text 'First name\\n' (str) should be 'Incorrect Label' (str)    Get Text    label >> text=First Name    ==    Incorrect Label
-
-Self Healing returns value in Getter Keyword
-    New Page    https://automationintesting.com/selenium/testpage/
-    Fill Text    css=input[id='firstname']    tom
-    ${name}    Get Text    css=input[id='firstname']
-    Should Be Equal    ${name}    tom
-
-Resolve to multiple elements
-    New Page    https://automationintesting.com/selenium/testpage/
-    Set Browser Timeout    1s
-    Fill Text    css=input#firstname    tom
-
-Resolve to wrong element type
-    New Page    https://automationintesting.com/selenium/testpage/
-    Set Browser Timeout    1s
-    Fill Text    css=input#firstname    tom
-
 ```
 
 ### Diff File
