@@ -147,7 +147,7 @@ LOCATOR_AGENT_MODEL="gpt-4o-mini"
 | **LOCATOR_AGENT_MODEL**       | `"gpt-4o-mini"` | No                       | Model for the locator agent                                               |
 
 > **Note:**  
-> Locator suggestions can be generated either by assembling strings from the DOM tree (with an LLM selecting the best option), or by having the LLM generate suggestions directly itself with the context given (DOM included). Set `USE_LLM_FOR_LOCATOR_GENERATION` to `True` to enable direct LLM generation.
+> Locator suggestions can be generated either by assembling strings from the DOM tree (with an LLM selecting the best option), or by having the LLM generate suggestions directly itself with the context given (DOM included). Set `USE_LLM_FOR_LOCATOR_GENERATION` to `True` to enable direct LLM generation (default is True).
 
 ## 🔮 Outlook
 
