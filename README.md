@@ -13,6 +13,7 @@ A robotframework library that **repairs failing Robot Framework tests automatica
 
 ## ✨ Features
 - 🧭 **Heals broken locators** automatically
+- 📂 Supports test suites with external **resource files**
 - ⏱️ **Runtime hooking** keeps tests running after locator fixes
 - 📝 **Generates reports** with healing steps, repaired files and diffs
 - 🤖 **LLM multi-agent** workflow (extensible for more error types)
