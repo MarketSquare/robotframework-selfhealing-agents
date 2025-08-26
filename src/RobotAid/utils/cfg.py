@@ -17,7 +17,7 @@ class Cfg(BaseSettings):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     enable_self_healing: bool = Field(
-        False, env="ENABLE_SELF_HEALING",
+        True, env="ENABLE_SELF_HEALING",
         description="True if Self-Healing System should be activated."
     )
     use_llm_for_locator_generation: bool = Field(
