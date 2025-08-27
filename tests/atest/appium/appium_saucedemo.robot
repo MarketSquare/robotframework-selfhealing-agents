@@ -2,7 +2,7 @@
 Library    AppiumLibrary
 Library    Process
 Library    OperatingSystem
-Library    RobotAid
+Library    SelfhealingAgents
 Test Tags    appium    not_ci    not_ready
 
 *** Variables ***

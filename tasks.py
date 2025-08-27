@@ -17,7 +17,7 @@ def utests(context):
     cmd = [
         "coverage",
         "run",
-        "--source=src/RobotAid",
+        "--source=SelfhealingAgents",
         "-p",
         "-m",
         "pytest",
@@ -33,7 +33,7 @@ def atests(context):
     cmd = [
         "coverage",
         "run",
-        "--source=src/RobotAid",
+        "--source=SelfhealingAgents",
         "-p",
         "-m",
         "robot",

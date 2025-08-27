@@ -1,6 +1,6 @@
 *** Settings ***
 Library    Browser    timeout=5s
-Library    RobotAid
+Library    SelfhealingAgents
 Resource    ./resources/sauce_web_vars.resource
 Resource    ./resources/sauce_web_keywords.resource
 Suite Setup    New Browser    browser=${BROWSER}    headless=${HEADLESS}

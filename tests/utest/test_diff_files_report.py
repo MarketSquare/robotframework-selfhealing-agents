@@ -3,14 +3,14 @@ import pytest
 from pathlib import Path
 from typing import List
 
-from RobotAid.self_healing_system.schemas.internal_state.report_context import (
+from SelfhealingAgents.self_healing_system.schemas.internal_state.report_context import (
     ReportContext,
 )
-from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
-from RobotAid.self_healing_system.reports.report_types.diff_files_report import (
+from SelfhealingAgents.self_healing_system.schemas.internal_state.report_data import ReportData
+from SelfhealingAgents.self_healing_system.reports.report_types.diff_files_report import (
     DiffFilesReport,
 )
-import RobotAid.self_healing_system.reports.report_types.diff_files_report as diff_module
+import SelfhealingAgents.self_healing_system.reports.report_types.diff_files_report as diff_module
 
 
 def _write(p: Path, content: str) -> None:

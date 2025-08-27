@@ -6,26 +6,26 @@ from bs4 import BeautifulSoup, Tag
 from typing import Any, Callable, Dict, List, Tuple, Optional
 
 
-MODULE_PATH: str = "RobotAid.self_healing_system.context_retrieving.library_dom_utils.browser_dom_utils"
+MODULE_PATH: str = "SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.browser_dom_utils"
 
 
 def _install_stub_logging_if_needed() -> None:
     try:
-        import RobotAid.utils.logging
+        import SelfhealingAgents
         return
     except Exception:
         pass
-    pkg = types.ModuleType("RobotAid")
+    pkg = types.ModuleType("SelfhealingAgents")
     pkg.__path__ = []
-    utils = types.ModuleType("RobotAid.utils")
+    utils = types.ModuleType("SelfhealingAgents.utils")
     utils.__path__ = []
-    logging_mod = types.ModuleType("RobotAid.utils.logging")
+    logging_mod = types.ModuleType("SelfhealingAgents.utils.logging")
     def log(func: Callable[..., Any]) -> Callable[..., Any]:
         return func
     logging_mod.log = log
-    sys.modules["RobotAid"] = pkg
-    sys.modules["RobotAid.utils"] = utils
-    sys.modules["RobotAid.utils.logging"] = logging_mod
+    sys.modules["SelfhealingAgents"] = pkg
+    sys.modules["SelfhealingAgents.utils"] = utils
+    sys.modules["SelfhealingAgents.utils.logging"] = logging_mod
 
 
 def _import_module_fresh() -> Any:

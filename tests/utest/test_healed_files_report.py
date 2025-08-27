@@ -6,8 +6,8 @@ from pathlib import Path
 from dataclasses import dataclass
 from typing import Any, Iterable, List, Tuple
 
-from RobotAid.self_healing_system.reports.report_types.healed_files_report import HealedFilesReport
-from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
+from SelfhealingAgents.self_healing_system.reports.report_types.healed_files_report import HealedFilesReport
+from SelfhealingAgents.self_healing_system.schemas.internal_state.report_context import ReportContext
 
 
 @dataclass
@@ -66,7 +66,7 @@ class _RecorderVisitor:
 
 @pytest.fixture
 def module_under_test(monkeypatch: pytest.MonkeyPatch) -> types.ModuleType:
-    import RobotAid.self_healing_system.reports.report_types.healed_files_report as mod
+    import SelfhealingAgents.self_healing_system.reports.report_types.healed_files_report as mod
 
     monkeypatch.setattr(mod, "File", _FakeFile, raising=True)
     monkeypatch.setattr(mod, "SettingSection", _FakeSettingSection, raising=True)
@@ -178,7 +178,7 @@ def test_get_replacements_handles_oserror_and_returns_direct_entries_only(
         raise OSError("cannot open")
 
     pytest.monkeypatch = None
-    import RobotAid.self_healing_system.reports.report_types.healed_files_report as mod
+    import SelfhealingAgents.self_healing_system.reports.report_types.healed_files_report as mod
     orig = mod.get_model
     try:
         object.__setattr__(mod, "get_model", _raising_get_model)

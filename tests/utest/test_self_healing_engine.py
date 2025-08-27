@@ -3,7 +3,7 @@ import types
 import pytest
 from unittest.mock import MagicMock, patch
 
-from RobotAid.self_healing_system.self_healing_engine import SelfHealingEngine
+from SelfhealingAgents.self_healing_system.self_healing_engine import SelfHealingEngine
 
 
 @pytest.fixture
@@ -61,15 +61,15 @@ def test_end_test_does_nothing_if_healing_disabled(engine, listener_state):
 
 
 def test_initiate_healing_locator_response(monkeypatch, engine, listener_state):
-    from RobotAid.self_healing_system.schemas.api.locator_healing import LocatorHealingResponse
-    import RobotAid.self_healing_system.self_healing_engine as she
+    from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import LocatorHealingResponse
+    import SelfhealingAgents.self_healing_system.self_healing_engine as she
     she.LocatorHealingResponse = LocatorHealingResponse
 
     def fake_kickoff_healing(*args, **kwargs):
         return LocatorHealingResponse(suggestions=["foo", "bar"])
 
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.self_healing_engine.KickoffMultiAgentSystem.kickoff_healing",
+        "SelfhealingAgents.self_healing_system.self_healing_engine.KickoffMultiAgentSystem.kickoff_healing",
         fake_kickoff_healing
     )
 
@@ -85,25 +85,25 @@ def test_initiate_healing_locator_response(monkeypatch, engine, listener_state):
 
 def test_initiate_healing_no_healing_needed(monkeypatch, engine, listener_state):
     try:
-        from RobotAid.self_healing_system.schemas.api.locator_healing import NoHealingNeededResponse
+        from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import NoHealingNeededResponse
     except Exception:
-        mod_name = "RobotAid.self_healing_system.schemas.api.locator_healing"
+        mod_name = "SelfhealingAgents.self_healing_system.schemas.api.locator_healing"
         mod = sys.modules.get(mod_name) or types.ModuleType(mod_name)
         class NoHealingNeededResponse:
             def __init__(self, message: str) -> None:
                 self.message = message
         mod.NoHealingNeededResponse = NoHealingNeededResponse
         sys.modules[mod_name] = mod
-        from RobotAid.self_healing_system.schemas.api.locator_healing import NoHealingNeededResponse
+        from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import NoHealingNeededResponse
 
-    import RobotAid.self_healing_system.self_healing_engine as she
+    import SelfhealingAgents.self_healing_system.self_healing_engine as she
     she.NoHealingNeededResponse = NoHealingNeededResponse
 
     def fake_kickoff_healing(*args, **kwargs):
         return NoHealingNeededResponse(message="test")
 
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.self_healing_engine.KickoffMultiAgentSystem.kickoff_healing",
+        "SelfhealingAgents.self_healing_system.self_healing_engine.KickoffMultiAgentSystem.kickoff_healing",
         fake_kickoff_healing
     )
 
@@ -139,7 +139,7 @@ def test_try_locator_suggestions_index_error(engine, listener_state):
     assert result is None
 
 
-@patch("RobotAid.self_healing_system.self_healing_engine.BuiltIn")
+@patch("SelfhealingAgents.self_healing_system.self_healing_engine.BuiltIn")
 def test_rerun_keyword_with_suggested_locator_success(mock_built_in, engine):
     data = MagicMock()
     data.name = "Keyword"
@@ -150,7 +150,7 @@ def test_rerun_keyword_with_suggested_locator_success(mock_built_in, engine):
     assert result == "return_value"
 
 
-@patch("RobotAid.self_healing_system.self_healing_engine.BuiltIn")
+@patch("SelfhealingAgents.self_healing_system.self_healing_engine.BuiltIn")
 def test_rerun_keyword_with_suggested_locator_no_locator(mock_built_in, engine):
     data = MagicMock()
     data.args = ["locator"]
@@ -158,7 +158,7 @@ def test_rerun_keyword_with_suggested_locator_no_locator(mock_built_in, engine):
     assert result is None
 
 
-@patch("RobotAid.self_healing_system.self_healing_engine.BuiltIn")
+@patch("SelfhealingAgents.self_healing_system.self_healing_engine.BuiltIn")
 def test_rerun_keyword_with_suggested_locator_exception(mock_built_in, engine):
     data = MagicMock()
     data.name = "Keyword"
@@ -168,7 +168,7 @@ def test_rerun_keyword_with_suggested_locator_exception(mock_built_in, engine):
         engine._rerun_keyword_with_suggested_locator(data, suggested_locator="locator")
 
 
-@patch("RobotAid.self_healing_system.self_healing_engine.BuiltIn")
+@patch("SelfhealingAgents.self_healing_system.self_healing_engine.BuiltIn")
 def test_record_report_appends_report_data(mock_built_in, engine, listener_state):
     data = MagicMock()
     data.args = ["failed_locator"]

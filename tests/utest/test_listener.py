@@ -50,8 +50,8 @@ def _ensure_robot_stubs() -> None:
 def listener() -> Any:
     _ensure_robot_stubs()
 
-    sys.modules.pop("RobotAid.listener", None)
-    mod = importlib.import_module("RobotAid.listener")
+    sys.modules.pop("SelfhealingAgents.listener", None)
+    mod = importlib.import_module("SelfhealingAgents.listener")
 
     with patch.object(mod, "SelfHealingEngine") as MockEngine, \
          patch.object(mod, "ReportGenerator") as MockReportGen, \
@@ -62,7 +62,7 @@ def listener() -> Any:
         mock_state = MockState.return_value
         mock_state.cfg.enable_self_healing = True
         mock_state.report_info = {"dummy": "info"}
-        yield mod.RobotAid()
+        yield mod.SelfhealingAgents()
 
 
 def test_initialization_logs_and_sets_state(listener: Any) -> None:

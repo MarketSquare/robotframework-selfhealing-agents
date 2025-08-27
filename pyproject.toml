@@ -1,8 +1,9 @@
 [project]
-name = "robotframework-aid"
+name = "robotframework-selfhealing-agents"
 version = "0.1.0"
 description = ""
-authors = [{ name = "MarketSquare - Robot Framework community" }]
+authors = [{ name = "viadee IT-Unternehmensberatung AG <julian.blanke@viadee.de>"},
+           { name = "Many Kasiriha <many@robotframework.org>"}]
 license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
@@ -12,6 +13,7 @@ dependencies = [
     "beautifulsoup4 >=4.13.4",
     "pydantic-settings >=2.9.1",
     "lxml>=6.0.0",
+    "robotframework-browser>=19.7.2",
     "robotframework-seleniumlibrary>=2.9.2",
     "python-dotenv>=1.1.1",
     "logfire>=4.3.3"
@@ -23,7 +25,7 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
-packages = [{ include = "RobotAid", from = "src" }]
+packages = [{ include = "SelfhealingAgents"}]
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"
@@ -32,7 +34,7 @@ coverage = "*"
 robotframework-stacktrace = "*"
 mkdocs-material = "*"
 
-[project.entry-points."robot_aid.llm_model_providers"]
-openai = "RobotAid.self_healing_system.llm.providers.openai_builder:openai_builder"
-azure = "RobotAid.self_healing_system.llm.providers.azure_builder:azure_builder"
-litellm = "RobotAid.self_healing_system.llm.providers.litellm_builder:litellm_builder"
+[project.entry-points."SelfhealingAgents.llm_model_providers"]
+openai = "SelfhealingAgents.self_healing_system.llm.providers.openai_builder:openai_builder"
+azure = "SelfhealingAgents.self_healing_system.llm.providers.azure_builder:azure_builder"
+litellm = "SelfhealingAgents.self_healing_system.llm.providers.litellm_builder:litellm_builder"

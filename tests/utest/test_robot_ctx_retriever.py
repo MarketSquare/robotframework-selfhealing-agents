@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from typing import Any, List, Optional
 
 
-MODULE_PATH: str = "RobotAid.self_healing_system.context_retrieving.robot_ctx_retriever"
+MODULE_PATH: str = "SelfhealingAgents.self_healing_system.context_retrieving.robot_ctx_retriever"
 robot_ctx_module = importlib.import_module(MODULE_PATH)
 RobotCtxRetriever = getattr(robot_ctx_module, "RobotCtxRetriever")
 

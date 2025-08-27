@@ -1,5 +1,5 @@
 *** Settings ***
-Library    RobotAid
+Library    SelfhealingAgents
 
 *** Test Cases ***
 Dummy Test
