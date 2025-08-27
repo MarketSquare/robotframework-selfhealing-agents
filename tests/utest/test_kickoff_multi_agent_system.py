@@ -3,8 +3,11 @@ import asyncio
 from typing import Any
 from unittest.mock import MagicMock, AsyncMock
 
-from RobotAid.self_healing_system.self_healing_engine import KickoffMultiAgentSystem
-from RobotAid.self_healing_system.schemas.api.locator_healing import LocatorHealingResponse, NoHealingNeededResponse
+from SelfhealingAgents.self_healing_system.kickoff_multi_agent_system import KickoffMultiAgentSystem
+from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import (
+    LocatorHealingResponse,
+    NoHealingNeededResponse
+)
 
 
 @pytest.fixture
@@ -31,24 +34,24 @@ def patch_factories_and_ctx(
     orchestrator_response: Any = LocatorHealingResponse(suggestions=["healing-response"]),
 ) -> MagicMock:
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.context_retrieving.dom_utility_factory.DomUtilityFactory.create_dom_utility",
+        "SelfhealingAgents.self_healing_system.context_retrieving.dom_utility_factory.DomUtilityFactory.create_dom_utility",
         lambda at: MagicMock(name=f"FakeDomUtility[{at}]"),
         raising=True,
     )
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.context_retrieving.robot_ctx_retriever.RobotCtxRetriever.get_context_payload",
+        "SelfhealingAgents.self_healing_system.context_retrieving.robot_ctx_retriever.RobotCtxRetriever.get_context_payload",
         lambda result, dom_utility: MagicMock(name="FakePromptPayload"),
         raising=True,
     )
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.agents.locator_agent.locator_agent_factory.LocatorAgentFactory.create_agent",
+        "SelfhealingAgents.self_healing_system.agents.locator_agent.locator_agent_factory.LocatorAgentFactory.create_agent",
         lambda at, cfg, dom_utility: MagicMock(name=f"FakeLocatorAgent[{at}]"),
         raising=True,
     )
     mocked_orchestrator: MagicMock = MagicMock(name="FakeOrchestratorAgent")
     mocked_orchestrator.run_async = AsyncMock(return_value=orchestrator_response)
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.kickoff_multi_agent_system.OrchestratorAgent",
+        "SelfhealingAgents.self_healing_system.kickoff_multi_agent_system.OrchestratorAgent",
         lambda cfg, locator_agent: mocked_orchestrator,
         raising=True,
     )
@@ -124,24 +127,24 @@ def test_kickoff_healing_context_payload_and_tried_locators(
     def fake_get_context_payload(result: MagicMock, dom_utility: MagicMock) -> MagicMock:
         return context_payload
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.context_retrieving.dom_utility_factory.DomUtilityFactory.create_dom_utility",
+        "SelfhealingAgents.self_healing_system.context_retrieving.dom_utility_factory.DomUtilityFactory.create_dom_utility",
         lambda agent_type: MagicMock(),
         raising=True,
     )
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.context_retrieving.robot_ctx_retriever.RobotCtxRetriever.get_context_payload",
+        "SelfhealingAgents.self_healing_system.context_retrieving.robot_ctx_retriever.RobotCtxRetriever.get_context_payload",
         fake_get_context_payload,
         raising=True,
     )
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.agents.locator_agent.locator_agent_factory.LocatorAgentFactory.create_agent",
+        "SelfhealingAgents.self_healing_system.agents.locator_agent.locator_agent_factory.LocatorAgentFactory.create_agent",
         lambda agent_type, cfg, dom_utility: MagicMock(),
         raising=True,
     )
     fake_orchestrator: MagicMock = MagicMock()
     fake_orchestrator.run_async = AsyncMock(return_value="resp")
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.kickoff_multi_agent_system.OrchestratorAgent",
+        "SelfhealingAgents.self_healing_system.kickoff_multi_agent_system.OrchestratorAgent",
         lambda cfg, locator_agent: fake_orchestrator,
         raising=True,
     )
@@ -182,22 +185,22 @@ def test_kickoff_healing_orchestrator_exception(
     fake_orchestrator: MagicMock = MagicMock()
     fake_orchestrator.run_async = AsyncMock(side_effect=raise_exc)
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.context_retrieving.dom_utility_factory.DomUtilityFactory.create_dom_utility",
+        "SelfhealingAgents.self_healing_system.context_retrieving.dom_utility_factory.DomUtilityFactory.create_dom_utility",
         lambda agent_type: MagicMock(),
         raising=True,
     )
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.context_retrieving.robot_ctx_retriever.RobotCtxRetriever.get_context_payload",
+        "SelfhealingAgents.self_healing_system.context_retrieving.robot_ctx_retriever.RobotCtxRetriever.get_context_payload",
         lambda result, dom_utility: MagicMock(),
         raising=True,
     )
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.agents.locator_agent.locator_agent_factory.LocatorAgentFactory.create_agent",
+        "SelfhealingAgents.self_healing_system.agents.locator_agent.locator_agent_factory.LocatorAgentFactory.create_agent",
         lambda agent_type, cfg, dom_utility: MagicMock(),
         raising=True,
     )
     monkeypatch.setattr(
-        "RobotAid.self_healing_system.kickoff_multi_agent_system.OrchestratorAgent",
+        "SelfhealingAgents.self_healing_system.kickoff_multi_agent_system.OrchestratorAgent",
         lambda cfg, locator_agent: fake_orchestrator,
         raising=True,
     )

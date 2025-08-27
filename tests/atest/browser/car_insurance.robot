@@ -1,6 +1,6 @@
 *** Settings ***
 Library    Browser
-Library    RobotAid
+Library    SelfhealingAgents
 Suite Setup    New Browser    browser=${BROWSER}    headless=${HEADLESS}
 Test Teardown    Close Context
 Suite Teardown    Close Browser    ALL

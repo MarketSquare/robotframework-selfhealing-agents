@@ -7,7 +7,7 @@ import importlib.util
 from typing import Any, Callable, List, Optional, Tuple
 
 
-MODULE_PATH: str = "RobotAid.self_healing_system.agents.orchestrator_agent.orchestrator_agent"
+MODULE_PATH: str = "SelfhealingAgents.self_healing_system.agents.orchestrator_agent.orchestrator_agent"
 
 
 class _LoggerStub:
@@ -120,24 +120,24 @@ def _install_stubs() -> _LoggerStub:
     _ensure_module("pydantic_ai.agent", build_pyd_ai_agent)
 
     try:
-        spec = importlib.util.find_spec("RobotAid.utils.logging")
+        spec = importlib.util.find_spec("SelfhealingAgents.utils.logging")
     except Exception:
         spec = None
-    if spec is None and "RobotAid.utils.logging" not in sys.modules:
-        _ensure_pkg_chain("RobotAid.utils.logging")
-        logging_mod = types.ModuleType("RobotAid.utils.logging")
+    if spec is None and "SelfhealingAgents.utils.logging" not in sys.modules:
+        _ensure_pkg_chain("SelfhealingAgents.utils.logging")
+        logging_mod = types.ModuleType("SelfhealingAgents.utils.logging")
         def log(f: Callable[..., Any]) -> Callable[..., Any]:
             return f
         logging_mod.log = log
-        sys.modules["RobotAid.utils.logging"] = logging_mod
+        sys.modules["SelfhealingAgents.utils.logging"] = logging_mod
     else:
-        logging_mod = sys.modules.get("RobotAid.utils.logging") or importlib.import_module("RobotAid.utils.logging")
+        logging_mod = sys.modules.get("SelfhealingAgents.utils.logging") or importlib.import_module("SelfhealingAgents.utils.logging")
         if not hasattr(logging_mod, "log"):
             def log(f: Callable[..., Any]) -> Callable[..., Any]:
                 return f
             setattr(logging_mod, "log", log)
 
-    mod_name = "RobotAid.self_healing_system.schemas.api.locator_healing"
+    mod_name = "SelfhealingAgents.self_healing_system.schemas.api.locator_healing"
     try:
         loc_mod = importlib.import_module(mod_name)
     except Exception:
@@ -176,9 +176,9 @@ def orch_setup() -> Tuple[Any, Any, _LoggerStub, Any, Any]:
     logger = _install_stubs()
     mod = _import_module_fresh()
     OrchestratorAgent = getattr(mod, "OrchestratorAgent")
-    locator_api = importlib.import_module("RobotAid.self_healing_system.schemas.api.locator_healing")
+    locator_api = importlib.import_module("SelfhealingAgents.self_healing_system.schemas.api.locator_healing")
     NoHealingNeededResponse = getattr(locator_api, "NoHealingNeededResponse")
-    prompt_payload_mod = importlib.import_module("RobotAid.self_healing_system.schemas.internal_state.prompt_payload")
+    prompt_payload_mod = importlib.import_module("SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload")
     PromptPayload = getattr(prompt_payload_mod, "PromptPayload")
     return mod, OrchestratorAgent, logger, NoHealingNeededResponse, PromptPayload
 

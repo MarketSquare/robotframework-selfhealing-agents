@@ -1,10 +1,10 @@
-# RobotAid - Self-healing for Robot Framework
+# Robot Framework Selfhealing Agents
 ![banner](./static/github_banner.png)
 
-[![PyPI version](https://img.shields.io/pypi/v/robotframework-selfhealer.svg)](https://pypi.org/project/robotframework-selfhealer/)
-![Python versions](https://img.shields.io/pypi/pyversions/robotframework-selfhealer.svg)
+[![PyPI version](https://img.shields.io/pypi/v/robotframework-selfhealing-agents.svg)](https://pypi.org/project/robotframework-selfhealing-agents/)
+![Python versions](https://img.shields.io/pypi/pyversions/robotframework-selfhealing-agents.svg)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](#license)
-[![Tests](https://img.shields.io/github/actions/workflow/status/MarketSquare/robot-heal-testbed/ci.yml?branch=main)](https://github.com/MarketSquare/robot-heal-testbed/actions)
+[![Tests](https://img.shields.io/github/actions/workflow/status/MarketSquare/robotframework-selfhealing-agents/ci.yml?branch=main)](https://github.com/MarketSquare/robotframework-selfhealing-agents/actions)
 
 A robotframework library that **repairs failing Robot Framework tests automatically** using **Large Language Models
 (LLMs)**. It currently heals broken locators, with upcoming releases expanding to additional common failure modes.
@@ -25,7 +25,7 @@ A robotframework library that **repairs failing Robot Framework tests automatica
 ---
 ## ⚙️ ️Installation
 ```bash
-pip install robotframework-selfhealer
+pip install robotframework-selfhealing-agents
 ```
 ---
 ## 🛠️Setup
@@ -37,11 +37,11 @@ OPENAI_API_KEY="your-openai-api-key"
 ```
 ---
 ## 🚀 Usage
-After installing the package and adding your API key to the `.env` file, simply add the Library `RobotAid` to your test suite.
-```
+After installing the package and adding your API key to the `.env` file, simply add the Library `SelfhealingAgents` to your test suite.
+```robotframework
 *** Settings ***
 Library    Browser    timeout=5s
-Library    RobotAid
+Library    SelfhealingAgents
 Suite Setup    New Browser    browser=${BROWSER}    headless=${HEADLESS}
 Test Setup    New Context    viewport={'width': 1280, 'height': 720}
 Test Teardown    Close Context
@@ -64,7 +64,7 @@ Login with valid credentials
     Click    id=i_do_nothing
 ```
 
-After running your test suite(s), you'll find a "RobotAid" directory in your current working directory containing 
+After running your test suite(s), you'll find a "SelfHealingReports" directory in your current working directory containing 
 detailed logs and output reports. There are three types of reports generated:
 1) **Action Log**: Summarizes all healing steps performed and their locations within your tests
 2) **Healed Files**: Provides repaired copies of your test suite(s)
@@ -73,11 +73,11 @@ detailed logs and output reports. There are three types of reports generated:
 ### Action Log
 ![action_log](./static/action_log.png)
 
-## Healed File
+### Healed File
 ```robotframework
 *** Settings ***
 Library    Browser    timeout=5s
-Library    RobotAid
+Library    SelfhealingAgents
 Suite Setup    New Browser    browser=${BROWSER}    headless=${HEADLESS}
 Test Setup    New Context    viewport={'width': 1280, 'height': 720}
 Test Teardown    Close Context
@@ -137,7 +137,7 @@ LOCATOR_AGENT_MODEL="gpt-4o-mini"
 | **AZURE_API_VERSION**         | `None`          | If using Azure           | Azure OpenAI API version                                                  |
 | **AZURE_ENDPOINT**            | `None`          | If using Azure           | Azure OpenAI endpoint                                                     |
 | **BASE_URL**                  | `None`          | No                       | Base URL for your provider (if required)                                  |
-| **ENABLE_SELF_HEALING**       | `True`          | No                       | Enable or disable RobotAid                                                |
+| **ENABLE_SELF_HEALING**       | `True`          | No                       | Enable or disable SelfhealingAgents                                                |
 | **USE_LLM_FOR_LOCATOR_GENERATION** | `True`    | No                       | If `True`, LLM generates locator suggestions directly (see note below)    |
 | **MAX_RETRIES**               | `3`             | No                       | Number of self-healing attempts per locator                               |
 | **REQUEST_LIMIT**             | `5`             | No                       | Internal agent-level limit for valid LLM response attempts                |
@@ -152,7 +152,7 @@ LOCATOR_AGENT_MODEL="gpt-4o-mini"
 
 ## 🔮 Outlook
 
-While RobotAid currently focuses on healing broken locators, its architecture is designed for much more. The introduced 
+While SelfhealingAgents currently focuses on healing broken locators, its architecture is designed for much more. The introduced 
 multi-agent system provides a modular and extensible foundation for integration of additional agents, each specialized 
 in healing different types of test failures.
 

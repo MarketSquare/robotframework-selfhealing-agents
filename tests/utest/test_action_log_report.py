@@ -2,10 +2,10 @@ import pytest
 from typing import List
 from pathlib import Path
 
-import RobotAid.self_healing_system.reports.report_types.action_log_report as action_module
-from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
-from RobotAid.self_healing_system.schemas.internal_state.report_context import ReportContext
-from RobotAid.self_healing_system.reports.report_types.action_log_report import ActionLogReport
+import SelfhealingAgents.self_healing_system.reports.report_types.action_log_report as action_module
+from SelfhealingAgents.self_healing_system.schemas.internal_state.report_data import ReportData
+from SelfhealingAgents.self_healing_system.schemas.internal_state.report_context import ReportContext
+from SelfhealingAgents.self_healing_system.reports.report_types.action_log_report import ActionLogReport
 
 
 def _mk_report_data(

@@ -1,6 +1,6 @@
 *** Settings ***
 Library    SeleniumLibrary
-Library    RobotAid
+Library    SelfhealingAgents
 Test Setup    Open Browser    browser=${BROWSER}
 Test Teardown    Close All Browsers
 

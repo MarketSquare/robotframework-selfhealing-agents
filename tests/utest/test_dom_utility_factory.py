@@ -3,7 +3,7 @@ import importlib
 from typing import Any, Dict, Mapping, Type
 
 
-MODULE_PATH: str = "RobotAid.self_healing_system.context_retrieving.dom_utility_factory"
+MODULE_PATH: str = "SelfhealingAgents.self_healing_system.context_retrieving.dom_utility_factory"
 mod = importlib.import_module(MODULE_PATH)
 DomUtilityFactory = getattr(mod, "DomUtilityFactory")
 

@@ -6,7 +6,7 @@ import importlib
 from typing import Any, Callable, List, Optional, Tuple
 
 
-MODULE_PATH: str = "RobotAid.self_healing_system.agents.locator_agent.base_locator_agent"
+MODULE_PATH: str = "SelfhealingAgents.self_healing_system.agents.locator_agent.base_locator_agent"
 
 
 def _run(coro):
@@ -84,10 +84,10 @@ def _install_stubs() -> _LoggerStub:
     _force_module("robot.result", types.ModuleType("robot.result"))
     _force_module("robot.running", types.ModuleType("robot.running"))
 
-    listener_stub = types.ModuleType("RobotAid.listener")
-    class RobotAid: ...
-    listener_stub.RobotAid = RobotAid
-    _force_module("RobotAid.listener", listener_stub)
+    listener_stub = types.ModuleType("SelfhealingAgents.listener")
+    class SelfhealingAgents: ...
+    listener_stub.SelfhealingAgents = SelfhealingAgents
+    _force_module("SelfhealingAgents.listener", listener_stub)
 
     pa = types.ModuleType("pydantic_ai")
     pa.Agent = _FakeAgent
@@ -103,12 +103,12 @@ def _install_stubs() -> _LoggerStub:
     pa_agent.AgentRunResult = _FakeAgentRunResult
     _force_module("pydantic_ai.agent", pa_agent)
 
-    aid_utils = types.ModuleType("RobotAid.utils")
-    logging_mod = types.ModuleType("RobotAid.utils.logging")
+    aid_utils = types.ModuleType("SelfhealingAgents.utils")
+    logging_mod = types.ModuleType("SelfhealingAgents.utils.logging")
     def log(f: Callable[..., Any]) -> Callable[..., Any]:
         return f
     logging_mod.log = log
-    cfg_mod = types.ModuleType("RobotAid.utils.cfg")
+    cfg_mod = types.ModuleType("SelfhealingAgents.utils.cfg")
     class Cfg:
         def __init__(self) -> None:
             self.request_limit: int = 10
@@ -117,11 +117,11 @@ def _install_stubs() -> _LoggerStub:
             self.locator_agent_provider: str = "prov"
             self.locator_agent_model: str = "mod"
     cfg_mod.Cfg = Cfg
-    _force_module("RobotAid.utils", aid_utils)
-    _force_module("RobotAid.utils.logging", logging_mod)
-    _force_module("RobotAid.utils.cfg", cfg_mod)
+    _force_module("SelfhealingAgents.utils", aid_utils)
+    _force_module("SelfhealingAgents.utils.logging", logging_mod)
+    _force_module("SelfhealingAgents.utils.cfg", cfg_mod)
 
-    prompts_pkg = types.ModuleType("RobotAid.self_healing_system.agents.prompts.locator.prompts_locator")
+    prompts_pkg = types.ModuleType("SelfhealingAgents.self_healing_system.agents.prompts.locator.prompts_locator")
     class PromptsLocatorGenerationAgent:
         @staticmethod
         def get_system_msg(dom: Any) -> str:
@@ -138,22 +138,22 @@ def _install_stubs() -> _LoggerStub:
             return "SEL_USER"
     prompts_pkg.PromptsLocatorGenerationAgent = PromptsLocatorGenerationAgent
     prompts_pkg.PromptsLocatorSelectionAgent = PromptsLocatorSelectionAgent
-    _force_module("RobotAid.self_healing_system.agents.prompts.locator.prompts_locator", prompts_pkg)
+    _force_module("SelfhealingAgents.self_healing_system.agents.prompts.locator.prompts_locator", prompts_pkg)
 
-    client_model = types.ModuleType("RobotAid.self_healing_system.llm.client_model")
+    client_model = types.ModuleType("SelfhealingAgents.self_healing_system.llm.client_model")
     def get_client_model(provider: str, model: str, cfg: Any) -> str:
         return f"{provider}:{model}"
     client_model.get_client_model = get_client_model
-    _force_module("RobotAid.self_healing_system.llm.client_model", client_model)
+    _force_module("SelfhealingAgents.self_healing_system.llm.client_model", client_model)
 
-    loc_schema = types.ModuleType("RobotAid.self_healing_system.schemas.api.locator_healing")
+    loc_schema = types.ModuleType("SelfhealingAgents.self_healing_system.schemas.api.locator_healing")
     class LocatorHealingResponse:
         def __init__(self, suggestions: List[str]) -> None:
             self.suggestions: List[str] = suggestions
     loc_schema.LocatorHealingResponse = LocatorHealingResponse
-    _force_module("RobotAid.self_healing_system.schemas.api.locator_healing", loc_schema)
+    _force_module("SelfhealingAgents.self_healing_system.schemas.api.locator_healing", loc_schema)
 
-    payload_mod = types.ModuleType("RobotAid.self_healing_system.schemas.internal_state.prompt_payload")
+    payload_mod = types.ModuleType("SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload")
     class PromptPayload:
         def __init__(
             self,
@@ -173,12 +173,12 @@ def _install_stubs() -> _LoggerStub:
             self.failed_locator = failed_locator
             self.tried_locator_memory = tried_locator_memory
     payload_mod.PromptPayload = PromptPayload
-    _force_module("RobotAid.self_healing_system.schemas.internal_state.prompt_payload", payload_mod)
+    _force_module("SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload", payload_mod)
 
-    base_dom = types.ModuleType("RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils")
+    base_dom = types.ModuleType("SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils")
     class BaseDomUtils: ...
     base_dom.BaseDomUtils = BaseDomUtils
-    _force_module("RobotAid.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils", base_dom)
+    _force_module("SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils", base_dom)
 
     return logger
 
@@ -195,10 +195,10 @@ def mod_and_cls() -> Tuple[Any, Any, Any, Any]:
     mod = _import_module_fresh()
     BaseLocatorAgent = getattr(mod, "BaseLocatorAgent")
     LocatorHealingResponse = importlib.import_module(
-        "RobotAid.self_healing_system.schemas.api.locator_healing"
+        "SelfhealingAgents.self_healing_system.schemas.api.locator_healing"
     ).LocatorHealingResponse
     PromptPayload = importlib.import_module(
-        "RobotAid.self_healing_system.schemas.internal_state.prompt_payload"
+        "SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload"
     ).PromptPayload
     return BaseLocatorAgent, LocatorHealingResponse, PromptPayload, logger
 

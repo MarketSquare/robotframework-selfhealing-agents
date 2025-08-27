@@ -1,9 +1,9 @@
 import pytest
 from unittest.mock import MagicMock
 
-import RobotAid.self_healing_system.reports.report_generator as report_generator
-from RobotAid.self_healing_system.reports.report_generator import ReportGenerator
-from RobotAid.self_healing_system.schemas.internal_state.report_data import ReportData
+import SelfhealingAgents.self_healing_system.reports.report_generator as report_generator
+from SelfhealingAgents.self_healing_system.reports.report_generator import ReportGenerator
+from SelfhealingAgents.self_healing_system.schemas.internal_state.report_data import ReportData
 
 
 @pytest.fixture
@@ -25,7 +25,7 @@ def patch_workspace(monkeypatch, tmp_path):
     fake_file = tmp_path / "a" / "b" / "c" / "d" / "report_generator.py"
     fake_file.parent.mkdir(parents=True)
     fake_file.write_text("# dummy")
-    monkeypatch.setattr("RobotAid.self_healing_system.reports.report_generator.__file__", str(fake_file))
+    monkeypatch.setattr("SelfhealingAgents.self_healing_system.reports.report_generator.__file__", str(fake_file))
     return tmp_path
 
 def test_init_creates_clean_reports_dir(patch_workspace, monkeypatch):
@@ -33,14 +33,14 @@ def test_init_creates_clean_reports_dir(patch_workspace, monkeypatch):
     reports_dir.mkdir(parents=True)
     (reports_dir / "oldfile.txt").write_text("old")
 
-    monkeypatch.setattr("RobotAid.self_healing_system.reports.report_types.action_log_report.ActionLogReport",
+    monkeypatch.setattr("SelfhealingAgents.self_healing_system.reports.report_types.action_log_report.ActionLogReport",
                         MagicMock())
-    monkeypatch.setattr("RobotAid.self_healing_system.reports.report_types.healed_files_report.HealedFilesReport",
+    monkeypatch.setattr("SelfhealingAgents.self_healing_system.reports.report_types.healed_files_report.HealedFilesReport",
                         MagicMock())
-    monkeypatch.setattr("RobotAid.self_healing_system.reports.report_types.diff_files_report.DiffFilesReport",
+    monkeypatch.setattr("SelfhealingAgents.self_healing_system.reports.report_types.diff_files_report.DiffFilesReport",
                         MagicMock())
 
-    rg = ReportGenerator()
+    rg = ReportGenerator(base_dir=reports_dir)
 
     assert reports_dir.exists()
     assert rg._base_dir == reports_dir
@@ -52,14 +52,14 @@ def test_init_creates_reports_dir_if_not_exists(patch_workspace, monkeypatch):
         reports_dir.rmdir()
 
     monkeypatch.setattr("shutil.rmtree", MagicMock())
-    monkeypatch.setattr("RobotAid.self_healing_system.reports.report_types.action_log_report.ActionLogReport",
+    monkeypatch.setattr("SelfhealingAgents.self_healing_system.reports.report_types.action_log_report.ActionLogReport",
                         MagicMock())
-    monkeypatch.setattr("RobotAid.self_healing_system.reports.report_types.healed_files_report.HealedFilesReport",
+    monkeypatch.setattr("SelfhealingAgents.self_healing_system.reports.report_types.healed_files_report.HealedFilesReport",
                         MagicMock())
-    monkeypatch.setattr("RobotAid.self_healing_system.reports.report_types.diff_files_report.DiffFilesReport",
+    monkeypatch.setattr("SelfhealingAgents.self_healing_system.reports.report_types.diff_files_report.DiffFilesReport",
                         MagicMock())
 
-    rg = ReportGenerator()
+    rg = ReportGenerator(base_dir=reports_dir)
     assert reports_dir.exists()
 
 def test_generate_reports_calls_all_report_types(monkeypatch, patch_workspace, dummy_report_data) -> None:
@@ -94,7 +94,7 @@ def test_generate_reports_with_empty_data(monkeypatch, patch_workspace):
 
     rg = ReportGenerator()
 
-    from RobotAid.self_healing_system.schemas.internal_state import report_context
+    from SelfhealingAgents.self_healing_system.schemas.internal_state import report_context
     dummy_ctx = MagicMock()
     monkeypatch.setattr(report_context, "ReportContext", lambda report_info: dummy_ctx)
 
@@ -118,7 +118,7 @@ def test_generate_reports_propagates_exceptions(monkeypatch, patch_workspace, du
 
     rg = ReportGenerator()
 
-    from RobotAid.self_healing_system.schemas.internal_state import report_context
+    from SelfhealingAgents.self_healing_system.schemas.internal_state import report_context
     dummy_ctx = MagicMock()
     monkeypatch.setattr(report_context, "ReportContext", lambda report_info: dummy_ctx)
 
