@@ -4,7 +4,6 @@
 [![PyPI version](https://img.shields.io/pypi/v/robotframework-selfhealing-agents.svg)](https://pypi.org/project/robotframework-selfhealing-agents/)
 ![Python versions](https://img.shields.io/pypi/pyversions/robotframework-selfhealing-agents.svg)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](#license)
-[![Tests](https://img.shields.io/github/actions/workflow/status/MarketSquare/robotframework-selfhealing-agents/ci.yml?branch=main)](https://github.com/MarketSquare/robotframework-selfhealing-agents/actions)
 
 A robotframework library that **repairs failing Robot Framework tests automatically** using **Large Language Models
 (LLMs)**. It currently heals broken locators, with upcoming releases expanding to additional common failure modes.

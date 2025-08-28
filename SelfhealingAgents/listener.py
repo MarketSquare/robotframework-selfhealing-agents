@@ -1,3 +1,5 @@
+from dotenv import load_dotenv, find_dotenv
+
 from robot import result, running
 from robot.api import logger as rf_logger
 from robot.api.interfaces import ListenerV3
@@ -33,6 +35,13 @@ class SelfhealingAgents(ListenerV3):
         The "_state" attribute of type ListenerState is shared and manipulated
         in the self_healing_engine module.
         """
+        dotenv_path: str = find_dotenv(usecwd=True)
+        if dotenv_path:
+            load_dotenv(dotenv_path=dotenv_path, override=True)
+            rf_logger.info(f"loaded .env from {dotenv_path}")
+        else:
+            rf_logger.info("no .env found near current working directory")
+
         self.ROBOT_LIBRARY_LISTENER: SelfhealingAgents = self
         self._state: ListenerState = ListenerState(cfg=Cfg())   # type: ignore
         self._self_healing_engine: SelfHealingEngine = SelfHealingEngine(self._state)
