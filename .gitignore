@@ -182,6 +182,7 @@ playwright-log*
 
 # Reports
 /reports
+/SelfhealingReports
 
 # Logs
 /logs

@@ -16,7 +16,7 @@ dependencies = [
     "robotframework-browser>=19.7.2",
     "robotframework-seleniumlibrary>=2.9.2",
     "python-dotenv>=1.1.1",
-    "logfire>=4.3.3"
+    "pydantic-logfire>=0.0.1"
 ]
 
 
