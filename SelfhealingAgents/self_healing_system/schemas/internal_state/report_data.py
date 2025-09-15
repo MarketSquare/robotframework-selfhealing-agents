@@ -8,6 +8,7 @@ class ReportData(BaseModel):
         file (str): Name of the file where the error occurred.
         keyword_source (str): Absolute path of the keyword source file.
         test_name (str): Name of the test case.
+        locator_origin (str): Origin where the locator is called (Test or Keyword).
         keyword (str): Failed keyword call.
         keyword_args (list): Arguments of the failed keyword call.
         lineno (int): Line number of the failed keyword call.
@@ -20,6 +21,7 @@ class ReportData(BaseModel):
     file: str = Field(..., description="Name of the file where the error occurred.")
     keyword_source: str = Field(..., description="Absolute path of the keyword source file.")
     test_name: str = Field(..., description="Name of the test case.")
+    locator_origin: str = Field(..., description="Origin where the locator is called (Test or Keyword).")
     keyword: str = Field(..., description="Failed Keyword Call.")
     keyword_args: list = Field(..., description="Failed Keyword Arguments.")
     lineno: int = Field(..., description="Line number of failed keyword call.")

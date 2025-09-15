@@ -1,5 +1,6 @@
 from typing import Final, Any
 
+from robot.model import TestCase
 from robot import result, running
 from robot.api import logger as rf_logger
 from robot.libraries.BuiltIn import BuiltIn
@@ -216,11 +217,20 @@ class SelfHealingEngine:
         """
         args = data.args
         failed_locator: str = BuiltIn().replace_variables(args[0]) if args else ""
+
+        current = data
+        locator_origin = current.parent.name
+        while current is not None:
+            if isinstance(current.parent, TestCase):
+                break
+            current = getattr(current, "parent", None)
+
         self._listener_state.report_info.append(
             ReportData(
                 file=data.source.parts[-1],
                 keyword_source=str(data.source),
-                test_name=data.parent.name,
+                test_name=current.parent.name,
+                locator_origin=locator_origin,
                 keyword=data.name,
                 keyword_args=args,
                 lineno=data.lineno,
