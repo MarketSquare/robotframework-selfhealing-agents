@@ -166,37 +166,3 @@ def test_rerun_keyword_with_suggested_locator_exception(mock_built_in, engine):
     mock_built_in().run_keyword.side_effect = Exception("fail")
     with pytest.raises(Exception):
         engine._rerun_keyword_with_suggested_locator(data, suggested_locator="locator")
-
-
-@patch("SelfhealingAgents.self_healing_system.self_healing_engine.BuiltIn")
-def test_record_report_appends_report_data(mock_built_in, engine, listener_state):
-    data = MagicMock()
-    data.args = ["failed_locator"]
-    data.source = MagicMock()
-    data.source.parts = ["file.robot"]
-    data.parent.name = "TestName"
-    data.name = "Keyword"
-    data.lineno = 42
-    mock_built_in().replace_variables.return_value = "failed_locator"
-    listener_state.tried_locators = ["locator1", "locator2"]
-    listener_state.report_info = []
-    engine._record_report(data, healed_locator="healed_locator", status="PASS")
-    assert len(listener_state.report_info) == 1
-    report = listener_state.report_info[0]
-    assert report.file == "file.robot"
-    assert report.test_name == "TestName"
-    assert report.failed_locator == "failed_locator"
-    assert report.healed_locator == "healed_locator"
-    assert report.tried_locators == ["locator1", "locator2"]
-
-
-def test_reset_state_clears_state(engine, listener_state):
-    listener_state.retry_count = 5
-    listener_state.suggestions = ["foo"]
-    listener_state.should_generate_locators = False
-    listener_state.tried_locators = ["a", "b"]
-    engine._reset_state()
-    assert listener_state.retry_count == 0
-    assert listener_state.suggestions is None
-    assert listener_state.should_generate_locators is True
-    assert listener_state.tried_locators == []

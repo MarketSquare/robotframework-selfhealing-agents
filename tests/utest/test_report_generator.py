@@ -12,6 +12,7 @@ def dummy_report_data():
         file='dummy.robot',
         keyword_source='test.robot',
         test_name='TestCase',
+        locator_origin='TestCase',
         keyword='Click Element',
         keyword_args=['arg1', 'arg2'],
         lineno=42,
