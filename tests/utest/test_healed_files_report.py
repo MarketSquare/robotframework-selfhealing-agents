@@ -8,11 +8,14 @@ from typing import Any, Iterable, List, Tuple
 
 from SelfhealingAgents.self_healing_system.reports.report_types.healed_files_report import HealedFilesReport
 from SelfhealingAgents.self_healing_system.schemas.internal_state.report_context import ReportContext
+from SelfhealingAgents.self_healing_system.schemas.internal_state.locator_replacements import LocatorReplacements
 
 
 @dataclass
 class _ReportDataStub:
     file: str
+    test_name: str
+    locator_origin: str
     failed_locator: str
     healed_locator: str
     keyword_source: str
@@ -138,12 +141,16 @@ def test_get_replacements_includes_resource_entries(
     report_info: List[_ReportDataStub] = [
         _ReportDataStub(
             file=suite_path.name,
+            test_name="Test",
+            locator_origin="Test",
             failed_locator="old1",
             healed_locator="new1",
             keyword_source=str(suite_path),
         ),
         _ReportDataStub(
             file="res",
+            test_name="Test",
+            locator_origin="Test",
             failed_locator="old2",
             healed_locator="new2",
             keyword_source=str(suite_path),
@@ -154,8 +161,12 @@ def test_get_replacements_includes_resource_entries(
         report_info=report_info, source_path=suite_path
     )
 
-    assert ("old1", "new1") in replacements
-    assert ("old2", "new2") in replacements
+    assert "old1" == replacements[0].failed_locator
+    assert "new1" == replacements[0].healed_locator
+
+    assert "old2" == replacements[1].failed_locator
+    assert "new2" == replacements[1].healed_locator
+
     assert len(replacements) == 2
 
 
@@ -168,6 +179,8 @@ def test_get_replacements_handles_oserror_and_returns_direct_entries_only(
     report_info: List[_ReportDataStub] = [
         _ReportDataStub(
             file=suite_path.name,
+            test_name="Test",
+            locator_origin="Test",
             failed_locator="old",
             healed_locator="new",
             keyword_source=str(suite_path),
@@ -188,7 +201,8 @@ def test_get_replacements_handles_oserror_and_returns_direct_entries_only(
     finally:
         object.__setattr__(mod, "get_model", orig)
 
-    assert replacements == [("old", "new")]
+    assert replacements == [LocatorReplacements(test_case='Test', locator_origin='Test',
+                                                failed_locator='old', healed_locator='new')]
 
 
 def test_replace_in_common_model_applies_visitors_and_saves(
@@ -201,7 +215,11 @@ def test_replace_in_common_model_applies_visitors_and_saves(
     fake_models[str(suite_path)] = _FakeFile(sections=[])
 
     report = HealedFilesReport(base_dir=tmp_path)
-    replacements: List[Tuple[str, str]] = [("a", "b"), ("c", "d")]
+    replacements: List[LocatorReplacements] = [
+        LocatorReplacements(test_case="Test1", locator_origin="Test1", failed_locator="a", healed_locator="b"),
+        LocatorReplacements(test_case="Test2", locator_origin="Test2", failed_locator="c", healed_locator="d"),
+        LocatorReplacements(test_case="Test3", locator_origin="Test3", failed_locator="e", healed_locator="f"),
+    ]
 
     report._replace_in_common_model(source_path=suite_path, replacements=replacements)
 
@@ -209,7 +227,14 @@ def test_replace_in_common_model_applies_visitors_and_saves(
     out_file = out_dir / suite_path.name
     assert out_file.exists()
     model = fake_models[str(suite_path)]
-    assert model.visits == [("locator", replacements), ("variables", replacements)]
+    expected = [
+        ('variables', [
+            ('a', 'b'),
+            ('c', 'd'),
+            ('e', 'f'),
+        ])
+    ]
+    assert model.visits == expected
     assert model.saved_to == out_file
 
 
@@ -224,8 +249,12 @@ def test_replace_in_common_model_raises_runtime_error_on_save_failure(
 
     report = HealedFilesReport(base_dir=tmp_path)
 
+    replacements = [
+        LocatorReplacements(test_case="TestX", locator_origin="TestX", failed_locator="x", healed_locator="y"),
+    ]
+
     with pytest.raises(RuntimeError) as exc:
-        report._replace_in_common_model(source_path=suite_path, replacements=[("x", "y")])
+        report._replace_in_common_model(source_path=suite_path, replacements=replacements)
 
     assert "Failed to save healed test suite" in str(exc.value)
 
@@ -265,23 +294,29 @@ def test_replace_in_resource_model_applies_when_defined_and_appends_path(
         external_resource_paths=[],
     )
 
+    replacements = [
+        LocatorReplacements(test_case="", locator_origin="", failed_locator="${LOC}", healed_locator="${HEALED}")
+    ]
+
     report._replace_in_resource_model(
         source_path=suite_path,
-        replacements=[("${LOC}", "${HEALED}")],
+        replacements=replacements,
         report_context=ctx,
     )
 
     out_dir = tmp_path / "healed_files" / suite_path.parent.name
     out_file = out_dir / resource_path.name
     assert out_file.exists()
-    assert resource_model.visits == [("variables", [("${LOC}", "${HEALED}")])]
+    assert resource_model.visits == [
+        ("variables", [("${LOC}", "${HEALED}")])
+    ]
     assert ctx.external_resource_paths == [suites_side_alias]
 
     fake_models[str(out_file)] = _FakeFile(sections=[var_section])
     out_file.touch()
     report._replace_in_resource_model(
         source_path=suite_path,
-        replacements=[("${LOC}", "${HEALED}")],
+        replacements=replacements,
         report_context=ctx,
     )
     assert any(str(out_file) == c for c in get_resource_calls)
@@ -308,9 +343,13 @@ def test_replace_in_resource_model_ignores_when_no_matching_defined_vars(
     report = HealedFilesReport(base_dir=tmp_path)
     ctx = ReportContext(report_info=[])
 
+    replacements = [
+        LocatorReplacements(test_case="", locator_origin="", failed_locator="${LOCATOR}", healed_locator="${NEW}")
+    ]
+
     report._replace_in_resource_model(
         source_path=suite_path,
-        replacements=[("${LOCATOR}", "${NEW}")],
+        replacements=replacements,
         report_context=ctx,
     )
 
@@ -356,15 +395,19 @@ def test_generate_report_deduplicates_sources_and_calls_children(
     calls_common: List[Path] = []
     calls_resource: List[Path] = []
 
-    def _common(self: HealedFilesReport, source_path: Path, replacements: List[Tuple[str, str]]) -> None:
+    def _common(self: HealedFilesReport, source_path: Path, replacements: list) -> None:
+        # replacements should be a list of LocatorReplacements objects
+        assert all(isinstance(r, LocatorReplacements) for r in replacements)
         calls_common.append(source_path)
 
     def _resource(
         self: HealedFilesReport,
         source_path: Path,
-        replacements: List[Tuple[str, str]],
+        replacements: list,
         report_context: ReportContext,
     ) -> None:
+        # replacements should be a list of LocatorReplacements objects
+        assert all(isinstance(r, LocatorReplacements) for r in replacements)
         calls_resource.append(source_path)
 
     monkeypatch.setattr(HealedFilesReport, "_replace_in_common_model", _common, raising=True)
@@ -381,6 +424,7 @@ def test_generate_report_deduplicates_sources_and_calls_children(
                 "lineno": 1,
                 "failed_locator": "a",
                 "healed_locator": "b",
+                "locator_origin": "T",
                 "tried_locators": [],
             },
             {
@@ -392,6 +436,7 @@ def test_generate_report_deduplicates_sources_and_calls_children(
                 "lineno": 2,
                 "failed_locator": "c",
                 "healed_locator": "d",
+                "locator_origin": "T2",
                 "tried_locators": [],
             },
         ]
