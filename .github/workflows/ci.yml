@@ -19,6 +19,10 @@ jobs:
       AZURE_API_KEY: ${{ secrets.AZURE_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       BASE_URL: ${{ vars.BASE_URL }}
+      ORCHESTRATOR_AGENT_MODEL: ${{ vars.ORCHESTRATOR_AGENT_MODEL }}
+      LOCATOR_AGENT_MODEL: ${{ vars.LOCATOR_AGENT_MODEL }}
+      ORCHESTRATOR_AGENT_PROVIDER: ${{ vars.ORCHESTRATOR_AGENT_PROVIDER }}
+      LOCATOR_AGENT_PROVIDER: ${{ vars.LOCATOR_AGENT_PROVIDER }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
