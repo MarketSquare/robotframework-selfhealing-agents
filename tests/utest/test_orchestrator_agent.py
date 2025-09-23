@@ -23,9 +23,9 @@ class _FakeAgentRunResult:
 
 
 class _FakeUsageLimits:
-    def __init__(self, req: int, total: int) -> None:
-        self.request_limit: int = req
-        self.total_tokens_limit: int = total
+    def __init__(self, request_limit: int, total_tokens_limit: int) -> None:
+        self.request_limit: int = request_limit
+        self.total_tokens_limit: int = total_tokens_limit
 
 
 class _FakeAgent:
