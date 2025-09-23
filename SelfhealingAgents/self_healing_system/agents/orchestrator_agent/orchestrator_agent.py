@@ -1,18 +1,24 @@
-from robot.api import logger as rf_logger
-from pydantic_ai.usage import UsageLimits
-from pydantic_ai.agent import AgentRunResult
 from pydantic_ai import Agent, ModelRetry, RunContext
+from pydantic_ai.agent import AgentRunResult
+from pydantic_ai.usage import UsageLimits
+from robot.api import logger as rf_logger
 
-from SelfhealingAgents.utils.cfg import Cfg
-from SelfhealingAgents.utils.logging import log
+from SelfhealingAgents.self_healing_system.agents.locator_agent.base_locator_agent import (
+    BaseLocatorAgent,
+)
+from SelfhealingAgents.self_healing_system.agents.prompts.orchestrator.prompts_orchestrator import (
+    PromptsOrchestrator,
+)
 from SelfhealingAgents.self_healing_system.llm.client_model import get_client_model
-from SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
-from SelfhealingAgents.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
-from SelfhealingAgents.self_healing_system.agents.prompts.orchestrator.prompts_orchestrator import PromptsOrchestrator
 from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
 )
+from SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload import (
+    PromptPayload,
+)
+from SelfhealingAgents.utils.cfg import Cfg
+from SelfhealingAgents.utils.logging import log
 
 
 class OrchestratorAgent:
@@ -24,6 +30,7 @@ class OrchestratorAgent:
         _usage_limits (UsageLimits): Usage limits for the orchestrator agent.
         _agent (Agent[PromptPayload, str]): The underlying agent for orchestrating healing.
     """
+
     def __init__(
         self,
         cfg: Cfg,
@@ -37,7 +44,9 @@ class OrchestratorAgent:
         """
         self._cfg = cfg
         self._locator_agent: BaseLocatorAgent = locator_agent
-        self._usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
+        self._usage_limits: UsageLimits = UsageLimits(
+            request_limit=cfg.request_limit, total_tokens_limit=cfg.total_tokens_limit
+        )
         self._agent: Agent[PromptPayload, str] = Agent[PromptPayload, str](
             model=get_client_model(
                 provider=cfg.orchestrator_agent_provider,
