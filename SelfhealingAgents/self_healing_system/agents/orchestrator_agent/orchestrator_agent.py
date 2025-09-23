@@ -55,7 +55,7 @@ class OrchestratorAgent:
             ),
             system_prompt=PromptsOrchestrator.get_system_msg(),
             deps_type=PromptPayload,
-            output_type=[self._get_healed_locators, str],
+            output_type=[self._get_healed_locators],
         )
 
     @log
