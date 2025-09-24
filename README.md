@@ -8,6 +8,12 @@
 A robotframework library that **repairs failing Robot Framework tests automatically** using **Large Language Models
 (LLMs)**. It currently heals broken locators, with upcoming releases expanding to additional common failure modes.
 
+**Note:** This repository does not collect or store any user data. However, when using LLMs, 
+data privacy cannot be fully guaranteed by this repository alone. If you are working with sensitive information, 
+ensure you use a trusted provider and/or connect to a secure endpoint that enforces data privacy and prevents your 
+data from being used for model training. \
+The repository is designed to be flexible, allowing you to integrate different providers and/or add custom endpoints as needed.
+
 ---
 
 ## ✨ Features
@@ -29,14 +35,43 @@ pip install robotframework-selfhealing-agents
 ---
 ## 🛠️Setup
 
-All necessary settings must be specified in a `.env` file at the root of the repository.
-A minimal `.env` file is all you need to get started with the default settings and OpenAI as the provider:
+To configure the project, create a .env file in the root directory of the repository. This file should contain all required environment variables for your chosen LLM provider.
+
+### Minimal Example (OpenAI)
+For a quick start with the default settings and OpenAI as the provider, your `.env` file only needs:
 ```env
 OPENAI_API_KEY="your-openai-api-key"
 ```
+### Custom Endpoint
+If you need to use a custom endpoint (for example, for compliance or privacy reasons), add the BASE_URL variable:
+```env
+OPENAI_API_KEY="your-openai-api-key"
+BASE_URL="your-endpoint-to-connect-to"
+```
+### Azure OpenAI Example
+To use Azure as your LLM provider, specify the following variables:
+```env
+AZURE_API_KEY="your-azure-api-key"
+AZURE_API_VERSION="your-azure-api-version"
+AZURE_ENDPOINT="your-azure-endpoint"
+
+ORCHESTRATOR_AGENT_PROVIDER="azure"
+LOCATOR_AGENT_PROVIDER="azure"
+```
+### LiteLLM Example
+To use LiteLLM as your LLM provider, specify the following variables:
+```env
+LITELLM_API_KEY="your-litellm-api-key"
+BASE_URL="your-endpoint-to-connect-to"
+
+ORCHESTRATOR_AGENT_PROVIDER="litellm"
+LOCATOR_AGENT_PROVIDER="litellm"
+```
+These minimal examples demonstrate how to run the project with different providers using the default settings. For more details on available configuration options (such as selecting a specific model) please refer to the "Configuration" section.
+
 ---
 ## 🚀 Usage
-After installing the package and adding your API key to the `.env` file, simply add the Library `SelfhealingAgents` to your test suite.
+After installing the package and adding your necessary parameters to the `.env` file, simply add the Library `SelfhealingAgents` to your test suite(s).
 ```robotframework
 *** Settings ***
 Library    Browser    timeout=5s
@@ -68,6 +103,7 @@ detailed logs and output reports. There are three types of reports generated:
 1) **Action Log**: Summarizes all healing steps performed and their locations within your tests
 2) **Healed Files**: Provides repaired copies of your test suite(s)
 3) **Diff Files**: Shows a side-by-side comparison of the original and healed files, with differences highlighted for easy review
+4) **Summary**: A json summary file for a quick overview of number of healing steps and files affected etc. 
 
 ### Action Log
 ![action_log](./static/action_log.png)
@@ -103,6 +139,21 @@ Login with valid credentials
 ### Diff File
 ![diff_file](./static/diff_file.png)
 
+### Summary json
+```json
+{
+  "total_healing_events": 6,
+  "nr_affected_tests": 1,
+  "nr_affected_files": 1,
+  "affected_tests": [
+    "Login with valid credentials"
+  ],
+  "affected_files": [
+    "ait.robot"
+  ]
+}
+```
+
 ---
 ## Configuration
 Below is an example `.env` file containing all available parameters:
@@ -128,23 +179,23 @@ LOCATOR_AGENT_MODEL="gpt-4o-mini"
 
 ### 📝 Configuration Parameters
 
-| Name                          | Default         | Required?                | Description                                                               |
-|-------------------------------|-----------------|--------------------------|---------------------------------------------------------------------------|
-| **OPENAI_API_KEY**            | `None`          | If using OpenAI          | Your OpenAI API key                                                       |
-| **LITELLM_API_KEY**           | `None`          | If using LiteLLM         | Your LiteLLM API key                                                      |
-| **AZURE_API_KEY**             | `None`          | If using Azure           | Your Azure OpenAI API key                                                 |
-| **AZURE_API_VERSION**         | `None`          | If using Azure           | Azure OpenAI API version                                                  |
-| **AZURE_ENDPOINT**            | `None`          | If using Azure           | Azure OpenAI endpoint                                                     |
-| **BASE_URL**                  | `None`          | No                       | Base URL for your provider (if required)                                  |
-| **ENABLE_SELF_HEALING**       | `True`          | No                       | Enable or disable SelfhealingAgents                                                |
-| **USE_LLM_FOR_LOCATOR_GENERATION** | `True`    | No                       | If `True`, LLM generates locator suggestions directly (see note below)    |
-| **MAX_RETRIES**               | `3`             | No                       | Number of self-healing attempts per locator                               |
-| **REQUEST_LIMIT**             | `5`             | No                       | Internal agent-level limit for valid LLM response attempts                |
-| **TOTAL_TOKENS_LIMIT**        | `6000`          | No                       | Maximum input tokens per LLM request                                      |
+| Name                          | Default         | Required?                | Description                                                                |
+|-------------------------------|-----------------|--------------------------|----------------------------------------------------------------------------|
+| **OPENAI_API_KEY**            | `None`          | If using OpenAI          | Your OpenAI API key                                                        |
+| **LITELLM_API_KEY**           | `None`          | If using LiteLLM         | Your LiteLLM API key                                                       |
+| **AZURE_API_KEY**             | `None`          | If using Azure           | Your Azure OpenAI API key                                                  |
+| **AZURE_API_VERSION**         | `None`          | If using Azure           | Azure OpenAI API version                                                   |
+| **AZURE_ENDPOINT**            | `None`          | If using Azure           | Azure OpenAI endpoint                                                      |
+| **BASE_URL**                  | `None`          | No                       | Endpoint to connect to (if required)                                       |
+| **ENABLE_SELF_HEALING**       | `True`          | No                       | Enable or disable SelfhealingAgents                                        |
+| **USE_LLM_FOR_LOCATOR_GENERATION** | `True`    | No                       | If `True`, LLM generates locator suggestions directly (see note below)     |
+| **MAX_RETRIES**               | `3`             | No                       | Number of self-healing attempts per locator                                |
+| **REQUEST_LIMIT**             | `5`             | No                       | Internal agent-level limit for valid LLM response attempts                 |
+| **TOTAL_TOKENS_LIMIT**        | `6000`          | No                       | Maximum input tokens per LLM request                                       |
 | **ORCHESTRATOR_AGENT_PROVIDER** | `"openai"`    | No                       | Provider for the orchestrator agent (`"openai"`, `"azure"` or `"litellm"`) |
-| **ORCHESTRATOR_AGENT_MODEL**  | `"gpt-4o-mini"` | No                       | Model for the orchestrator agent                                          |
-| **LOCATOR_AGENT_PROVIDER**    | `"openai"`      | No                       | Provider for the locator agent (`"openai"`, `"azure"` or `"litellm"`)     |
-| **LOCATOR_AGENT_MODEL**       | `"gpt-4o-mini"` | No                       | Model for the locator agent                                               |
+| **ORCHESTRATOR_AGENT_MODEL**  | `"gpt-4o-mini"` | No                       | Model for the orchestrator agent                                           |
+| **LOCATOR_AGENT_PROVIDER**    | `"openai"`      | No                       | Provider for the locator agent (`"openai"`, `"azure"` or `"litellm"`)      |
+| **LOCATOR_AGENT_MODEL**       | `"gpt-4o-mini"` | No                       | Model for the locator agent                                                |
 
 > **Note:**  
 > Locator suggestions can be generated either by assembling strings from the DOM tree (with an LLM selecting the best option), or by having the LLM generate suggestions directly itself with the context given (DOM included). Set `USE_LLM_FOR_LOCATOR_GENERATION` to `True` to enable direct LLM generation (default is True).
