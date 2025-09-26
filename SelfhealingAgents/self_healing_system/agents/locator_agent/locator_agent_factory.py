@@ -4,13 +4,14 @@ from SelfhealingAgents.utils.cfg import Cfg
 from SelfhealingAgents.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
 from SelfhealingAgents.self_healing_system.agents.locator_agent.browser_locator_agent import BrowserLocatorAgent
 from SelfhealingAgents.self_healing_system.agents.locator_agent.selenium_locator_agent import SeleniumLocatorAgent
+from SelfhealingAgents.self_healing_system.agents.locator_agent.appium_locator_agent import AppiumLocatorAgent
 from SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 
 
 _AGENT_MAPPING: Final[Mapping[str, Type[BaseLocatorAgent]]] = {
     "browser": BrowserLocatorAgent,
     "selenium": SeleniumLocatorAgent,
-    # "appium": AppiumLocatorAgent      # Not yet implemented
+    "appium": AppiumLocatorAgent,
 }
 
 

@@ -1,24 +1,37 @@
 import asyncio
-from typing import List, Final
+from typing import Final, List
 
 from robot import result
+from robot.api import logger as rf_logger
 
-from SelfhealingAgents.utils.cfg import Cfg
-from SelfhealingAgents.utils.logging import log
-from SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
-from SelfhealingAgents.self_healing_system.context_retrieving.robot_ctx_retriever import RobotCtxRetriever
-from SelfhealingAgents.self_healing_system.agents.locator_agent.base_locator_agent import BaseLocatorAgent
-from SelfhealingAgents.self_healing_system.agents.locator_agent.locator_agent_factory import LocatorAgentFactory
-from SelfhealingAgents.self_healing_system.agents.orchestrator_agent.orchestrator_agent import OrchestratorAgent
-from SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
+from SelfhealingAgents.self_healing_system.agents.locator_agent.base_locator_agent import (
+    BaseLocatorAgent,
+)
+from SelfhealingAgents.self_healing_system.agents.locator_agent.locator_agent_factory import (
+    LocatorAgentFactory,
+)
+from SelfhealingAgents.self_healing_system.agents.orchestrator_agent.orchestrator_agent import (
+    OrchestratorAgent,
+)
 from SelfhealingAgents.self_healing_system.context_retrieving.dom_utility_factory import (
     DomUtilityFactory,
+)
+from SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import (
+    BaseDomUtils,
+)
+from SelfhealingAgents.self_healing_system.context_retrieving.robot_ctx_retriever import (
+    RobotCtxRetriever,
 )
 from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
 )
-
+from SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload import (
+    PromptPayload,
+)
+from pydantic_ai import UnexpectedModelBehavior
+from SelfhealingAgents.utils.cfg import Cfg
+from SelfhealingAgents.utils.logging import log
 
 _LIBRARY_MAPPING: Final[dict[str, str]] = {
     "SeleniumLibrary": "selenium",
@@ -33,6 +46,7 @@ class KickoffMultiAgentSystem:
     This class coordinates the multi-agent system responsible for self-healing failed Robot Framework keywords.
     It retrieves the necessary context, instantiates the appropriate agents, and triggers the healing process.
     """
+
     @staticmethod
     @log
     def kickoff_healing(
@@ -57,14 +71,33 @@ class KickoffMultiAgentSystem:
             raise ValueError(f"Library type: {agent_type} not supported.")
         dom_utility: BaseDomUtils = DomUtilityFactory.create_dom_utility(agent_type)
 
-        robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(result, dom_utility)
+        robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(
+            result, dom_utility
+        )
         robot_ctx_payload.tried_locator_memory = tried_locator_memory
 
-        locator_agent: BaseLocatorAgent = LocatorAgentFactory.create_agent(agent_type, cfg, dom_utility)
+        rf_logger.info(f"Robot context payload: {robot_ctx_payload}")
+        locator_agent: BaseLocatorAgent = LocatorAgentFactory.create_agent(
+            agent_type, cfg, dom_utility
+        )
 
         orchestrator_agent: OrchestratorAgent = OrchestratorAgent(cfg, locator_agent)
 
-        response = asyncio.get_event_loop().run_until_complete(
-            orchestrator_agent.run_async(robot_ctx_payload)
-        )
+        try:
+            response = asyncio.get_event_loop().run_until_complete(
+                orchestrator_agent.run_async(robot_ctx_payload)
+            )
+        except UnexpectedModelBehavior as exc:
+            rf_logger.warn(
+                "SelfhealingAgents: locator generation failed (%s); falling back to DOM proposals",
+                exc,
+            )
+            suggestions: list[str] = dom_utility.get_locator_proposals(
+                robot_ctx_payload.failed_locator,
+                robot_ctx_payload.keyword_name,
+            )
+            if suggestions:
+                return LocatorHealingResponse(suggestions=suggestions)
+            return str(exc)
+
         return response

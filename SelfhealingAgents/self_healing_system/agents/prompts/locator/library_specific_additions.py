@@ -50,16 +50,32 @@ def get_system_msg_selenium(system_msg: str) -> str:
     )
 
 
-# ToDo: implement appium support
-def get_system_msg_appium(system_msg: str) -> None:
+def get_system_msg_appium(system_msg: str) -> str:
     """Returns the Appium library-specific system prompt for locator generation.
 
-    Currently not implemented.
+    Adds guidance for mobile locators. Only XPath and accessibility/resource-id
+    strategies are valid; CSS selectors are not applicable in Appium.
 
     Args:
         system_msg (str): The base system message to extend.
 
     Returns:
-        None: Appium-specific instructions are not yet implemented.
+        str: Appium-specific instructions for locator generation and formatting.
     """
-    return None
+    return (
+        f"{system_msg}\n"
+        "APPIUM LIBRARY SPECIFIC INSTRUCTIONS:\n"
+        "- Output only XPath or accessibility/resource-id based locators.\n"
+        "- Prefer attributes that are stable on mobile:\n"
+        "  ANDROID: @resource-id, @content-desc, @text, @class\n"
+        "  iOS: @name, @label, @value, XCUI element type\n"
+        "- Do NOT use CSS selectors.\n"
+        "- Examples (Android):\n"
+        "  xpath=//*[@resource-id='com.app:id/username']\n"
+        "  //*[contains(@content-desc,'login')]\n"
+        "  //android.widget.Button[@text='LOGIN']\n"
+        "- Examples (iOS):\n"
+        "  //XCUIElementTypeTextField[@name='username']\n"
+        "  //*[contains(@label,'Submit')]\n"
+        "Example response: {\"suggestions\": [\"//*[@resource-id='com.app:id/btn']\", \"//*[contains(@content-desc,'submit')]\", \"//XCUIElementTypeButton[@label='Submit']\"]}\n"
+    )

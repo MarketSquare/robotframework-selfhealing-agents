@@ -1,4 +1,9 @@
+import json
+import re
+from typing import Any, List, Optional
+
 from robot.libraries.BuiltIn import BuiltIn
+from bs4 import BeautifulSoup
 
 from SelfhealingAgents.utils.logging import log
 from SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
@@ -71,24 +76,73 @@ class AppiumDomUtils(BaseDomUtils):
         if self._library_instance is None:
             return "<hierarchy>AppiumLibrary not available</hierarchy>"
 
+        def resolve_driver() -> Optional[Any]:
+            driver = getattr(self._library_instance, "_current_application", None)
+            if driver:
+                return driver
+            cache = getattr(self._library_instance, "_cache", None)
+            if cache is not None:
+                return getattr(cache, "current", None)
+            return None
+
+        def looks_like_session_error(source: str) -> bool:
+            lowered = source.lower()
+            return (
+                source.lstrip().startswith("{")
+                and (
+                    "unable to find session" in lowered
+                    or "invalid session id" in lowered
+                    or "session id is null" in lowered
+                )
+            )
+
+        def driver_page_source() -> Optional[str]:
+            driver = resolve_driver()
+            if driver is None:
+                return None
+            try:
+                return driver.page_source
+            except Exception:
+                return None
+
         try:
-            if hasattr(self._library_instance, "get_source"):
-                page_source = getattr(self._library_instance, "get_source")()
-            elif hasattr(self._library_instance, "get_page_source"):
-                page_source = getattr(self._library_instance, "get_page_source")()
-            else:
-                # Try to get the driver and get page source directly
-                driver = getattr(self._library_instance, "_current_application", None)
-                if driver:
-                    page_source = driver.page_source
-                else:
-                    return "<hierarchy>Unable to retrieve page source</hierarchy>"
+            fetchers = [
+                "get_source",
+                "get_page_source",
+            ]
+            for fetcher in fetchers:
+                if hasattr(self._library_instance, fetcher):
+                    page_source = getattr(self._library_instance, fetcher)()
+                    if isinstance(page_source, str) and not looks_like_session_error(page_source):
+                        return page_source
+                    fallback = driver_page_source()
+                    if fallback:
+                        return fallback
+                    if isinstance(page_source, str):
+                        return self._format_dom_error(page_source)
+            fallback = driver_page_source()
+            if fallback:
+                return fallback
+            return "<hierarchy>Unable to retrieve page source</hierarchy>"
+        except Exception as exc:
+            fallback = driver_page_source()
+            if fallback:
+                return fallback
+            return f"<hierarchy>Error retrieving DOM tree: {str(exc)}"
 
-            # For mobile apps, we return the raw XML as it's already structured
-            return page_source
+    @staticmethod
+    def _format_dom_error(raw: str) -> str:
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return f"<hierarchy>Error retrieving DOM tree: {raw}</hierarchy>"
 
-        except Exception as e:
-            return f"<hierarchy>Error retrieving DOM tree: {str(e)}</hierarchy>"
+        message = (
+            data.get("value", {}).get("message")
+            or data.get("message")
+            or raw
+        )
+        return f"<hierarchy>Error retrieving DOM tree: {message}</hierarchy>"
 
     def get_library_type(self) -> str:
         """Returns the library type identifier.
@@ -102,16 +156,218 @@ class AppiumDomUtils(BaseDomUtils):
     def get_locator_proposals(
         self, failed_locator: str, keyword_name: str
     ) -> list[str]:
-        """Generates locator proposals for the given failed locator and keyword.
+        """Generates locator proposals for Appium.
+
+        Produces XPath or attribute-based locators suitable for Android/iOS using
+        attributes commonly present in Appium page source. Keeps proposals small
+        and relies on runtime validation for uniqueness.
 
         Args:
-            failed_locator (str): The locator that failed.
-            keyword_name (str): The name of the keyword being executed.
+            failed_locator: The locator that failed.
+            keyword_name: The name of the keyword being executed.
 
         Returns:
-            List[str]: A list of proposed locator strings.
+            list[str]: Proposed locators in priority order.
         """
-        pass
+        proposals: List[str] = []
+
+        def add_if(value: str | None) -> None:
+            if value and value not in proposals:
+                proposals.append(value)
+
+        hints = self._parse_locator_hints(failed_locator)
+        for text_hint in hints["text"]:
+            literal = self._xpath_literal(text_hint)
+            add_if(f"//*[@text={literal}]")
+            add_if(f"//*[contains(@text,{literal})]")
+        for desc_hint in hints["content_desc"]:
+            literal = self._xpath_literal(desc_hint)
+            add_if(f"//*[@content-desc={literal}]")
+            add_if(f"//*[contains(@content-desc,{literal})]")
+        for res_hint in hints["resource_id"]:
+            literal = self._xpath_literal(res_hint)
+            add_if(f"//*[@resource-id={literal}]")
+
+        try:
+            source: str = self.get_dom_tree()
+            soup: BeautifulSoup = BeautifulSoup(source, "xml")
+        except Exception:
+            return proposals[:12]
+
+        # Choose candidates based on keyword intent
+        keyword_lower = str(keyword_name or "").lower()
+        want_inputs: bool = keyword_lower in (
+            "input text",
+            "type text",
+            "clear text",
+            "press keys",
+            "press key",
+        )
+        want_click: bool = "click" in keyword_lower or "tap" in keyword_lower
+
+        # Iterate elements with attributes we can leverage
+        for el in soup.find_all(True):
+            attrs = el.attrs or {}
+            tag = el.name or ""
+            res_id = attrs.get("resource-id")
+            content_desc = attrs.get("content-desc")
+            text_value = attrs.get("text") or (el.get_text(strip=True) or None)
+            name = attrs.get("name")
+            label = attrs.get("label")
+            value = attrs.get("value")
+            klass = attrs.get("class") or attrs.get("className")
+
+            # Heuristics for candidate relevance
+            if want_inputs:
+                if tag.endswith("EditText") or (klass and "EditText" in str(klass)) or (name and "TextField" in tag):
+                    if res_id:
+                        add_if(f"//*[@resource-id={self._xpath_literal(res_id)}]")
+                    if content_desc:
+                        add_if(f"//*[@content-desc={self._xpath_literal(content_desc)}]")
+                    if text_value and tag:
+                        literal = self._xpath_literal(text_value)
+                        add_if(f"//{tag}[@text={literal}]")
+                    if name and tag:
+                        add_if(f"//{tag}[@name={self._xpath_literal(name)}]")
+                    if label:
+                        add_if(f"//*[@label={self._xpath_literal(label)}]")
+                    if value:
+                        add_if(f"//*[@value={self._xpath_literal(value)}]")
+            elif want_click:
+                clickable = attrs.get("clickable") == "true"
+                is_buttonish = (
+                    (tag and ("Button" in tag or "ImageButton" in tag))
+                    or (klass and ("Button" in str(klass) or "ImageButton" in str(klass)))
+                    or (label or name or content_desc)
+                )
+                if clickable or is_buttonish:
+                    if res_id:
+                        add_if(f"//*[@resource-id={self._xpath_literal(res_id)}]")
+                    if content_desc:
+                        literal = self._xpath_literal(content_desc)
+                        add_if(f"//*[@content-desc={literal}]")
+                        add_if(f"//*[contains(@content-desc,{literal})]")
+                    if text_value and tag:
+                        literal = self._xpath_literal(text_value)
+                        add_if(f"//{tag}[@text={literal}]")
+                        add_if(f"//*[contains(@text,{literal})]")
+                    if label:
+                        add_if(f"//*[@label={self._xpath_literal(label)}]")
+                    if name:
+                        add_if(f"//*[@name={self._xpath_literal(name)}]")
+            else:
+                # Generic: text-bearing elements
+                if text_value:
+                    literal = self._xpath_literal(text_value)
+                    add_if(f"//*[@text={literal}]")
+                    if len(text_value) <= 30:
+                        add_if(f"//*[contains(@text,{literal})]")
+
+            # Early stop to keep list small
+            if len(proposals) >= 12:
+                break
+
+        # Fallback: if nothing found, suggest coarse XPath by class/tag
+        if not proposals and soup and soup.find(True):
+            first = soup.find(True)
+            if first and first.name:
+                proposals.append(f"//{first.name}")
+
+        return proposals[:12]
+
+    @staticmethod
+    def _parse_locator_hints(locator: str) -> dict[str, List[str]]:
+        hints: dict[str, List[str]] = {
+            "text": [],
+            "content_desc": [],
+            "resource_id": [],
+        }
+        if not locator:
+            return hints
+
+        normalized = locator.strip()
+        lower = normalized.lower()
+        if lower.startswith("xpath=") or lower.startswith("xpath:"):
+            normalized = normalized[6:]
+
+        def collect(pattern: re.Pattern[str], bucket: list[str]) -> None:
+            for value in pattern.findall(normalized):
+                if value and value not in bucket:
+                    bucket.append(value)
+
+        collect(re.compile(r'@text\s*=\s*["\']([^"\']+)["\']'), hints["text"])
+        collect(re.compile(r'contains\(@text\s*,\s*["\']([^"\']+)["\']\)'), hints["text"])
+
+        collect(re.compile(r'@content-desc\s*=\s*["\']([^"\']+)["\']'), hints["content_desc"])
+        collect(
+            re.compile(r'contains\(@content-desc\s*,\s*["\']([^"\']+)["\']\)'),
+            hints["content_desc"],
+        )
+
+        collect(re.compile(r'@resource-id\s*=\s*["\']([^"\']+)["\']'), hints["resource_id"])
+
+        return hints
+
+    @staticmethod
+    def _xpath_literal(value: str) -> str:
+        if "'" not in value:
+            return f"'{value}'"
+        if '"' not in value:
+            return f'"{value}"'
+        parts = value.split("'")
+        concat_parts: List[str] = []
+        for index, part in enumerate(parts):
+            if part:
+                concat_parts.append(f"'{part}'")
+            if index != len(parts) - 1:
+                concat_parts.append("\"'\"")
+        return "concat(" + ", ".join(concat_parts) + ")"
+
+
+    def is_element_clickable(self, locator: str) -> bool:
+        """Checks if the element is clickable using AppiumLibrary.
+
+        Heuristic using element attributes; returns False on errors.
+        """
+        if self._library_instance is None:
+            return False
+        try:
+            if hasattr(self._library_instance, "get_webelements"):
+                elements = getattr(self._library_instance, "get_webelements")(locator)
+            else:
+                return False
+            if not elements:
+                return False
+            el = elements[0]
+            # Visibility and enablement
+            try:
+                displayed = el.get_attribute("displayed") == "true" or bool(getattr(el, "is_displayed", lambda: False)())
+            except Exception:
+                displayed = False
+            try:
+                enabled = el.get_attribute("enabled") == "true" or bool(getattr(el, "is_enabled", lambda: False)())
+            except Exception:
+                enabled = False
+
+            # Platform-specific hints
+            klass = None
+            try:
+                klass = el.get_attribute("class")
+            except Exception:
+                pass
+            tag_name = getattr(el, "tag_name", "") or ""
+            is_buttonish = any(
+                s in (klass or tag_name)
+                for s in ["Button", "ImageButton", "CheckBox", "XCUIElementTypeButton", "XCUIElementTypeSwitch"]
+            )
+            try:
+                clickable_attr = el.get_attribute("clickable") == "true"
+            except Exception:
+                clickable_attr = False
+
+            return (displayed and enabled) and (clickable_attr or is_buttonish)
+        except Exception:
+            return False
 
     def get_locator_metadata(self, locator: str) -> list[dict]:
         """Retrieves metadata for the element(s) matching the given locator.
