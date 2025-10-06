@@ -469,7 +469,6 @@ class SoupDomUtils:
         return "display: none" in style
 
     @staticmethod
-    @log
     def get_simplified_dom_tree(source: str) -> str | None:
         """Returns a simplified DOM tree as a string, removing non-essential elements and attributes.
 

@@ -9,6 +9,7 @@ from SelfhealingAgents.self_healing_system.schemas.internal_state.report_context
 from SelfhealingAgents.self_healing_system.reports.report_types.action_log_report import ActionLogReport
 from SelfhealingAgents.self_healing_system.reports.report_types.healed_files_report import HealedFilesReport
 from SelfhealingAgents.self_healing_system.reports.report_types.diff_files_report import DiffFilesReport
+from SelfhealingAgents.self_healing_system.reports.report_types.summary_json import SummaryJson
 
 
 class ReportGenerator:
@@ -41,7 +42,8 @@ class ReportGenerator:
         self._report_types: List[BaseReport] = [
             ActionLogReport(self._base_dir),
             HealedFilesReport(self._base_dir),
-            DiffFilesReport(self._base_dir)
+            DiffFilesReport(self._base_dir),
+            SummaryJson(self._base_dir)
         ]
 
     @log

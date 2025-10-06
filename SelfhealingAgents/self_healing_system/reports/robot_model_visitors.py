@@ -3,6 +3,8 @@ from typing import Any, List, Tuple, Dict
 from robot.api.parsing import ModelTransformer
 from robot.parsing.model import VariableSection
 
+from SelfhealingAgents.self_healing_system.schemas.internal_state.locator_replacements import LocatorReplacements
+
 
 class LocatorReplacer(ModelTransformer):
     """AST transformer for replacing locator tokens in Robot Framework keyword calls.
@@ -13,7 +15,7 @@ class LocatorReplacer(ModelTransformer):
     Attributes:
         _replacements (Dict[str, str]): Mapping of old locator strings to their new values.
     """
-    def __init__(self, replacements: List[Tuple[str, str]]) -> None:
+    def __init__(self, replacements: List[LocatorReplacements]) -> None:
         """Initializes the LocatorReplacer with a mapping of locator replacements.
 
         Args:
@@ -21,7 +23,7 @@ class LocatorReplacer(ModelTransformer):
                 locator strings should be replaced and their corresponding new values.
         """
         super().__init__()
-        self._replacements: Dict[str, str] = dict(replacements)
+        self._replacements: List[LocatorReplacements] = replacements
 
     def visit_KeywordCall(self, node: Any) -> Any:
         """Replaces matching locator tokens in a KeywordCall node.
@@ -36,8 +38,9 @@ class LocatorReplacer(ModelTransformer):
             The modified KeywordCall node with locator tokens replaced where applicable.
         """
         for token in node.tokens[1:]:
-            if token.value in self._replacements:
-                token.value = self._replacements[token.value]
+            for repl in self._replacements:
+                if token.value == repl.failed_locator:
+                    token.value = repl.healed_locator
         return node
 
 
