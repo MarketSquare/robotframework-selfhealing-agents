@@ -48,6 +48,10 @@ class Cfg(BaseSettings):
         6000, env="TOTAL_TOKENS_LIMIT",
         description="Limit of total tokens for each request."
     )
+    locator_type: str = Field(
+        "css", env="LOCATOR_TYPE",
+        description="Locator type restriction for suggestions of model."
+    )
 
     azure_api_key: Optional[str] = Field(
         None, env="AZURE_API_KEY",

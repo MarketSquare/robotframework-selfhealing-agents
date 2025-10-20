@@ -12,6 +12,7 @@ class PromptPayload(BaseModel):
         keyword_args (tuple): Arguments of the Robot Framework keyword that failed.
         failed_locator (str): Locator that failed in the Robot Framework keyword.
         tried_locator_memory (list): List of tried locator suggestions that still failed.
+        locator_type (str): Locator type restriction for suggestions of model.
     """
     robot_code_line: str = Field(
         ..., description="The raw Robot keyword call that failed"
@@ -29,4 +30,7 @@ class PromptPayload(BaseModel):
     )
     tried_locator_memory: list = Field(
         ..., description="List of tried locator suggestions that still failed."
+    )
+    locator_type: str = Field(
+        "css", description="Locator type restriction for suggestions of model."
     )

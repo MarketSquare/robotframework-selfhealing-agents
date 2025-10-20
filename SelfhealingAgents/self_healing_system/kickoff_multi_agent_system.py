@@ -59,6 +59,7 @@ class KickoffMultiAgentSystem:
 
         robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(result, dom_utility)
         robot_ctx_payload.tried_locator_memory = tried_locator_memory
+        robot_ctx_payload.locator_type = cfg.locator_type
 
         locator_agent: BaseLocatorAgent = LocatorAgentFactory.create_agent(agent_type, cfg, dom_utility)
 

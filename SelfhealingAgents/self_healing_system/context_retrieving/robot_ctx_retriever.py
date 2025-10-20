@@ -41,7 +41,8 @@ class RobotCtxRetriever:
             keyword_name=result.name,
             keyword_args=result.args,
             failed_locator=BuiltIn().replace_variables(result.args[0]),
-            tried_locator_memory=[]
+            tried_locator_memory=[],
+            locator_type="tbd"
         )
         return robot_ctx_payload
 
