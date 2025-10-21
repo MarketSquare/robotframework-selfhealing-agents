@@ -44,6 +44,7 @@ class FakePromptPayload:
     keyword_args: List[Any]
     failed_locator: Any
     tried_locator_memory: List[Any]
+    locator_type: str
 
 
 def fake_seq2str(items: List[Any], quote: str = "", sep: str = " ", lastsep: str = " ") -> str:
@@ -103,6 +104,7 @@ def test_get_context_payload_builds_expected_payload(monkeypatch: Any) -> None:
     assert payload.tried_locator_memory == []
     assert dom_util.get_dom_tree_calls == 1
     assert builtin_stub.calls == ["${btn}"]
+    assert payload.locator_type == "tbd"
 
 
 def test_get_context_payload_uses_first_arg_for_failed_locator(monkeypatch: Any) -> None:

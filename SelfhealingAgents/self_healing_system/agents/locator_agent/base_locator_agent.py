@@ -1,21 +1,27 @@
-from typing import Optional
 from abc import ABC, abstractmethod
+from typing import Optional
 
-from robot.api import logger as rf_logger
-from pydantic_ai.usage import UsageLimits
-from pydantic_ai.agent import AgentRunResult
 from pydantic_ai import Agent, ModelRetry, RunContext
+from pydantic_ai.agent import AgentRunResult
+from pydantic_ai.usage import UsageLimits
+from robot.api import logger as rf_logger
 
-from SelfhealingAgents.utils.cfg import Cfg
-from SelfhealingAgents.utils.logging import log
-from SelfhealingAgents.self_healing_system.llm.client_model import get_client_model
-from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import LocatorHealingResponse
-from SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
-from SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 from SelfhealingAgents.self_healing_system.agents.prompts.locator.prompts_locator import (
     PromptsLocatorGenerationAgent,
-    PromptsLocatorSelectionAgent
+    PromptsLocatorSelectionAgent,
 )
+from SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import (
+    BaseDomUtils,
+)
+from SelfhealingAgents.self_healing_system.llm.client_model import get_client_model
+from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import (
+    LocatorHealingResponse,
+)
+from SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload import (
+    PromptPayload,
+)
+from SelfhealingAgents.utils.cfg import Cfg
+from SelfhealingAgents.utils.logging import log
 
 
 class BaseLocatorAgent(ABC):
@@ -31,18 +37,17 @@ class BaseLocatorAgent(ABC):
                                                                                    generation.
         selection_agent (Optional[Agent[PromptPayload, str]]): Agent for DOM-based locator selection.
     """
-    def __init__(
-        self,
-        cfg: Cfg,
-        dom_utility: BaseDomUtils
-    ) -> None:
+
+    def __init__(self, cfg: Cfg, dom_utility: BaseDomUtils) -> None:
         """Initializes the BaseLocatorAgent.
 
         Args:
             cfg (Cfg): Instance of Cfg config class containing user-defined app configuration.
             dom_utility (BaseDomUtils): DOM utility instance for validation.
         """
-        self._usage_limits: UsageLimits = UsageLimits(cfg.request_limit, cfg.total_tokens_limit)
+        self._usage_limits: UsageLimits = UsageLimits(
+            request_limit=cfg.request_limit, total_tokens_limit=cfg.total_tokens_limit
+        )
         self._dom_utility: BaseDomUtils = dom_utility
         self._use_llm_for_locator_generation = cfg.use_llm_for_locator_generation
 
@@ -60,7 +65,9 @@ class BaseLocatorAgent(ABC):
                     model=cfg.locator_agent_model,
                     cfg=cfg,
                 ),
-                system_prompt=PromptsLocatorGenerationAgent.get_system_msg(self._dom_utility),
+                system_prompt=PromptsLocatorGenerationAgent.get_system_msg(
+                    self._dom_utility
+                ),
                 deps_type=PromptPayload,
                 output_type=LocatorHealingResponse,
             )
