@@ -75,6 +75,7 @@ class PromptsLocatorGenerationAgent(BasePromptAgent):
             f"Keyword name: `{ctx.deps.keyword_name}`\n\n"
             f"Dom Tree: ```{ctx.deps.dom_tree}```\n\n"
             f"Tried Locator Suggestion Memory:\n{ctx.deps.tried_locator_memory}\n\n"
+            f"Test-Suite or Resource-File in which the locator failed:\n{ctx.deps.file_usage_ctx}\n\n"
         )
 
 

@@ -1,7 +1,7 @@
 import asyncio
 from typing import List, Final
 
-from robot import result
+from robot import result, running
 
 from SelfhealingAgents.utils.cfg import Cfg
 from SelfhealingAgents.utils.logging import log
@@ -36,6 +36,7 @@ class KickoffMultiAgentSystem:
     @staticmethod
     @log
     def kickoff_healing(
+        data: running.Keyword,
         result: result.Keyword,
         *,
         cfg: Cfg,
@@ -44,6 +45,7 @@ class KickoffMultiAgentSystem:
         """Instantiates the multi-agent system, retrieves context, and initiates the self-healing process.
 
         Args:
+            data: The running test case data.
             result: The keyword result and additional information passed by the Robot Framework listener.
             cfg: An instance of the Cfg config class containing user-defined application configuration.
             tried_locator_memory: A list of locator suggestions that have already been tried and failed.
@@ -57,7 +59,7 @@ class KickoffMultiAgentSystem:
             raise ValueError(f"Library type: {agent_type} not supported.")
         dom_utility: BaseDomUtils = DomUtilityFactory.create_dom_utility(agent_type)
 
-        robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(result, dom_utility)
+        robot_ctx_payload: PromptPayload = RobotCtxRetriever.get_context_payload(data, result, dom_utility)
         robot_ctx_payload.tried_locator_memory = tried_locator_memory
         robot_ctx_payload.locator_type = cfg.locator_type
 

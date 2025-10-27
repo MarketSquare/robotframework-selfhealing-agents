@@ -1,4 +1,5 @@
-from robot import result
+from pathlib import Path
+from robot import result, running
 from robot.utils.misc import seq2str
 from robot.libraries.BuiltIn import BuiltIn
 
@@ -17,7 +18,9 @@ class RobotCtxRetriever:
     @staticmethod
     @log
     def get_context_payload(
-        result: result.Keyword, dom_utility: BaseDomUtils
+        data: running.Keyword,
+        result: result.Keyword,
+        dom_utility: BaseDomUtils
     ) -> PromptPayload:
         """Builds and returns a context payload for the LLM self-healing process.
 
@@ -42,7 +45,8 @@ class RobotCtxRetriever:
             keyword_args=result.args,
             failed_locator=BuiltIn().replace_variables(result.args[0]),
             tried_locator_memory=[],
-            locator_type="tbd"
+            locator_type="tbd",
+            file_usage_ctx=RobotCtxRetriever._file_usage_ctx(data)
         )
         return robot_ctx_payload
 
@@ -65,3 +69,18 @@ class RobotCtxRetriever:
 
         args_part: str = seq2str(result.args, quote="", sep=" ", lastsep=" ")
         return f"{assign_str}{result.name} {args_part}"
+
+    @staticmethod
+    def _file_usage_ctx(data: running.Keyword) -> str:
+        """Loads the full source file in which the locator failed and returns it as string for context of LLM.
+
+        Args:
+            data: The running test case data.#
+
+        Returns:
+            Full file string for context of LLM.
+        """
+        source_file = Path(data.source)
+        if not source_file.exists():
+            raise FileNotFoundError(f"Source file for LLM context not found: {source_file}")
+        return source_file.read_text(encoding="utf-8", errors="ignore")
