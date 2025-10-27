@@ -11,6 +11,10 @@ from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import (
 
 
 @pytest.fixture
+def fake_data() -> MagicMock:
+    return MagicMock()
+
+@pytest.fixture
 def fake_result() -> MagicMock:
     obj: MagicMock = MagicMock()
     obj.owner = "SeleniumLibrary"
@@ -40,7 +44,7 @@ def patch_factories_and_ctx(
     )
     monkeypatch.setattr(
         "SelfhealingAgents.self_healing_system.context_retrieving.robot_ctx_retriever.RobotCtxRetriever.get_context_payload",
-        lambda result, dom_utility: MagicMock(name="FakePromptPayload"),
+        lambda data, result, dom_utility: MagicMock(name="FakePromptPayload"),
         raising=True,
     )
     monkeypatch.setattr(
@@ -65,6 +69,7 @@ def patch_factories_and_ctx(
 
 def test_kickoff_healing_happy_path(
     monkeypatch: pytest.MonkeyPatch,
+    fake_data: MagicMock,
     fake_result: MagicMock,
     fake_cfg: MagicMock,
     fake_tried_locators: list[str],
@@ -76,7 +81,7 @@ def test_kickoff_healing_happy_path(
     )
     fake_result.owner = "SeleniumLibrary"
     result: LocatorHealingResponse | str | NoHealingNeededResponse = KickoffMultiAgentSystem.kickoff_healing(
-        fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
+        fake_data, fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
     )
     assert result == LocatorHealingResponse(suggestions=["healing-response"])
 
@@ -91,6 +96,7 @@ def test_kickoff_healing_happy_path(
 )
 def test_kickoff_healing_library_mapping(
     monkeypatch: pytest.MonkeyPatch,
+    fake_data: MagicMock,
     fake_result: MagicMock,
     fake_cfg: MagicMock,
     fake_tried_locators: list[str],
@@ -100,12 +106,13 @@ def test_kickoff_healing_library_mapping(
     patch_factories_and_ctx(monkeypatch, agent_type=agent_type, orchestrator_response="ok")
     fake_result.owner = lib
     result: LocatorHealingResponse | str | NoHealingNeededResponse = KickoffMultiAgentSystem.kickoff_healing(
-        fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
+        fake_data, fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
     )
     assert result == "ok"
 
 
 def test_kickoff_healing_unsupported_library(
+    fake_data: MagicMock,
     fake_result: MagicMock,
     fake_cfg: MagicMock,
     fake_tried_locators: list[str],
@@ -113,18 +120,19 @@ def test_kickoff_healing_unsupported_library(
     fake_result.owner = "UnknownLibrary"
     with pytest.raises(ValueError):
         KickoffMultiAgentSystem.kickoff_healing(
-            fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
+            fake_data, fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
         )
 
 
 def test_kickoff_healing_context_payload_and_tried_locators(
     monkeypatch: pytest.MonkeyPatch,
+    fake_data: MagicMock,
     fake_result: MagicMock,
     fake_cfg: MagicMock,
     fake_tried_locators: list[str],
 ) -> None:
     context_payload: MagicMock = MagicMock()
-    def fake_get_context_payload(result: MagicMock, dom_utility: MagicMock) -> MagicMock:
+    def fake_get_context_payload(data: MagicMock, result: MagicMock, dom_utility: MagicMock) -> MagicMock:
         return context_payload
     monkeypatch.setattr(
         "SelfhealingAgents.self_healing_system.context_retrieving.dom_utility_factory.DomUtilityFactory.create_dom_utility",
@@ -155,13 +163,14 @@ def test_kickoff_healing_context_payload_and_tried_locators(
     )
     fake_result.owner = "SeleniumLibrary"
     _ = KickoffMultiAgentSystem.kickoff_healing(
-        fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
+        fake_data, fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
     )
     assert context_payload.tried_locator_memory == fake_tried_locators
 
 
 def test_kickoff_healing_asyncio_run_until_complete(
     monkeypatch: pytest.MonkeyPatch,
+    fake_data: MagicMock,
     fake_result: MagicMock,
     fake_cfg: MagicMock,
     fake_tried_locators: list[str],
@@ -169,13 +178,14 @@ def test_kickoff_healing_asyncio_run_until_complete(
     patch_factories_and_ctx(monkeypatch, agent_type="selenium", orchestrator_response="async-result")
     fake_result.owner = "SeleniumLibrary"
     result: LocatorHealingResponse | str | NoHealingNeededResponse = KickoffMultiAgentSystem.kickoff_healing(
-        fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
+        fake_data, fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
     )
     assert result == "async-result"
 
 
 def test_kickoff_healing_orchestrator_exception(
     monkeypatch: pytest.MonkeyPatch,
+    fake_data: MagicMock,
     fake_result: MagicMock,
     fake_cfg: MagicMock,
     fake_tried_locators: list[str],
@@ -191,7 +201,7 @@ def test_kickoff_healing_orchestrator_exception(
     )
     monkeypatch.setattr(
         "SelfhealingAgents.self_healing_system.context_retrieving.robot_ctx_retriever.RobotCtxRetriever.get_context_payload",
-        lambda result, dom_utility: MagicMock(),
+        lambda data, result, dom_utility: MagicMock(),
         raising=True,
     )
     monkeypatch.setattr(
@@ -212,5 +222,5 @@ def test_kickoff_healing_orchestrator_exception(
     fake_result.owner = "SeleniumLibrary"
     with pytest.raises(RuntimeError, match="orchestrator failed"):
         _ = KickoffMultiAgentSystem.kickoff_healing(
-            fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
+            fake_data, fake_result, cfg=fake_cfg, tried_locator_memory=fake_tried_locators
         )

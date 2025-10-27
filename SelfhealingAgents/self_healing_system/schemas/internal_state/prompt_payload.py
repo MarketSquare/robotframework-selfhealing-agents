@@ -34,3 +34,6 @@ class PromptPayload(BaseModel):
     locator_type: str = Field(
         "css", description="Locator type restriction for suggestions of model."
     )
+    file_usage_ctx: str = Field(
+        ..., description="Parent-Test or Parent-Keyword of failed locator."
+    )

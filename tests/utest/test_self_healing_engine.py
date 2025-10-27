@@ -77,7 +77,7 @@ def test_initiate_healing_locator_response(monkeypatch, engine, listener_state):
     listener_state.should_generate_locators = True
     listener_state.retry_count = 0
 
-    engine._initiate_healing(MagicMock())
+    engine._initiate_healing(MagicMock(), MagicMock())
     assert listener_state.suggestions == ["foo", "bar"]
     assert listener_state.should_generate_locators is False
     assert listener_state.retry_count == 1
@@ -110,7 +110,7 @@ def test_initiate_healing_no_healing_needed(monkeypatch, engine, listener_state)
     listener_state.suggestions = ["foo"]
     listener_state.should_generate_locators = False
 
-    engine._initiate_healing(MagicMock())
+    engine._initiate_healing(MagicMock(), MagicMock())
     assert listener_state.suggestions is None
     assert listener_state.should_generate_locators is True
 
