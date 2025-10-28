@@ -247,6 +247,7 @@ def test_run_async_returns_no_healing_when_not_failed(
         total_tokens_limit: int = 1000
         orchestrator_agent_provider: str = "prov"
         orchestrator_agent_model: str = "mod"
+        orchestrator_agent_temperature: float = 0.1
 
     orch = OrchestratorAgent(FakeCfg(), _FakeLocatorAgent(is_failed=False))
     payload = PromptPayload(
@@ -277,6 +278,7 @@ def test_run_async_calls_agent_and_logs_on_error(
         total_tokens_limit: int = 1000
         orchestrator_agent_provider: str = "prov"
         orchestrator_agent_model: str = "mod"
+        orchestrator_agent_temperature: float = 0.1
 
     orch = OrchestratorAgent(FakeCfg(), _FakeLocatorAgent(is_failed=True))
     payload = PromptPayload(
@@ -316,6 +318,7 @@ def test_run_async_calls_agent_no_log_when_ok(
         total_tokens_limit: int = 1000
         orchestrator_agent_provider: str = "prov"
         orchestrator_agent_model: str = "mod"
+        orchestrator_agent_temperature: float = 0.1
 
     orch = OrchestratorAgent(FakeCfg(), _FakeLocatorAgent(is_failed=True))
     payload = PromptPayload(
@@ -353,6 +356,7 @@ def test_get_healed_locators_success(
         total_tokens_limit: int = 1000
         orchestrator_agent_provider: str = "prov"
         orchestrator_agent_model: str = "mod"
+        orchestrator_agent_temperature: float = 0.1
 
     orch = OrchestratorAgent(
         FakeCfg(),
@@ -373,6 +377,7 @@ def test_get_healed_locators_raises_modelretry(
         total_tokens_limit: int = 1000
         orchestrator_agent_provider: str = "prov"
         orchestrator_agent_model: str = "mod"
+        orchestrator_agent_temperature: float = 0.1
 
     orch = OrchestratorAgent(
         FakeCfg(), _FakeLocatorAgent(is_failed=True, raise_on_heal=True)
