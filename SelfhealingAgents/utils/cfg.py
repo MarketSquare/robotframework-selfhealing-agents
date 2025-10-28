@@ -32,6 +32,9 @@ class Cfg(BaseSettings):
         "gpt-4o-mini", env="ORCHESTRATOR_AGENT_MODEL",
         description="Model selection for orchestrator agent."
     )
+    orchestrator_agent_temperature: float = Field(
+        0.1, gt=0, env="ORCHESTRATOR_AGENT_TEMPERATURE"
+    )
     locator_agent_provider: str = Field(
         "openai", env="LOCATOR_AGENT_PROVIDER",
         description="LLM Provider for Locator agent - Options: 'openai', 'azure'."
@@ -39,6 +42,9 @@ class Cfg(BaseSettings):
     locator_agent_model: str = Field(
         "gpt-4o-mini", env="LOCATOR_AGENT_MODEL",
         description="Model selection for locator agent."
+    )
+    locator_agent_temperature: float = Field(
+        0.1, gt=0, env="LOCATOR_AGENT_TEMPERATURE"
     )
     request_limit: int = Field(
         5, env="REQUEST_LIMIT",

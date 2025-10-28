@@ -131,6 +131,8 @@ def _install_stubs() -> _LoggerStub:
             self.use_llm_for_locator_generation: bool = True
             self.locator_agent_provider: str = "prov"
             self.locator_agent_model: str = "mod"
+            self.locator_agent_temperature: float = 0.1
+            self.orchestrator_agent_temperature: float = 0.1
 
     cfg_mod.Cfg = Cfg
     _force_module("SelfhealingAgents.utils", aid_utils)
@@ -332,6 +334,8 @@ class _ConcreteAgentFactory:
             use_llm_for_locator_generation: bool = use_llm
             locator_agent_provider: str = "prov"
             locator_agent_model: str = "mod"
+            locator_agent_temperature: float = 0.1
+            orchestrator_agent_temperature: float = 0.1
 
         return Impl(Cfg(), dom)
 

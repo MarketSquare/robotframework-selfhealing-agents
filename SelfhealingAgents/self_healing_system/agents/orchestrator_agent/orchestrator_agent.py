@@ -78,7 +78,7 @@ class OrchestratorAgent:
             PromptsOrchestrator.get_user_msg(robot_ctx_payload),
             deps=robot_ctx_payload,
             usage_limits=self._usage_limits,
-            model_settings={"temperature": 0.1, "parallel_tool_calls": False},
+            model_settings={"temperature": self._cfg.orchestrator_agent_temperature, "parallel_tool_calls": False},
         )
         self._catch_token_limit_exceedance(response.output)
         return response.output
