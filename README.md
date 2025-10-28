@@ -173,29 +173,35 @@ REQUEST_LIMIT=5
 TOTAL_TOKENS_LIMIT=6000
 ORCHESTRATOR_AGENT_PROVIDER="openai"
 ORCHESTRATOR_AGENT_MODEL="gpt-4o-mini"
+ORCHESTRATOR_AGENT_TEMPERATURE=0.1
 LOCATOR_AGENT_PROVIDER="openai"
 LOCATOR_AGENT_MODEL="gpt-4o-mini"
+LOCATOR_AGNET_TEMPERATURE=0.1
+LOCATOR_TYPE="css"
 ```
 
 ### 📝 Configuration Parameters
 
-| Name                          | Default         | Required?                | Description                                                                |
-|-------------------------------|-----------------|--------------------------|----------------------------------------------------------------------------|
-| **OPENAI_API_KEY**            | `None`          | If using OpenAI          | Your OpenAI API key                                                        |
-| **LITELLM_API_KEY**           | `None`          | If using LiteLLM         | Your LiteLLM API key                                                       |
-| **AZURE_API_KEY**             | `None`          | If using Azure           | Your Azure OpenAI API key                                                  |
-| **AZURE_API_VERSION**         | `None`          | If using Azure           | Azure OpenAI API version                                                   |
-| **AZURE_ENDPOINT**            | `None`          | If using Azure           | Azure OpenAI endpoint                                                      |
-| **BASE_URL**                  | `None`          | No                       | Endpoint to connect to (if required)                                       |
-| **ENABLE_SELF_HEALING**       | `True`          | No                       | Enable or disable SelfhealingAgents                                        |
-| **USE_LLM_FOR_LOCATOR_GENERATION** | `True`    | No                       | If `True`, LLM generates locator suggestions directly (see note below)     |
-| **MAX_RETRIES**               | `3`             | No                       | Number of self-healing attempts per locator                                |
-| **REQUEST_LIMIT**             | `5`             | No                       | Internal agent-level limit for valid LLM response attempts                 |
-| **TOTAL_TOKENS_LIMIT**        | `6000`          | No                       | Maximum input tokens per LLM request                                       |
-| **ORCHESTRATOR_AGENT_PROVIDER** | `"openai"`    | No                       | Provider for the orchestrator agent (`"openai"`, `"azure"` or `"litellm"`) |
-| **ORCHESTRATOR_AGENT_MODEL**  | `"gpt-4o-mini"` | No                       | Model for the orchestrator agent                                           |
-| **LOCATOR_AGENT_PROVIDER**    | `"openai"`      | No                       | Provider for the locator agent (`"openai"`, `"azure"` or `"litellm"`)      |
-| **LOCATOR_AGENT_MODEL**       | `"gpt-4o-mini"` | No                       | Model for the locator agent                                                |
+| Name                               | Default        | Required?                | Description                                                                |
+|------------------------------------|----------------|--------------------------|----------------------------------------------------------------------------|
+| **OPENAI_API_KEY**                 | `None`         | If using OpenAI          | Your OpenAI API key                                                        |
+| **LITELLM_API_KEY**                | `None`         | If using LiteLLM         | Your LiteLLM API key                                                       |
+| **AZURE_API_KEY**                  | `None`         | If using Azure           | Your Azure OpenAI API key                                                  |
+| **AZURE_API_VERSION**              | `None`         | If using Azure           | Azure OpenAI API version                                                   |
+| **AZURE_ENDPOINT**                 | `None`         | If using Azure           | Azure OpenAI endpoint                                                      |
+| **BASE_URL**                       | `None`         | No                       | Endpoint to connect to (if required)                                       |
+| **ENABLE_SELF_HEALING**            | `True`         | No                       | Enable or disable SelfhealingAgents                                        |
+| **USE_LLM_FOR_LOCATOR_GENERATION** | `True`         | No                       | If `True`, LLM generates locator suggestions directly (see note below)     |
+| **MAX_RETRIES**                    | `3`            | No                       | Number of self-healing attempts per locator                                |
+| **REQUEST_LIMIT**                  | `5`            | No                       | Internal agent-level limit for valid LLM response attempts                 |
+| **TOTAL_TOKENS_LIMIT**             | `6000`         | No                       | Maximum input tokens per LLM request                                       |
+| **ORCHESTRATOR_AGENT_PROVIDER**    | `"openai"`     | No                       | Provider for the orchestrator agent (`"openai"`, `"azure"` or `"litellm"`) |
+| **ORCHESTRATOR_AGENT_MODEL**       | `"gpt-4o-mini"` | No                       | Model for the orchestrator agent                                           |
+| **ORCHESTRATOR_AGENT_TEMPERATURE** | `0.1`          | No                       | Orchestrator model temperature.                                            |
+| **LOCATOR_AGENT_PROVIDER**         | `"openai"`     | No                       | Provider for the locator agent (`"openai"`, `"azure"` or `"litellm"`)      |
+| **LOCATOR_AGENT_MODEL**            | `"gpt-4o-mini"` | No                       | Model for the locator agent                                                |
+| **LOCATOR_AGENT_TEMPERATURE**      | `0.1`          | No                       | Locator model temperature.                                                 |
+| **LOCATOR_TYPE**                   | `"css"`        | No                       | Restricts the locator suggestions of the agent to the given type           |
 
 > **Note:**  
 > Locator suggestions can be generated either by assembling strings from the DOM tree (with an LLM selecting the best option), or by having the LLM generate suggestions directly itself with the context given (DOM included). Set `USE_LLM_FOR_LOCATOR_GENERATION` to `True` to enable direct LLM generation (default is True).

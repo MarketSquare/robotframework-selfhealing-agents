@@ -9,6 +9,10 @@ RobotCtxRetriever = getattr(robot_ctx_module, "RobotCtxRetriever")
 
 
 @dataclass
+class FakeData:
+    file_usage_ctx: str
+
+@dataclass
 class FakeKeyword:
     name: str
     args: List[Any]
@@ -44,10 +48,16 @@ class FakePromptPayload:
     keyword_args: List[Any]
     failed_locator: Any
     tried_locator_memory: List[Any]
+    locator_type: str
+    file_usage_ctx: str
 
 
 def fake_seq2str(items: List[Any], quote: str = "", sep: str = " ", lastsep: str = " ") -> str:
     return sep.join(str(x) for x in items) + lastsep
+
+
+def _fake_file_usage_ctx(data: Any) -> str:
+    return getattr(data, "file_usage_ctx", "")
 
 
 def patch_module_symbols(monkeypatch: Any) -> DummyBuiltIn:
@@ -55,6 +65,7 @@ def patch_module_symbols(monkeypatch: Any) -> DummyBuiltIn:
     builtin_stub = DummyBuiltIn()
     monkeypatch.setattr(robot_ctx_module, "BuiltIn", lambda: builtin_stub, raising=True)
     monkeypatch.setattr(robot_ctx_module, "PromptPayload", FakePromptPayload, raising=True)
+    monkeypatch.setattr(RobotCtxRetriever, "_file_usage_ctx", staticmethod(_fake_file_usage_ctx), raising=True)
     return builtin_stub
 
 
@@ -84,6 +95,11 @@ def test_format_keyword_call_with_assign(monkeypatch: Any) -> None:
 def test_get_context_payload_builds_expected_payload(monkeypatch: Any) -> None:
     builtin_stub: DummyBuiltIn = patch_module_symbols(monkeypatch)
     dom_util: FakeDomUtils = FakeDomUtils("<DOM/>")
+
+    data: FakeData = FakeData(
+        file_usage_ctx="TestSuiteDummyString",
+    )
+
     kw: FakeKeyword = FakeKeyword(
         name="Click Element",
         args=["${btn}", "timeout=5"],
@@ -91,7 +107,7 @@ def test_get_context_payload_builds_expected_payload(monkeypatch: Any) -> None:
     )
 
     payload: FakePromptPayload = RobotCtxRetriever.get_context_payload(
-        kw, dom_util
+        data, kw, dom_util
     )
 
     assert payload.robot_code_line == "Click Element ${btn} timeout=5 "
@@ -103,6 +119,8 @@ def test_get_context_payload_builds_expected_payload(monkeypatch: Any) -> None:
     assert payload.tried_locator_memory == []
     assert dom_util.get_dom_tree_calls == 1
     assert builtin_stub.calls == ["${btn}"]
+    assert payload.locator_type == "tbd"
+    assert payload.file_usage_ctx == "TestSuiteDummyString"
 
 
 def test_get_context_payload_uses_first_arg_for_failed_locator(monkeypatch: Any) -> None:
@@ -114,9 +132,12 @@ def test_get_context_payload_uses_first_arg_for_failed_locator(monkeypatch: Any)
         message="fail"
     )
 
+    data: FakeData = FakeData(file_usage_ctx="")
+
     payload: FakePromptPayload = RobotCtxRetriever.get_context_payload(
-        kw, dom_util
+        data, kw, dom_util
     )
 
     assert payload.failed_locator == "LOC::${first}"
     assert builtin_stub.calls == ["${first}"]
+

@@ -81,7 +81,7 @@ class SelfHealingEngine:
             pre_healing_data: running.Keyword = data.deepcopy()
             if self._listener_state.retry_count < self._listener_state.cfg.max_retries:
                 if self._listener_state.should_generate_locators:
-                    self._initiate_healing(result_)
+                    self._initiate_healing(data, result_)
                 keyword_return_value: Any = self._try_locator_suggestions(data)
                 # Note: failing suggestions immediately re-trigger end_keyword function
 
@@ -115,7 +115,7 @@ class SelfHealingEngine:
             )
             # This would store information for post-execution healing
 
-    def _initiate_healing(self, result_: result.Keyword) -> None:
+    def _initiate_healing(self, data: running.Keyword, result_: result.Keyword) -> None:
         """Starts the self-healing process using the agentic system.
 
         Invokes the multi-agent system to generate locator suggestions and updates the listener state accordingly.
@@ -125,6 +125,7 @@ class SelfHealingEngine:
         """
         locator_suggestions: LocatorHealingResponse | str | NoHealingNeededResponse = (
             KickoffMultiAgentSystem.kickoff_healing(
+                data,
                 result_,
                 cfg=self._listener_state.cfg,
                 tried_locator_memory=self._listener_state.tried_locators,

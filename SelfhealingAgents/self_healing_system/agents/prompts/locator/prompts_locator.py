@@ -23,7 +23,7 @@ class PromptsLocatorGenerationAgent(BasePromptAgent):
         _library_func_mapping_system_msg (dict[str, Callable[[], str]]): Mapping of library types to their system message generator functions.
     """
     _system_msg: ClassVar[str] = (
-        "You are a xpath and css selector self-healing tool.\n"
+        "You are a locator/selector self-healing tool.\n"
         "You will provide a fixed_locator for a failed_locator.\n"
         "Using the elements in the DOM at failure time, suggest 3 new locators.\n"
         "You are also given a list of tried locator suggestions memory that were tried but still failed. "
@@ -69,11 +69,13 @@ class PromptsLocatorGenerationAgent(BasePromptAgent):
             str: The assembled user message for locator generation.
         """
         return (
+            f"Your suggested locators should be only of type: {ctx.deps.locator_type}. No other types are allowed. \n\n"
             f"Error message: `{ctx.deps.error_msg}`\n\n"
             f"Failed locator: `{ctx.deps.failed_locator}`\n\n"
             f"Keyword name: `{ctx.deps.keyword_name}`\n\n"
             f"Dom Tree: ```{ctx.deps.dom_tree}```\n\n"
             f"Tried Locator Suggestion Memory:\n{ctx.deps.tried_locator_memory}\n\n"
+            f"Test-Suite or Resource-File in which the locator failed:\n{ctx.deps.file_usage_ctx}\n\n"
         )
 
 
