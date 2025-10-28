@@ -30,6 +30,7 @@ class BaseLocatorAgent(ABC):
     Defines the common interface and shared functionality for all locator agent flavors.
 
     Attributes:
+        _cfg (Cfg): An instance of the Cfg config class containing user-defined application configuration.
         _usage_limits (UsageLimits): Usage token and request limits.
         _dom_utility (BaseDomUtils): DOM utility instance for the specific library.
         _use_llm_for_locator_generation (bool): Whether to use LLM for locator generation.
@@ -45,6 +46,7 @@ class BaseLocatorAgent(ABC):
             cfg (Cfg): Instance of Cfg config class containing user-defined app configuration.
             dom_utility (BaseDomUtils): DOM utility instance for validation.
         """
+        self._cfg = cfg
         self._usage_limits: UsageLimits = UsageLimits(
             request_limit=cfg.request_limit, total_tokens_limit=cfg.total_tokens_limit
         )
@@ -217,7 +219,7 @@ class BaseLocatorAgent(ABC):
             PromptsLocatorGenerationAgent.get_user_msg(ctx),
             deps=ctx.deps,
             usage_limits=self._usage_limits,
-            model_settings={"temperature": 0.1},
+            model_settings={"temperature": self._cfg.locator_agent_temperature},
         )
         if not isinstance(response.output, LocatorHealingResponse):
             raise ModelRetry(
@@ -319,7 +321,7 @@ class BaseLocatorAgent(ABC):
                 ),
                 deps=ctx.deps,
                 usage_limits=self._usage_limits,
-                model_settings={"temperature": 0.1},
+                model_settings={"temperature": self._cfg.locator_agent_temperature},
             )
 
             # Parse the selected locator from the response
