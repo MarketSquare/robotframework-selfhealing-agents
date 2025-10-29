@@ -37,10 +37,11 @@ class SelfhealingAgents(ListenerV3):
         """
         dotenv_path: str = find_dotenv(usecwd=True)
         if dotenv_path:
-            load_dotenv(dotenv_path=dotenv_path, override=True)
+            load_dotenv(dotenv_path=dotenv_path, override=False)
             rf_logger.info(f"loaded .env from {dotenv_path}")
         else:
-            rf_logger.info("no .env found near current working directory")
+            load_dotenv(override=False)
+            rf_logger.info("no .env found near current working directory; using existing environment variables")
 
         self.ROBOT_LIBRARY_LISTENER: SelfhealingAgents = self
         self._state: ListenerState = ListenerState(cfg=Cfg())   # type: ignore
