@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+from typing import Optional
 from dotenv import load_dotenv, find_dotenv
 
 from robot import result, running
@@ -35,16 +38,10 @@ class SelfhealingAgents(ListenerV3):
         The "_state" attribute of type ListenerState is shared and manipulated
         in the self_healing_engine module.
         """
-        dotenv_path: str = find_dotenv(usecwd=True)
-        if dotenv_path:
-            load_dotenv(dotenv_path=dotenv_path, override=False)
-            rf_logger.info(f"loaded .env from {dotenv_path}")
-        else:
-            load_dotenv(override=False)
-            rf_logger.info("no .env found near current working directory; using existing environment variables")
+        self._robust_env_load()
 
         self.ROBOT_LIBRARY_LISTENER: SelfhealingAgents = self
-        self._state: ListenerState = ListenerState(cfg=Cfg())   # type: ignore
+        self._state: ListenerState = ListenerState(cfg=Cfg())  # type: ignore
         self._self_healing_engine: SelfHealingEngine = SelfHealingEngine(self._state)
         self._report_generator: ReportGenerator = ReportGenerator()
         self._closed: bool = False
@@ -52,6 +49,56 @@ class SelfhealingAgents(ListenerV3):
             f"SelfhealingAgents initialized; healing="
             f"{'enabled' if self._state.cfg.enable_self_healing else 'disabled'}"
         )
+
+    def _robust_env_load(self) -> None:
+        """Load environment variables in a way that supports both:
+        1) GitHub Actions/Docker provided process environment (secrets already present)
+        2) A local .env file (e.g., created by the workflow under ./robot/.env)
+
+        Strategy:
+        - Do NOT override already-present environment variables (so that GitHub secrets win).
+        - Try explicit candidate .env locations that commonly occur in CI:
+            * $DOTENV_PATH (if set)
+            * CWD/.env (Robot working-directory)
+            * directory of this file /.env
+            * auto-discovery via find_dotenv(usecwd=True) as a fallback
+        - If none found, we still call load_dotenv() without a path so that python-dotenv
+          can perform its default discovery (no overrides).
+        """
+        loaded_from: Optional[str] = None
+
+        explicit_path: Optional[str] = os.environ.get("DOTENV_PATH")
+        if explicit_path and Path(explicit_path).is_file():
+            load_dotenv(dotenv_path=explicit_path, override=False)
+            loaded_from = explicit_path
+
+        if loaded_from is None:
+            candidates = [
+                Path(os.getcwd()) / ".env",
+                Path(__file__).resolve().parent / ".env",
+            ]
+            for p in candidates:
+                if p.is_file():
+                    load_dotenv(dotenv_path=str(p), override=False)
+                    loaded_from = str(p)
+                    break
+
+        if loaded_from is None:
+            try:
+                found = find_dotenv(usecwd=True)
+            except TypeError:
+                found = find_dotenv()
+            if found:
+                load_dotenv(dotenv_path=found, override=False)
+                loaded_from = found
+
+        if loaded_from is None:
+            load_dotenv(override=False)
+
+        if loaded_from:
+            rf_logger.info(f"environment variables loaded from .env: {loaded_from}")
+        else:
+            rf_logger.info("no .env file found; relying on existing process environment variables")
 
     def start_test(
         self, data: running.TestCase, result_: result.TestCase
