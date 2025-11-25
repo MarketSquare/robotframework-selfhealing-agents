@@ -1,7 +1,11 @@
 from typing import ClassVar
 
-from SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload import PromptPayload
-from SelfhealingAgents.self_healing_system.agents.prompts.base_prompt_agent import BasePromptAgent
+from SelfhealingAgents.self_healing_system.agents.prompts.base_prompt_agent import (
+    BasePromptAgent,
+)
+from SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload import (
+    PromptPayload,
+)
 
 
 class PromptsOrchestrator(BasePromptAgent):
@@ -13,10 +17,11 @@ class PromptsOrchestrator(BasePromptAgent):
     Attributes:
         _system_msg (ClassVar[str]): Class-level system message describing the agent's role and available tools.
     """
+
     _system_msg: ClassVar[str] = (
         "You are a Robot Framework smart recovery tool and a JSON passthrough machine. Your only job is to return the exact, raw JSON output from a tool.\n"
         "The following tools are available to you:\n"
-        "- get_healed_locators: This tool provides locator suggestions for a broken locator.\n\n"
+        "- get_healed_locators: This tool provides locator suggestions for a broken locator and must always be called with an empty argument object ({}).\n\n"
     )
 
     @classmethod
@@ -39,5 +44,7 @@ class PromptsOrchestrator(BasePromptAgent):
             str: The assembled user message instructing the tool call for the broken locator.
         """
         return (
-            f"Call the 'get_healed_locators' tool for the broken locator: `{robot_ctx_payload.failed_locator}`.\n"
+            "Call the 'get_healed_locators' tool now. "
+            "Do not pass any arguments (use `{}`); the tool already has the failed locator context.\n"
+            f"Failed locator for reference: `{robot_ctx_payload.failed_locator}`.\n"
         )

@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Any, Final
 
 from robot import result, running
@@ -240,18 +241,21 @@ class SelfHealingEngine:
                 break
             current = getattr(current, "parent", None)
 
+        file_name, keyword_source = self._extract_source_metadata(data.source)
+        test_name = self._extract_test_name(current)
+
         self._listener_state.report_info.append(
             ReportData(
-                file=data.source.parts[-1],
-                keyword_source=str(data.source),
-                test_name=current.parent.name,
+                file=file_name,
+                keyword_source=keyword_source,
+                test_name=test_name,
                 locator_origin=locator_origin,
                 keyword=data.name,
                 keyword_args=args,
                 lineno=data.lineno,
                 failed_locator=failed_locator,
                 healed_locator=healed_locator if status == "PASS" else "",
-                tried_locators=self._listener_state.tried_locators,
+                tried_locators=self._listener_state.tried_locators.copy(),
             )
         )
 
@@ -264,3 +268,32 @@ class SelfHealingEngine:
         self._listener_state.suggestions = None
         self._listener_state.should_generate_locators = True
         self._listener_state.tried_locators.clear()
+
+    @staticmethod
+    def _extract_source_metadata(source: Any) -> tuple[str, str]:
+        """Safely extract file and path information from keyword source."""
+        if not source:
+            return "", ""
+
+        try:
+            parts = getattr(source, "parts", None)
+            if parts:
+                return parts[-1], str(source)
+        except IndexError:
+            pass
+
+        source_str = str(source)
+        file_name = Path(source_str).name if source_str else ""
+        return file_name, source_str
+
+    @staticmethod
+    def _extract_test_name(keyword: Any) -> str:
+        """Safely resolve the parent test name for a keyword."""
+        if not keyword:
+            return ""
+
+        parent = getattr(keyword, "parent", None)
+        if not parent:
+            return ""
+
+        return getattr(parent, "name", "")
