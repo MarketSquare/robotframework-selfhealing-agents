@@ -51,7 +51,9 @@ def analyze_locator_argument(
     remaining_failed = failed_locator[len(prefix) :] if prefix else failed_locator
     if suffix:
         if not remaining_failed.endswith(suffix):
-            return ArgumentAnalysisResult(token_value=healed_locator, variable_updates=[])
+            return ArgumentAnalysisResult(
+                token_value=healed_locator, variable_updates=[]
+            )
         original_var_value = remaining_failed[: -len(suffix)]
     else:
         original_var_value = remaining_failed
@@ -80,4 +82,6 @@ def analyze_locator_argument(
     if new_var_value != original_var_value:
         variable_updates.append((var_token, new_var_value))
 
-    return ArgumentAnalysisResult(token_value=token_value, variable_updates=variable_updates)
+    return ArgumentAnalysisResult(
+        token_value=token_value, variable_updates=variable_updates
+    )

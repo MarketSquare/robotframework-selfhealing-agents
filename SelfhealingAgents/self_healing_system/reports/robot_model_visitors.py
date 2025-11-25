@@ -3,10 +3,12 @@ from typing import Any, Dict, List, Tuple
 from robot.api.parsing import ModelTransformer
 from robot.parsing.model import VariableSection
 
-from SelfhealingAgents.self_healing_system.schemas.internal_state.locator_replacements import LocatorReplacements
 from SelfhealingAgents.self_healing_system.reports.locator_argument_analyzer import (
     ArgumentAnalysisResult,
     analyze_locator_argument,
+)
+from SelfhealingAgents.self_healing_system.schemas.internal_state.locator_replacements import (
+    LocatorReplacements,
 )
 
 
@@ -19,6 +21,7 @@ class LocatorReplacer(ModelTransformer):
     Attributes:
         _replacements (Dict[str, str]): Mapping of old locator strings to their new values.
     """
+
     def __init__(self, replacements: List[LocatorReplacements]) -> None:
         """Initializes the LocatorReplacer with a mapping of locator replacements.
 
@@ -81,6 +84,7 @@ class VariablesReplacer(ModelTransformer):
     Attributes:
         _replacements (Dict[str, str]): Mapping of variable names to their new values.
     """
+
     def __init__(self, replacements: List[Tuple[str, str]]) -> None:
         """Initializes the VariablesReplacer with a mapping of variable replacements.
 

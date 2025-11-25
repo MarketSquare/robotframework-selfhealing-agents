@@ -1,20 +1,25 @@
-from typing import Final, Any
+from typing import Any, Final
 
-from robot.model import TestCase
 from robot import result, running
 from robot.api import logger as rf_logger
 from robot.libraries.BuiltIn import BuiltIn
+from robot.model import TestCase
 
-from SelfhealingAgents.utils.logging import initialize_logger
-from SelfhealingAgents.utils.logfire_init import init_logfire
-from SelfhealingAgents.self_healing_system.schemas.internal_state.report_data import ReportData
-from SelfhealingAgents.self_healing_system.kickoff_multi_agent_system import KickoffMultiAgentSystem
-from SelfhealingAgents.self_healing_system.schemas.internal_state.listener_state import ListenerState
+from SelfhealingAgents.self_healing_system.kickoff_multi_agent_system import (
+    KickoffMultiAgentSystem,
+)
 from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
 )
-
+from SelfhealingAgents.self_healing_system.schemas.internal_state.listener_state import (
+    ListenerState,
+)
+from SelfhealingAgents.self_healing_system.schemas.internal_state.report_data import (
+    ReportData,
+)
+from SelfhealingAgents.utils.logfire_init import init_logfire
+from SelfhealingAgents.utils.logging import initialize_logger
 
 init_logfire()
 initialize_logger()
@@ -35,6 +40,7 @@ class SelfHealingEngine:
     Attributes:
         _listener_state (ListenerState): The shared ListenerState object for maintaining state across the test run.
     """
+
     def __init__(self, listener_state: ListenerState):
         """Initializes the SelfHealingEngine.
 
@@ -87,12 +93,14 @@ class SelfHealingEngine:
 
                 if self._listener_state.healed:
                     if keyword_return_value and result_.assign:
-                        BuiltIn().set_local_variable(result_.assign[0], keyword_return_value)
+                        BuiltIn().set_local_variable(
+                            result_.assign[0], keyword_return_value
+                        )
                     result_.status = "PASS"
                     self._record_report(
                         pre_healing_data,
                         self._listener_state.tried_locators[-1],
-                        result_.status
+                        result_.status,
                     )
             self._reset_state()
         return None
@@ -161,7 +169,9 @@ class SelfHealingEngine:
         except IndexError:
             return None
         self._listener_state.tried_locators.append(suggestion)
-        result: Any = self._rerun_keyword_with_suggested_locator(data, suggested_locator=suggestion)
+        result: Any = self._rerun_keyword_with_suggested_locator(
+            data, suggested_locator=suggestion
+        )
         self._listener_state.healed = True
         if not self._listener_state.suggestions:
             self._should_generate_locators = True
@@ -169,10 +179,8 @@ class SelfHealingEngine:
 
     @staticmethod
     def _rerun_keyword_with_suggested_locator(
-            data: running.Keyword,
-            *,
-            suggested_locator: str | None
-    )-> str | None:
+        data: running.Keyword, *, suggested_locator: str | None
+    ) -> str | None:
         """Reruns a keyword with a suggested locator argument.
 
         Modifies the keyword arguments to use the suggested locator and executes the keyword again.

@@ -19,6 +19,7 @@ class _ReportDataStub:
     failed_locator: str
     healed_locator: str
     keyword_source: str
+    keyword_args: list[str] | None = None
 
 
 class _FakeFile:
@@ -49,8 +50,16 @@ class _FakeResourceImport:
 
 
 class _FakeVariable:
-    def __init__(self, value: Iterable[str]) -> None:
-        self.value: Tuple[str, ...] = tuple(value)
+    def __init__(self, name: str, value: Iterable[str] | None = None) -> None:
+        self.name: str = name
+        self.value: Tuple[str, ...] = tuple(value or [])
+        arguments = list(self.value or [""])
+        self.tokens = [
+            types.SimpleNamespace(value=name, type="VARIABLE"),
+            types.SimpleNamespace(value="    ", type="SEPARATOR"),
+            *[types.SimpleNamespace(value=arg, type="ARGUMENT") for arg in arguments],
+            types.SimpleNamespace(value="\n", type="EOL"),
+        ]
 
 
 class _FakeVariableSection:
@@ -58,10 +67,38 @@ class _FakeVariableSection:
         self.body: List[_FakeVariable] = body
 
 
+class _FakeKeyword:
+    def __init__(self, name: str) -> None:
+        self.name: str = name
+        self.visits: List[Tuple[str, List[Tuple[str, str]]]] = []
+
+
+class _FakeKeywordSection:
+    def __init__(self, body: List[Any]) -> None:
+        self.body: List[Any] = body
+
+
+class _FakeTestCase:
+    def __init__(self, name: str) -> None:
+        self.name: str = name
+        self.visits: List[Tuple[str, List[Tuple[str, str]]]] = []
+
+
+class _FakeTestCaseSection:
+    def __init__(self, body: List[Any]) -> None:
+        self.body: List[Any] = body
+
+
+class _FakeComment:
+    def __init__(self) -> None:
+        self.visits: List[Tuple[str, List[Tuple[str, str]]]] = []
+
+
 class _RecorderVisitor:
-    def __init__(self, kind: str, replacements: List[Tuple[str, str]]) -> None:
+    def __init__(self, kind: str, replacements: List[Any], variable_updates: dict[str, str] | None = None) -> None:
         self.kind: str = kind
-        self.replacements: List[Tuple[str, str]] = replacements
+        self.replacements: List[Any] = replacements
+        self.variable_updates: dict[str, str] = variable_updates or {}
 
     def visit(self, model: _FakeFile) -> None:
         model.visits.append((self.kind, self.replacements))
@@ -75,9 +112,15 @@ def module_under_test(monkeypatch: pytest.MonkeyPatch) -> types.ModuleType:
     monkeypatch.setattr(mod, "SettingSection", _FakeSettingSection, raising=True)
     monkeypatch.setattr(mod, "ResourceImport", _FakeResourceImport, raising=True)
     monkeypatch.setattr(mod, "VariableSection", _FakeVariableSection, raising=True)
+    monkeypatch.setattr(mod, "TestCaseSection", _FakeTestCaseSection, raising=True)
+    monkeypatch.setattr(mod, "KeywordSection", _FakeKeywordSection, raising=True)
 
-    def locator_replacer_factory(replacements: List[Tuple[str, str]]) -> _RecorderVisitor:
-        return _RecorderVisitor("locator", replacements)
+    def locator_replacer_factory(replacements: List[Any]) -> _RecorderVisitor:
+        fake_updates = {}
+        for repl in replacements:
+            if hasattr(repl, "failed_locator"):
+                fake_updates[repl.failed_locator] = getattr(repl, "healed_locator", "")
+        return _RecorderVisitor("locator", replacements, fake_updates)
 
     def variables_replacer_factory(replacements: List[Tuple[str, str]]) -> _RecorderVisitor:
         return _RecorderVisitor("variables", replacements)
@@ -212,7 +255,9 @@ def test_replace_in_common_model_applies_visitors_and_saves(
     tmp_path: Path,
 ) -> None:
     suite_path = tmp_suite_paths["suite"]
-    fake_models[str(suite_path)] = _FakeFile(sections=[])
+    test_cases = [_FakeTestCase(name=f"Test{i}") for i in range(1, 4)]
+    test_section = module_under_test.TestCaseSection(body=test_cases)
+    fake_models[str(suite_path)] = _FakeFile(sections=[test_section])
 
     report = HealedFilesReport(base_dir=tmp_path)
     replacements: List[LocatorReplacements] = [
@@ -227,15 +272,40 @@ def test_replace_in_common_model_applies_visitors_and_saves(
     out_file = out_dir / suite_path.name
     assert out_file.exists()
     model = fake_models[str(suite_path)]
-    expected = [
-        ('variables', [
-            ('a', 'b'),
-            ('c', 'd'),
-            ('e', 'f'),
-        ])
-    ]
-    assert model.visits == expected
+    for case in test_cases:
+        assert case.visits and case.visits[0][0] == "locator"
+    assert model.visits
+    assert model.visits[-1][0] == "variables"
+    assert len(model.visits[-1][1]) == len(replacements)
     assert model.saved_to == out_file
+
+
+def test_replace_in_common_model_skips_comment_entries(
+    module_under_test: types.ModuleType,
+    fake_models: dict[str, _FakeFile],
+    tmp_suite_paths: dict[str, Path],
+    tmp_path: Path,
+) -> None:
+    suite_path = tmp_suite_paths["suite"]
+    comment = _FakeComment()
+    keyword = _FakeKeyword(name="Reusable Keyword")
+    keyword_section = module_under_test.KeywordSection(body=[comment, keyword])
+    fake_models[str(suite_path)] = _FakeFile(sections=[keyword_section])
+
+    report = HealedFilesReport(base_dir=tmp_path)
+    replacements: List[LocatorReplacements] = [
+        LocatorReplacements(
+            test_case="",
+            locator_origin="Reusable Keyword",
+            failed_locator="old",
+            healed_locator="new",
+        )
+    ]
+
+    report._replace_in_common_model(source_path=suite_path, replacements=replacements)
+
+    assert keyword.visits == [("locator", replacements)]
+    assert comment.visits == []
 
 
 def test_replace_in_common_model_raises_runtime_error_on_save_failure(
@@ -273,7 +343,12 @@ def test_replace_in_resource_model_applies_when_defined_and_appends_path(
     suite_model = _FakeFile(sections=[setting])
     fake_models[str(suite_path)] = suite_model
 
-    var_section = _FakeVariableSection(body=[_FakeVariable(value=["${LOC}", "${OTHER}"])])
+    var_section = _FakeVariableSection(
+        body=[
+            _FakeVariable(name="${LOC}", value=["old-loc"]),
+            _FakeVariable(name="${OTHER}", value=["other"]),
+        ]
+    )
     resource_model = _FakeFile(sections=[var_section])
     fake_models[str(resource_path)] = resource_model
 
@@ -297,11 +372,13 @@ def test_replace_in_resource_model_applies_when_defined_and_appends_path(
     replacements = [
         LocatorReplacements(test_case="", locator_origin="", failed_locator="${LOC}", healed_locator="${HEALED}")
     ]
+    variable_updates = {"${LOC}": "${HEALED}"}
 
     report._replace_in_resource_model(
         source_path=suite_path,
         replacements=replacements,
         report_context=ctx,
+        variable_updates=variable_updates,
     )
 
     out_dir = tmp_path / "healed_files" / suite_path.parent.name
@@ -318,6 +395,7 @@ def test_replace_in_resource_model_applies_when_defined_and_appends_path(
         source_path=suite_path,
         replacements=replacements,
         report_context=ctx,
+        variable_updates=variable_updates,
     )
     assert any(str(out_file) == c for c in get_resource_calls)
 
@@ -335,7 +413,7 @@ def test_replace_in_resource_model_ignores_when_no_matching_defined_vars(
     suite_model = _FakeFile(sections=[setting])
     fake_models[str(suite_path)] = suite_model
 
-    var_section = _FakeVariableSection(body=[_FakeVariable(value=["${NOT_ME}"])])
+    var_section = _FakeVariableSection(body=[_FakeVariable(name="${NOT_ME}", value=["noop"])])
     res_model = _FakeFile(sections=[var_section])
     fake_models[str(resource_path)] = res_model
     fake_models[str(tmp_suite_paths["suites_dir"] / resource_path.name)] = res_model
@@ -346,11 +424,13 @@ def test_replace_in_resource_model_ignores_when_no_matching_defined_vars(
     replacements = [
         LocatorReplacements(test_case="", locator_origin="", failed_locator="${LOCATOR}", healed_locator="${NEW}")
     ]
+    variable_updates = {}
 
     report._replace_in_resource_model(
         source_path=suite_path,
         replacements=replacements,
         report_context=ctx,
+        variable_updates=variable_updates,
     )
 
     out_dir = tmp_path / "healed_files" / suite_path.parent.name
@@ -374,7 +454,10 @@ def test_replace_in_resource_model_swallows_errors(
     ctx = ReportContext(report_info=[])
 
     report._replace_in_resource_model(
-        source_path=tmp_suite_paths["suite"], replacements=[], report_context=ctx
+        source_path=tmp_suite_paths["suite"],
+        replacements=[],
+        report_context=ctx,
+        variable_updates={},
     )
 
     assert ctx.external_resource_paths == []
@@ -395,19 +478,22 @@ def test_generate_report_deduplicates_sources_and_calls_children(
     calls_common: List[Path] = []
     calls_resource: List[Path] = []
 
-    def _common(self: HealedFilesReport, source_path: Path, replacements: list) -> None:
+    def _common(self: HealedFilesReport, source_path: Path, replacements: list) -> dict[str, str]:
         # replacements should be a list of LocatorReplacements objects
         assert all(isinstance(r, LocatorReplacements) for r in replacements)
         calls_common.append(source_path)
+        return {"${FAKE}": "value"}
 
     def _resource(
         self: HealedFilesReport,
         source_path: Path,
         replacements: list,
         report_context: ReportContext,
+        variable_updates: dict[str, str],
     ) -> None:
         # replacements should be a list of LocatorReplacements objects
         assert all(isinstance(r, LocatorReplacements) for r in replacements)
+        assert variable_updates == {"${FAKE}": "value"}
         calls_resource.append(source_path)
 
     monkeypatch.setattr(HealedFilesReport, "_replace_in_common_model", _common, raising=True)

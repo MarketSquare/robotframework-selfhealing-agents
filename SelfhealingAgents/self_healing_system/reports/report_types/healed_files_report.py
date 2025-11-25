@@ -1,24 +1,32 @@
 from pathlib import Path
-from typing import Dict, List, Tuple, Set
+from typing import Dict, List, Set, Tuple
 
-from robot.parsing.model import VariableSection, File, TestCaseSection, KeywordSection
 from robot.api.parsing import (
+    EmptyLine,
+    ResourceImport,
+    SettingSection,
     get_model,
     get_resource_model,
-    SettingSection,
-    ResourceImport,
-    EmptyLine
 )
+from robot.parsing.model import File, KeywordSection, TestCaseSection, VariableSection
 
-from SelfhealingAgents.utils.logging import log
-from SelfhealingAgents.self_healing_system.reports.report_types.base_report import BaseReport
-from SelfhealingAgents.self_healing_system.schemas.internal_state.report_data import ReportData
-from SelfhealingAgents.self_healing_system.schemas.internal_state.report_context import ReportContext
+from SelfhealingAgents.self_healing_system.reports.report_types.base_report import (
+    BaseReport,
+)
 from SelfhealingAgents.self_healing_system.reports.robot_model_visitors import (
     LocatorReplacer,
-    VariablesReplacer
+    VariablesReplacer,
 )
-from SelfhealingAgents.self_healing_system.schemas.internal_state.locator_replacements import LocatorReplacements
+from SelfhealingAgents.self_healing_system.schemas.internal_state.locator_replacements import (
+    LocatorReplacements,
+)
+from SelfhealingAgents.self_healing_system.schemas.internal_state.report_context import (
+    ReportContext,
+)
+from SelfhealingAgents.self_healing_system.schemas.internal_state.report_data import (
+    ReportData,
+)
+from SelfhealingAgents.utils.logging import log
 
 
 class HealedFilesReport(BaseReport):
@@ -27,6 +35,7 @@ class HealedFilesReport(BaseReport):
     This report applies locator and variable replacements to test suites and their
     imported resources, saving the healed versions to the reports directory.
     """
+
     def __init__(self, base_dir: Path) -> None:
         """Initializes the HealedFilesReport with the given base directory.
 
@@ -51,11 +60,13 @@ class HealedFilesReport(BaseReport):
         Raises:
             RuntimeError: If saving healed suites fails.
         """
-        sources: Set[Path] = {Path(entry.keyword_source) for entry in report_context.report_info}
+        sources: Set[Path] = {
+            Path(entry.keyword_source) for entry in report_context.report_info
+        }
 
         for source_path in sources:
-            replacements: List[LocatorReplacements] = (
-                self._get_replacements_for_file(report_context.report_info, source_path)
+            replacements: List[LocatorReplacements] = self._get_replacements_for_file(
+                report_context.report_info, source_path
             )
             variable_updates = self._replace_in_common_model(source_path, replacements)
             self._replace_in_resource_model(
@@ -68,8 +79,7 @@ class HealedFilesReport(BaseReport):
 
     @staticmethod
     def _get_replacements_for_file(
-            report_info: List[ReportData],
-            source_path: Path
+        report_info: List[ReportData], source_path: Path
     ) -> List[LocatorReplacements]:
         """Builds a list of original-to-healed locator pairs for a file.
 
@@ -117,9 +127,9 @@ class HealedFilesReport(BaseReport):
         ]
 
     def _replace_in_common_model(
-            self,
-            source_path: Path,
-            replacements: List[LocatorReplacements],
+        self,
+        source_path: Path,
+        replacements: List[LocatorReplacements],
     ) -> Dict[str, str]:
         """Applies locator and variable replacements to a Robot Framework file and saves it.
 
@@ -144,7 +154,9 @@ class HealedFilesReport(BaseReport):
                     test_name = getattr(test, "name", None)
                     if not test_name:
                         continue
-                    filtered_replacements = [e for e in replacements if e.test_case == test_name]
+                    filtered_replacements = [
+                        e for e in replacements if e.test_case == test_name
+                    ]
                     replacer = LocatorReplacer(filtered_replacements)
                     replacer.visit(test)
                     variable_updates.update(replacer.variable_updates)
@@ -206,20 +218,26 @@ class HealedFilesReport(BaseReport):
                 res_path: Path = source_path.parent / res.name
                 res_model: File = get_resource_model(str(res_path))
                 variable_section: VariableSection = next(
-                    sec for sec in res_model.sections if isinstance(sec, VariableSection)
+                    sec
+                    for sec in res_model.sections
+                    if isinstance(sec, VariableSection)
                 )
                 defined_names: Set[str] = {
                     var.tokens[0].value
                     for var in variable_section.body
                     if not isinstance(var, EmptyLine)
                 }
-                if variable_updates and any(name in defined_names for name in variable_updates):
+                if variable_updates and any(
+                    name in defined_names for name in variable_updates
+                ):
                     res_dir: Path = self._out_dir / res_path.parent.name
                     res_dir.mkdir(parents=True, exist_ok=True)
                     res_out: Path = res_dir / res_path.name
                     if res_out.exists():
                         res_model: File = get_resource_model(res_out)
-                    unpacked_replacements: List[Tuple[str, str]] = list(variable_updates.items())
+                    unpacked_replacements: List[Tuple[str, str]] = list(
+                        variable_updates.items()
+                    )
                     VariablesReplacer(unpacked_replacements).visit(res_model)
                     res_model.save(str(res_out))
                     report_context.external_resource_paths.append(res_path)
