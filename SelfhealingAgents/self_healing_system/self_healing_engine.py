@@ -190,10 +190,16 @@ class SelfHealingEngine:
             data.args = list(data.args)
             data.args[0] = suggested_locator
         try:
-            rf_logger.info(
-                f"Re-trying Keyword '{data.name}' with arguments '{data.args}'.",
-                also_console=True,
-            )
+            try:
+                rf_logger.info(
+                    f"Re-trying Keyword '{data.name}' with arguments '{data.args}'.",
+                    also_console=True,
+                )
+            except OSError:
+                rf_logger.info(
+                    f"Re-trying Keyword '{data.name}' with arguments '{data.args}'.",
+                    also_console=False,
+                )
             return_value: Any = BuiltIn().run_keyword(data.name, *data.args)
             # BuiltIn().run_keyword("Take Screenshot")      # TODO: discuss if this is valuable for other RF-error types
             return return_value
@@ -216,7 +222,7 @@ class SelfHealingEngine:
             healed_locator: The locator used for healing, if successful.
             status: The status of the keyword execution (e.g., 'PASS').
         """
-        args = data.args
+        args = list(data.args)
         failed_locator: str = BuiltIn().replace_variables(args[0]) if args else ""
 
         current = data

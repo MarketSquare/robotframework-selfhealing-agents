@@ -14,3 +14,7 @@ class LocatorReplacements(BaseModel):
     locator_origin: str = Field(..., description="Origin where the locator is called (Test or Keyword).")
     failed_locator: str = Field(..., description="Original locator that failed.")
     healed_locator: str = Field(..., description="Healed locator that replaces the failed one.")
+    keyword_args: list[str] | None = Field(
+        default=None,
+        description="Raw keyword arguments at the time of failure to help reconstruct locators.",
+    )

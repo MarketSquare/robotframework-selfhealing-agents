@@ -1,6 +1,5 @@
 from pathlib import Path
-from itertools import chain
-from typing import List, Tuple, Set
+from typing import Dict, List, Tuple, Set
 
 from robot.parsing.model import VariableSection, File, TestCaseSection, KeywordSection
 from robot.api.parsing import (
@@ -58,8 +57,13 @@ class HealedFilesReport(BaseReport):
             replacements: List[LocatorReplacements] = (
                 self._get_replacements_for_file(report_context.report_info, source_path)
             )
-            self._replace_in_common_model(source_path, replacements)
-            self._replace_in_resource_model(source_path, replacements, report_context)
+            variable_updates = self._replace_in_common_model(source_path, replacements)
+            self._replace_in_resource_model(
+                source_path,
+                replacements,
+                report_context,
+                variable_updates,
+            )
         return report_context
 
     @staticmethod
@@ -106,7 +110,8 @@ class HealedFilesReport(BaseReport):
                 test_case=entry.test_name,
                 locator_origin=entry.locator_origin,
                 failed_locator=entry.failed_locator,
-                healed_locator=entry.healed_locator
+                healed_locator=entry.healed_locator,
+                keyword_args=list(getattr(entry, "keyword_args", []) or []) or None,
             )
             for entry in entries
         ]
@@ -115,7 +120,7 @@ class HealedFilesReport(BaseReport):
             self,
             source_path: Path,
             replacements: List[LocatorReplacements],
-    ) -> None:
+    ) -> Dict[str, str]:
         """Applies locator and variable replacements to a Robot Framework file and saves it.
 
         Loads the AST for the suite or resource at `source_path`, applies the given
@@ -131,18 +136,33 @@ class HealedFilesReport(BaseReport):
         """
         model: File = get_model(str(source_path))
 
+        variable_updates: Dict[str, str] = {}
+
         for sec in model.sections:
             if isinstance(sec, TestCaseSection):
                 for test in sec.body:
-                    filtered_replacements = [e for e in replacements if e.test_case == test.name]
-                    LocatorReplacer(filtered_replacements).visit(test)
+                    test_name = getattr(test, "name", None)
+                    if not test_name:
+                        continue
+                    filtered_replacements = [e for e in replacements if e.test_case == test_name]
+                    replacer = LocatorReplacer(filtered_replacements)
+                    replacer.visit(test)
+                    variable_updates.update(replacer.variable_updates)
             if isinstance(sec, KeywordSection):
                 for keyword in sec.body:
-                    filtered_replacements = [e for e in replacements if e.locator_origin == keyword.name]
-                    LocatorReplacer(filtered_replacements).visit(keyword)
+                    keyword_name = getattr(keyword, "name", None)
+                    if not keyword_name:
+                        continue
+                    filtered_replacements = [
+                        e for e in replacements if e.locator_origin == keyword_name
+                    ]
+                    replacer = LocatorReplacer(filtered_replacements)
+                    replacer.visit(keyword)
+                    variable_updates.update(replacer.variable_updates)
 
-        unpacked_replacements_vars = [(e.failed_locator, e.healed_locator) for e in replacements]
-        VariablesReplacer(unpacked_replacements_vars).visit(model)
+        variable_replacement_pairs = list(variable_updates.items())
+        if variable_replacement_pairs:
+            VariablesReplacer(variable_replacement_pairs).visit(model)
 
         suite_output_dir: Path = self._out_dir / source_path.parent.name
         suite_output_dir.mkdir(parents=True, exist_ok=True)
@@ -154,11 +174,14 @@ class HealedFilesReport(BaseReport):
                 f"Failed to save healed test suite to {suite_output_file}"
             ) from exc
 
+        return variable_updates
+
     def _replace_in_resource_model(
         self,
         source_path: Path,
         replacements: List[LocatorReplacements],
-        report_context: ReportContext
+        report_context: ReportContext,
+        variable_updates: Dict[str, str],
     ) -> None:
         """Applies variable replacements to imported resource files and saves them.
 
@@ -182,22 +205,21 @@ class HealedFilesReport(BaseReport):
             for res in resources:
                 res_path: Path = source_path.parent / res.name
                 res_model: File = get_resource_model(str(res_path))
-                defined: Set[str] = {
-                    v for v in next(
-                        sec for sec in res_model.sections if isinstance(sec, VariableSection)
-                    ).body
+                variable_section: VariableSection = next(
+                    sec for sec in res_model.sections if isinstance(sec, VariableSection)
+                )
+                defined_names: Set[str] = {
+                    var.tokens[0].value
+                    for var in variable_section.body
+                    if not isinstance(var, EmptyLine)
                 }
-                filtered_defined = [v.value for v in defined if not isinstance(v, EmptyLine)]
-                unpacked_tuples: List[str] = list(chain.from_iterable(filtered_defined))
-                if any(repl.failed_locator in unpacked_tuples for repl in replacements):
+                if variable_updates and any(name in defined_names for name in variable_updates):
                     res_dir: Path = self._out_dir / res_path.parent.name
                     res_dir.mkdir(parents=True, exist_ok=True)
                     res_out: Path = res_dir / res_path.name
                     if res_out.exists():
                         res_model: File = get_resource_model(res_out)
-                    unpacked_replacements: List[Tuple[str, str]] = [
-                        (e.failed_locator, e.healed_locator) for e in replacements
-                    ]
+                    unpacked_replacements: List[Tuple[str, str]] = list(variable_updates.items())
                     VariablesReplacer(unpacked_replacements).visit(res_model)
                     res_model.save(str(res_out))
                     report_context.external_resource_paths.append(res_path)
