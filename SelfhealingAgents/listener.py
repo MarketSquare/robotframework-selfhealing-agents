@@ -38,8 +38,9 @@ class SelfhealingAgents(ListenerV3):
         The "_state" attribute of type ListenerState is shared and manipulated
         in the self_healing_engine module.
         """
-        self._robust_env_load()
+        #self._robust_env_load()
 
+        load_dotenv(dotenv_path="/opt/robotframework/tests/.env", override=False)
         self.ROBOT_LIBRARY_LISTENER: SelfhealingAgents = self
         self._state: ListenerState = ListenerState(cfg=Cfg())  # type: ignore
         self._self_healing_engine: SelfHealingEngine = SelfHealingEngine(self._state)
@@ -51,20 +52,6 @@ class SelfhealingAgents(ListenerV3):
         )
 
     def _robust_env_load(self) -> None:
-        """Load environment variables in a way that supports both:
-        1) GitHub Actions/Docker provided process environment (secrets already present)
-        2) A local .env file (e.g., created by the workflow under ./robot/.env)
-
-        Strategy:
-        - Do NOT override already-present environment variables (so that GitHub secrets win).
-        - Try explicit candidate .env locations that commonly occur in CI:
-            * $DOTENV_PATH (if set)
-            * CWD/.env (Robot working-directory)
-            * directory of this file /.env
-            * auto-discovery via find_dotenv(usecwd=True) as a fallback
-        - If none found, we still call load_dotenv() without a path so that python-dotenv
-          can perform its default discovery (no overrides).
-        """
         loaded_from: Optional[str] = None
 
         explicit_path: Optional[str] = os.environ.get("DOTENV_PATH")
