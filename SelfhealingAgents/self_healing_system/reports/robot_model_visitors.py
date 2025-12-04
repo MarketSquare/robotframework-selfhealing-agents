@@ -1,9 +1,15 @@
-from typing import Any, List, Tuple, Dict
+from typing import Any, Dict, List, Tuple
 
 from robot.api.parsing import ModelTransformer
 from robot.parsing.model import VariableSection
 
-from SelfhealingAgents.self_healing_system.schemas.internal_state.locator_replacements import LocatorReplacements
+from SelfhealingAgents.self_healing_system.reports.locator_argument_analyzer import (
+    ArgumentAnalysisResult,
+    analyze_locator_argument,
+)
+from SelfhealingAgents.self_healing_system.schemas.internal_state.locator_replacements import (
+    LocatorReplacements,
+)
 
 
 class LocatorReplacer(ModelTransformer):
@@ -15,6 +21,7 @@ class LocatorReplacer(ModelTransformer):
     Attributes:
         _replacements (Dict[str, str]): Mapping of old locator strings to their new values.
     """
+
     def __init__(self, replacements: List[LocatorReplacements]) -> None:
         """Initializes the LocatorReplacer with a mapping of locator replacements.
 
@@ -24,6 +31,8 @@ class LocatorReplacer(ModelTransformer):
         """
         super().__init__()
         self._replacements: List[LocatorReplacements] = replacements
+        self._processed: set[int] = set()
+        self.variable_updates: Dict[str, str] = {}
 
     def visit_KeywordCall(self, node: Any) -> Any:
         """Replaces matching locator tokens in a KeywordCall node.
@@ -39,8 +48,30 @@ class LocatorReplacer(ModelTransformer):
         """
         for token in node.tokens[1:]:
             for repl in self._replacements:
-                if token.value == repl.failed_locator:
-                    token.value = repl.healed_locator
+                repl_id = id(repl)
+                if repl_id in self._processed:
+                    continue
+
+                raw_locator_arg: str | None = None
+                if repl.keyword_args:
+                    raw_locator_arg = repl.keyword_args[0]
+
+                if raw_locator_arg:
+                    if token.value.strip() != raw_locator_arg.strip():
+                        continue
+                else:
+                    if token.value != repl.failed_locator:
+                        continue
+
+                analysis: ArgumentAnalysisResult = analyze_locator_argument(
+                    raw_argument=raw_locator_arg or token.value,
+                    failed_locator=repl.failed_locator,
+                    healed_locator=repl.healed_locator,
+                )
+                token.value = analysis.token_value
+                for name, value in analysis.variable_updates:
+                    self.variable_updates[name] = value
+                self._processed.add(repl_id)
         return node
 
 
@@ -53,6 +84,7 @@ class VariablesReplacer(ModelTransformer):
     Attributes:
         _replacements (Dict[str, str]): Mapping of variable names to their new values.
     """
+
     def __init__(self, replacements: List[Tuple[str, str]]) -> None:
         """Initializes the VariablesReplacer with a mapping of variable replacements.
 
@@ -61,7 +93,9 @@ class VariablesReplacer(ModelTransformer):
                 variable names should be replaced and their corresponding new values.
         """
         super().__init__()
-        self._replacements: Dict[str, str] = dict(replacements)
+        self._replacements: Dict[str, str] = {
+            name: value for name, value in replacements if name and value is not None
+        }
 
     def visit_VariableSection(self, node: VariableSection) -> Any:
         """Replaces variable values in the VariableSection node.
@@ -77,9 +111,13 @@ class VariablesReplacer(ModelTransformer):
         """
         for variable in node.body:
             try:
-                name_token: str = variable.tokens[2].value
+                name_token: str = variable.tokens[0].value
                 if name_token in self._replacements:
-                    variable.tokens[2].value = self._replacements[name_token]
-            except:
+                    # Variable values start at index 2 (arguments) – update each.
+                    for idx in range(2, len(variable.tokens) - 1):
+                        if variable.tokens[idx].type == "ARGUMENT":
+                            variable.tokens[idx].value = self._replacements[name_token]
+                            break
+            except Exception:
                 pass
         return self.generic_visit(node)

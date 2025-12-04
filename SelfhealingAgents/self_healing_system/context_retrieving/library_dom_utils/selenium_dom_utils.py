@@ -1,12 +1,17 @@
-from typing import List, Dict
+import re
+from typing import Dict, Iterable, List
 
+from bs4 import BeautifulSoup, Tag
 from robot.libraries.BuiltIn import BuiltIn
-from bs4 import BeautifulSoup, ResultSet, Tag
 from selenium.webdriver.remote.webelement import WebElement
 
+from SelfhealingAgents.self_healing_system.context_retrieving.dom_soap_utils import (
+    SoupDomUtils,
+)
+from SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import (
+    BaseDomUtils,
+)
 from SelfhealingAgents.utils.logging import log
-from SelfhealingAgents.self_healing_system.context_retrieving.dom_soap_utils import SoupDomUtils
-from SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.base_dom_utils import BaseDomUtils
 
 
 class SeleniumDomUtils(BaseDomUtils):
@@ -18,6 +23,38 @@ class SeleniumDomUtils(BaseDomUtils):
     Attributes:
         _library_instance: Instance of the SeleniumLibrary used for DOM interactions.
     """
+
+    TEXT_INPUT_KEYWORDS = {
+        "input text",
+        "input password",
+        "press keys",
+        "press key",
+        "textarea should contain",
+        "textarea value should be",
+        "textfield should contain",
+        "textfield value should be",
+        "clear text",
+    }
+
+    CLICK_KEYWORDS = {
+        "click button",
+        "click link",
+        "click element",
+        "click image",
+        "click element at coordinates",
+        "click",
+        "click item",
+        "check checkbox",
+        "uncheck checkbox",
+    }
+
+    SELECT_KEYWORDS = {
+        "select options",
+        "select options by",
+        "list",
+        "select",
+    }
+
     def __init__(self):
         """Initialize Selenium DOM utilities."""
         self._library_instance = BuiltIn().get_library_instance("SeleniumLibrary")
@@ -54,7 +91,9 @@ class SeleniumDomUtils(BaseDomUtils):
 
         try:
             # Use dynamic attribute access to handle different SeleniumLibrary versions
-            elements: List[WebElement] = getattr(self._library_instance, "get_webelements")(locator)
+            elements: List[WebElement] = getattr(
+                self._library_instance, "get_webelements"
+            )(locator)
             return len(elements) == 1
         except Exception:
             return False
@@ -100,7 +139,9 @@ class SeleniumDomUtils(BaseDomUtils):
         if self._library_instance is None:
             return False
         try:
-            element: WebElement = getattr(self._library_instance, "get_webelement")(locator)
+            element: WebElement = getattr(self._library_instance, "get_webelement")(
+                locator
+            )
 
             # Get tag name using element property
             tag: str = element.tag_name.lower()
@@ -168,6 +209,11 @@ class SeleniumDomUtils(BaseDomUtils):
         dom_tree: str = self.get_dom_tree()
         soup: BeautifulSoup = BeautifulSoup(dom_tree, "html.parser")
 
+        keyword_key: str = (keyword_name or "").lower()
+        heuristic_locators: List[str] = self._generate_semantic_locators(
+            soup, failed_locator, keyword_key
+        )
+
         match keyword_name:
             case (
                 "Input Text"
@@ -181,7 +227,7 @@ class SeleniumDomUtils(BaseDomUtils):
                 | "Clear Text"
             ):
                 element_types: List[str] = ["textarea", "input"]
-                elements: ResultSet = soup.find_all(element_types)
+                elements = soup.find_all(element_types)
             case (
                 "Click Button"
                 | "Click Link"
@@ -199,22 +245,32 @@ class SeleniumDomUtils(BaseDomUtils):
                     "li",
                     SoupDomUtils.has_direct_text,
                 ]
-                elements: ResultSet = soup.find_all(element_types)
+                elements = soup.find_all(element_types)
             case s if "list" in s.lower():
                 element_types: List[str] = ["select"]
-                elements: ResultSet = soup.find_all(element_types)
+                elements = soup.find_all(element_types)
             case c if "checkbox" in c.lower():
                 element_types: List[str] = ["input", "button", "checkbox"]
-                elements: ResultSet = soup.find_all(element_types)
+                elements = soup.find_all(element_types)
             case "Get Text" | "Element Text Should Be" | "Element Text Should Not Be":
-                element_types: List[str] = ["label", "div", "span", SoupDomUtils.has_direct_text]
-                elements: ResultSet = soup.find_all(element_types)
+                element_types: List[str] = [
+                    "label",
+                    "div",
+                    "span",
+                    SoupDomUtils.has_direct_text,
+                ]
+                elements = soup.find_all(element_types)
+            case _:
+                elements = soup.find_all(True)
 
         filtered_elements: List[Tag] = [
             elem
             for elem in elements
             if (
-                (SoupDomUtils.is_leaf_or_lowest(elem) or SoupDomUtils.has_direct_text(elem))
+                (
+                    SoupDomUtils.is_leaf_or_lowest(elem)
+                    or SoupDomUtils.has_direct_text(elem)
+                )
                 and (not SoupDomUtils.has_parent_dialog_without_open(elem))
                 and (not SoupDomUtils.has_child_dialog_without_open(elem))
                 and (not SoupDomUtils.is_headline(elem))
@@ -223,7 +279,7 @@ class SeleniumDomUtils(BaseDomUtils):
             )
         ]
 
-        locators: List = []
+        locators: List = list(heuristic_locators)
         # Generate and display unique selectors
         for elem in filtered_elements:
             try:
@@ -232,7 +288,7 @@ class SeleniumDomUtils(BaseDomUtils):
                 locator = None
             if locator:
                 locators.append(locator)
-        return locators
+        return self._deduplicate(locators)
 
     def get_locator_metadata(self, locator: str) -> List[Dict]:
         """Get metadata for the given locator.
@@ -247,7 +303,9 @@ class SeleniumDomUtils(BaseDomUtils):
             return []
 
         try:
-            element: WebElement = getattr(self._library_instance, "get_webelement")(locator)
+            element: WebElement = getattr(self._library_instance, "get_webelement")(
+                locator
+            )
             metadata_list: List = []
 
             if element:
@@ -386,3 +444,254 @@ class SeleniumDomUtils(BaseDomUtils):
         if selector:
             return "xpath:" + selector
         return None
+
+    # --- Internal helpers -------------------------------------------------
+
+    def _generate_semantic_locators(
+        self, soup: BeautifulSoup, failed_locator: str, keyword_key: str
+    ) -> List[str]:
+        hint: str = self._strip_locator_hint(failed_locator)
+        locators: List[str] = []
+
+        if hint:
+            hint_lower: str = hint.lower()
+            tokens: List[str] = self._tokenize(hint_lower)
+
+            if keyword_key in self.TEXT_INPUT_KEYWORDS:
+                locators.extend(
+                    self._collect_form_field_locators(
+                        soup,
+                        hint,
+                        tokens,
+                        ["input", "textarea"],
+                        prefix="css=",
+                    )
+                )
+
+            if keyword_key in self.CLICK_KEYWORDS:
+                locators.extend(
+                    self._collect_form_field_locators(
+                        soup,
+                        hint,
+                        tokens,
+                        [
+                            "button",
+                            "a",
+                            "input",
+                            "label",
+                            "span",
+                            "div",
+                            "li",
+                        ],
+                        prefix="css=",
+                    )
+                )
+
+            if keyword_key in self.SELECT_KEYWORDS or "select" in keyword_key:
+                locators.extend(
+                    self._collect_form_field_locators(
+                        soup,
+                        hint,
+                        tokens,
+                        ["select"],
+                        prefix="css=",
+                    )
+                )
+
+        chained_hint = self._extract_chained_hint(failed_locator)
+        if chained_hint:
+            locators.extend(
+                self._collect_label_only_locators(
+                    soup,
+                    chained_hint,
+                    self._tokenize(chained_hint.lower()),
+                    prefix="css=",
+                )
+            )
+
+        locators.extend(
+            self._collect_class_token_locators(soup, failed_locator, prefix="css=")
+        )
+        return self._deduplicate(locators)
+
+    def _collect_form_field_locators(
+        self,
+        soup: BeautifulSoup,
+        hint: str,
+        tokens: List[str],
+        target_tags: List[str],
+        *,
+        prefix: str,
+    ) -> List[str]:
+        selectors: List[str] = []
+        hint_lower: str = hint.lower()
+
+        selectors.extend(
+            self._collect_label_only_locators(soup, hint, tokens, prefix=prefix)
+        )
+
+        for elem in soup.find_all(target_tags):
+            if self._hint_matches_element(elem, tokens):
+                css_selector = SoupDomUtils.generate_unique_css_selector(elem, soup)
+                if css_selector:
+                    selectors.append(f"{prefix}{css_selector}")
+
+        selectors.extend(
+            self._collect_text_based_locators(
+                soup,
+                hint_lower,
+                tokens,
+                target_tags,
+                prefix,
+            )
+        )
+
+        return selectors
+
+    def _collect_label_only_locators(
+        self,
+        soup: BeautifulSoup,
+        hint: str,
+        tokens: List[str],
+        *,
+        prefix: str,
+    ) -> List[str]:
+        selectors: List[str] = []
+        for label in soup.find_all("label"):
+            label_text: str = self._normalize_text(label.get_text(" "))
+            if not label_text:
+                continue
+            if (
+                not self._tokens_in_text(tokens, label_text.lower())
+                and hint.lower() not in label_text.lower()
+            ):
+                continue
+            related = self._find_related_input(label, soup)
+            if related:
+                css_selector = SoupDomUtils.generate_unique_css_selector(related, soup)
+                if css_selector:
+                    selectors.append(f"{prefix}{css_selector}")
+        return selectors
+
+    @staticmethod
+    def _find_related_input(label: Tag, soup: BeautifulSoup) -> Tag | None:
+        for_attr = label.get("for")
+        if for_attr:
+            candidate = soup.find(id=for_attr)
+            if candidate and candidate.name in ["input", "textarea", "select"]:
+                return candidate
+        sibling_input = label.find_previous("input")
+        if sibling_input:
+            return sibling_input
+        parent = label.parent
+        if parent:
+            descendant = parent.find(["input", "textarea", "select"])
+            if descendant:
+                return descendant
+        return None
+
+    def _collect_text_based_locators(
+        self,
+        soup: BeautifulSoup,
+        hint_lower: str,
+        tokens: List[str],
+        target_tags: List[str],
+        prefix: str,
+    ) -> List[str]:
+        selectors: List[str] = []
+        for elem in soup.find_all(target_tags):
+            text_value: str = self._normalize_text(elem.get_text(" "))
+            if not text_value:
+                continue
+            if hint_lower in text_value.lower() or self._tokens_in_text(
+                tokens, text_value.lower()
+            ):
+                css_selector = SoupDomUtils.generate_unique_css_selector(elem, soup)
+                if css_selector:
+                    selectors.append(f"{prefix}{css_selector}")
+        return selectors
+
+    def _collect_class_token_locators(
+        self, soup: BeautifulSoup, failed_locator: str, *, prefix: str
+    ) -> List[str]:
+        tokens: List[str] = re.findall(r"[a-zA-Z0-9_-]{4,}", failed_locator or "")
+        selectors: List[str] = []
+        if not tokens:
+            return selectors
+
+        for token in dict.fromkeys(token.lower() for token in tokens):
+            match = soup.find(
+                lambda tag: any(
+                    token in value.lower()
+                    for attr in ("id", "class", "name", "role", "type")
+                    for value in (
+                        tag.get(attr)
+                        if isinstance(tag.get(attr), list)
+                        else [tag.get(attr)]
+                        if tag.get(attr)
+                        else []
+                    )
+                )
+            )
+            if match:
+                css_selector = SoupDomUtils.generate_unique_css_selector(match, soup)
+                if css_selector:
+                    selectors.append(f"{prefix}{css_selector}")
+        return selectors
+
+    @staticmethod
+    def _strip_locator_hint(value: str | None) -> str:
+        if not value:
+            return ""
+        hint = value.strip()
+        if hint.startswith(("'", '"')) and hint.endswith(("'", '"')):
+            hint = hint[1:-1]
+        return hint.strip()
+
+    @staticmethod
+    def _extract_chained_hint(value: str | None) -> str:
+        if not value or ">>" not in value:
+            return ""
+        chained = value.split(">>")[-1].strip()
+        if chained.startswith(("'", '"')) and chained.endswith(("'", '"')):
+            chained = chained[1:-1]
+        return chained.strip()
+
+    @staticmethod
+    def _normalize_text(value: str | None) -> str:
+        if not value:
+            return ""
+        return re.sub(r"\s+", " ", value).strip()
+
+    @staticmethod
+    def _tokenize(value: str) -> List[str]:
+        return [token for token in re.split(r"\s+", value) if len(token) >= 3]
+
+    def _hint_matches_element(self, elem: Tag, tokens: List[str]) -> bool:
+        for attr in ("id", "name", "placeholder", "value", "role", "type"):
+            attr_val = elem.get(attr)
+            if isinstance(attr_val, str) and self._tokens_in_text(
+                tokens, attr_val.lower()
+            ):
+                return True
+        class_attr = elem.get("class")
+        if class_attr and any(
+            self._tokens_in_text(tokens, cls.lower()) for cls in class_attr
+        ):
+            return True
+        return False
+
+    @staticmethod
+    def _tokens_in_text(tokens: Iterable[str], text_value: str) -> bool:
+        return any(token in text_value for token in tokens)
+
+    @staticmethod
+    def _deduplicate(locators: List[str]) -> List[str]:
+        unique: List[str] = []
+        seen: set[str] = set()
+        for locator in locators:
+            if not locator or locator in seen:
+                continue
+            seen.add(locator)
+            unique.append(locator)
+        return unique
