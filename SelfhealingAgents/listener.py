@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from dotenv import load_dotenv, find_dotenv
 
 from robot import result, running
@@ -35,15 +37,9 @@ class SelfhealingAgents(ListenerV3):
         The "_state" attribute of type ListenerState is shared and manipulated
         in the self_healing_engine module.
         """
-        dotenv_path: str = find_dotenv(usecwd=True)
-        if dotenv_path:
-            load_dotenv(dotenv_path=dotenv_path, override=True)
-            rf_logger.info(f"loaded .env from {dotenv_path}")
-        else:
-            rf_logger.info("no .env found near current working directory")
-
+        self._robust_env_load()
         self.ROBOT_LIBRARY_LISTENER: SelfhealingAgents = self
-        self._state: ListenerState = ListenerState(cfg=Cfg())   # type: ignore
+        self._state: ListenerState = ListenerState(cfg=Cfg())  # type: ignore
         self._self_healing_engine: SelfHealingEngine = SelfHealingEngine(self._state)
         self._report_generator: ReportGenerator = ReportGenerator()
         self._closed: bool = False
@@ -52,8 +48,48 @@ class SelfhealingAgents(ListenerV3):
             f"{'enabled' if self._state.cfg.enable_self_healing else 'disabled'}"
         )
 
+    def _robust_env_load(self) -> None:
+        """Handles environment variables loading. First, it tries to find "DOTENV_PATH", if not
+           available, it searches directories. If neither of those work, it tries to load
+           the process environment variables.
+        """
+        loaded_from: str | None = None
+
+        explicit_path: str | None = os.environ.get("DOTENV_PATH")
+        if explicit_path and Path(explicit_path).is_file():
+            load_dotenv(dotenv_path=explicit_path, override=False)
+            loaded_from = explicit_path
+
+        if loaded_from is None:
+            candidates = [
+                Path(os.getcwd()) / ".env",
+                Path(__file__).resolve().parent / ".env",
+                ]
+            for p in candidates:
+                if p.is_file():
+                    load_dotenv(dotenv_path=str(p), override=False)
+                    loaded_from = str(p)
+                    break
+
+        if loaded_from is None:
+            try:
+                found = find_dotenv(usecwd=True)
+            except TypeError:
+                found = find_dotenv()
+            if found:
+                load_dotenv(dotenv_path=found, override=False)
+                loaded_from = found
+
+        if loaded_from is None:
+            load_dotenv(override=False)
+
+        if loaded_from:
+            rf_logger.info(f"environment variables loaded from .env: {loaded_from}")
+        else:
+            rf_logger.info("no .env file found; relying on existing process environment variables")
+
     def start_test(
-        self, data: running.TestCase, result_: result.TestCase
+            self, data: running.TestCase, result_: result.TestCase
     ) -> None:
         """Handles the start of a test case.
 
@@ -66,7 +102,7 @@ class SelfhealingAgents(ListenerV3):
         self._self_healing_engine.start_test(data, result_)
 
     def end_keyword(
-        self, data: running.Keyword, result_: result.Keyword
+            self, data: running.Keyword, result_: result.Keyword
     ) -> None:
         """Handles the end of a keyword execution.
 
@@ -79,7 +115,7 @@ class SelfhealingAgents(ListenerV3):
         self._self_healing_engine.end_keyword(data, result_)
 
     def end_test(
-        self, data: running.TestCase, result_: result.TestCase
+            self, data: running.TestCase, result_: result.TestCase
     ) -> None:
         """Handles the end of a test case.
 
