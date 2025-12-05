@@ -1,20 +1,26 @@
-from typing import Final, Any
+from pathlib import Path
+from typing import Any, Final
 
-from robot.model import TestCase
 from robot import result, running
 from robot.api import logger as rf_logger
 from robot.libraries.BuiltIn import BuiltIn
+from robot.model import TestCase
 
-from SelfhealingAgents.utils.logging import initialize_logger
-from SelfhealingAgents.utils.logfire_init import init_logfire
-from SelfhealingAgents.self_healing_system.schemas.internal_state.report_data import ReportData
-from SelfhealingAgents.self_healing_system.kickoff_multi_agent_system import KickoffMultiAgentSystem
-from SelfhealingAgents.self_healing_system.schemas.internal_state.listener_state import ListenerState
+from SelfhealingAgents.self_healing_system.kickoff_multi_agent_system import (
+    KickoffMultiAgentSystem,
+)
 from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import (
     LocatorHealingResponse,
     NoHealingNeededResponse,
 )
-
+from SelfhealingAgents.self_healing_system.schemas.internal_state.listener_state import (
+    ListenerState,
+)
+from SelfhealingAgents.self_healing_system.schemas.internal_state.report_data import (
+    ReportData,
+)
+from SelfhealingAgents.utils.logfire_init import init_logfire
+from SelfhealingAgents.utils.logging import initialize_logger
 
 init_logfire()
 initialize_logger()
@@ -35,6 +41,7 @@ class SelfHealingEngine:
     Attributes:
         _listener_state (ListenerState): The shared ListenerState object for maintaining state across the test run.
     """
+
     def __init__(self, listener_state: ListenerState):
         """Initializes the SelfHealingEngine.
 
@@ -87,12 +94,14 @@ class SelfHealingEngine:
 
                 if self._listener_state.healed:
                     if keyword_return_value and result_.assign:
-                        BuiltIn().set_local_variable(result_.assign[0], keyword_return_value)
+                        BuiltIn().set_local_variable(
+                            result_.assign[0], keyword_return_value
+                        )
                     result_.status = "PASS"
                     self._record_report(
                         pre_healing_data,
                         self._listener_state.tried_locators[-1],
-                        result_.status
+                        result_.status,
                     )
             self._reset_state()
         return None
@@ -161,7 +170,9 @@ class SelfHealingEngine:
         except IndexError:
             return None
         self._listener_state.tried_locators.append(suggestion)
-        result: Any = self._rerun_keyword_with_suggested_locator(data, suggested_locator=suggestion)
+        result: Any = self._rerun_keyword_with_suggested_locator(
+            data, suggested_locator=suggestion
+        )
         self._listener_state.healed = True
         if not self._listener_state.suggestions:
             self._should_generate_locators = True
@@ -169,10 +180,8 @@ class SelfHealingEngine:
 
     @staticmethod
     def _rerun_keyword_with_suggested_locator(
-            data: running.Keyword,
-            *,
-            suggested_locator: str | None
-    )-> str | None:
+        data: running.Keyword, *, suggested_locator: str | None
+    ) -> str | None:
         """Reruns a keyword with a suggested locator argument.
 
         Modifies the keyword arguments to use the suggested locator and executes the keyword again.
@@ -190,10 +199,16 @@ class SelfHealingEngine:
             data.args = list(data.args)
             data.args[0] = suggested_locator
         try:
-            rf_logger.info(
-                f"Re-trying Keyword '{data.name}' with arguments '{data.args}'.",
-                also_console=True,
-            )
+            try:
+                rf_logger.info(
+                    f"Re-trying Keyword '{data.name}' with arguments '{data.args}'.",
+                    also_console=True,
+                )
+            except OSError:
+                rf_logger.info(
+                    f"Re-trying Keyword '{data.name}' with arguments '{data.args}'.",
+                    also_console=False,
+                )
             return_value: Any = BuiltIn().run_keyword(data.name, *data.args)
             # BuiltIn().run_keyword("Take Screenshot")      # TODO: discuss if this is valuable for other RF-error types
             return return_value
@@ -216,7 +231,7 @@ class SelfHealingEngine:
             healed_locator: The locator used for healing, if successful.
             status: The status of the keyword execution (e.g., 'PASS').
         """
-        args = data.args
+        args = list(data.args)
         failed_locator: str = BuiltIn().replace_variables(args[0]) if args else ""
 
         current = data
@@ -226,18 +241,21 @@ class SelfHealingEngine:
                 break
             current = getattr(current, "parent", None)
 
+        file_name, keyword_source = self._extract_source_metadata(data.source)
+        test_name = self._extract_test_name(current)
+
         self._listener_state.report_info.append(
             ReportData(
-                file=data.source.parts[-1],
-                keyword_source=str(data.source),
-                test_name=current.parent.name,
+                file=file_name,
+                keyword_source=keyword_source,
+                test_name=test_name,
                 locator_origin=locator_origin,
                 keyword=data.name,
                 keyword_args=args,
                 lineno=data.lineno,
                 failed_locator=failed_locator,
                 healed_locator=healed_locator if status == "PASS" else "",
-                tried_locators=self._listener_state.tried_locators,
+                tried_locators=self._listener_state.tried_locators.copy(),
             )
         )
 
@@ -250,3 +268,32 @@ class SelfHealingEngine:
         self._listener_state.suggestions = None
         self._listener_state.should_generate_locators = True
         self._listener_state.tried_locators.clear()
+
+    @staticmethod
+    def _extract_source_metadata(source: Any) -> tuple[str, str]:
+        """Safely extract file and path information from keyword source."""
+        if not source:
+            return "", ""
+
+        try:
+            parts = getattr(source, "parts", None)
+            if parts:
+                return parts[-1], str(source)
+        except IndexError:
+            pass
+
+        source_str = str(source)
+        file_name = Path(source_str).name if source_str else ""
+        return file_name, source_str
+
+    @staticmethod
+    def _extract_test_name(keyword: Any) -> str:
+        """Safely resolve the parent test name for a keyword."""
+        if not keyword:
+            return ""
+
+        parent = getattr(keyword, "parent", None)
+        if not parent:
+            return ""
+
+        return getattr(parent, "name", "")
