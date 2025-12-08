@@ -1,6 +1,6 @@
 [project]
 name = "robotframework-selfhealing-agents"
-version = "0.1.4"
+version = "0.1.5"
 description = ""
 authors = [
     { name = "viadee IT-Unternehmensberatung AG <julian.blanke@viadee.de>" },
