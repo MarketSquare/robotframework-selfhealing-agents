@@ -38,10 +38,11 @@ class SelfhealingAgents(ListenerV3):
         in the self_healing_engine module.
         """
         self._robust_env_load()
+        self._cfg: Cfg = Cfg()
         self.ROBOT_LIBRARY_LISTENER: SelfhealingAgents = self
-        self._state: ListenerState = ListenerState(cfg=Cfg())  # type: ignore
+        self._state: ListenerState = ListenerState(cfg=self._cfg)  # type: ignore
         self._self_healing_engine: SelfHealingEngine = SelfHealingEngine(self._state)
-        self._report_generator: ReportGenerator = ReportGenerator()
+        self._report_generator: ReportGenerator = ReportGenerator(base_dir=self._cfg.report_directory)
         self._closed: bool = False
         rf_logger.info(
             f"SelfhealingAgents initialized; healing="
@@ -49,9 +50,9 @@ class SelfhealingAgents(ListenerV3):
         )
 
     def _robust_env_load(self) -> None:
-        """Handles environment variables loading. First, it tries to find "DOTENV_PATH", if not
-           available, it searches directories. If neither of those work, it tries to load
-           the process environment variables.
+        """Handles environment variables loading. First, it tries to find "DOTENV_PATH", then
+           "envfile" in cwd, if not available, it searches directories for .env. If neither of those
+           work, it tries to load the process environment variables.
         """
         loaded_from: str | None = None
 
@@ -59,6 +60,12 @@ class SelfhealingAgents(ListenerV3):
         if explicit_path and Path(explicit_path).is_file():
             load_dotenv(dotenv_path=explicit_path, override=False)
             loaded_from = explicit_path
+
+        if loaded_from is None:
+            envfile_path = Path(os.getcwd()) / ".env"
+            if envfile_path.is_file():
+                load_dotenv(dotenv_path=str(envfile_path), override=False)
+                loaded_from = str(envfile_path)
 
         if loaded_from is None:
             candidates = [
@@ -84,9 +91,9 @@ class SelfhealingAgents(ListenerV3):
             load_dotenv(override=False)
 
         if loaded_from:
-            rf_logger.info(f"environment variables loaded from .env: {loaded_from}")
+            rf_logger.info(f"environment variables loaded from: {loaded_from}")
         else:
-            rf_logger.info("no .env file found; relying on existing process environment variables")
+            rf_logger.info("no env file found; relying on existing process environment variables")
 
     def start_test(
             self, data: running.TestCase, result_: result.TestCase
