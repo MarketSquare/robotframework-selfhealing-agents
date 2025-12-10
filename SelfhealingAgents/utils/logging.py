@@ -40,7 +40,7 @@ def initialize_logger() -> None:
     Creates a 'logs' directory three levels above the current file if it does not exist, and sets up
     a file handler to write logs to 'info.log'. If a file handler is already present, no new handler is added.
     """
-    logs_dir: Path = Path.cwd() / "SelfhealingReports" / "logs"
+    logs_dir: Path = Path.cwd() / "SelfhealingAgentsLogs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     log_file_path: Path = logs_dir / "info.log"
 

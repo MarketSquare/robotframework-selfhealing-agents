@@ -25,7 +25,7 @@ class ReportGenerator:
         _report_types (List[BaseReport]): List of report type handlers used to generate different reports.
     """
 
-    def __init__(self, base_dir: Path = None) -> None:
+    def __init__(self, base_dir: str = None) -> None:
         """Initializes the ReportGenerator and sets up the report directories.
 
         The reports directory is created under the project workspace. If it already
@@ -34,7 +34,10 @@ class ReportGenerator:
         Args:
             base_dir (Path): The base directory where all reports are generated for unit testing.
         """
-        self._base_dir: Path = base_dir or (Path.cwd() / "SelfhealingReports" / "reports")
+        if base_dir:
+            self._base_dir: Path = Path(base_dir) / "SelfhealingReports"
+        else:
+            self._base_dir: Path = Path.cwd() / "SelfhealingReports"
         if self._base_dir.exists():
             shutil.rmtree(self._base_dir)
         self._base_dir.mkdir(parents=True)
