@@ -58,7 +58,10 @@ class Cfg(BaseSettings):
         "css", env="LOCATOR_TYPE",
         description="Locator type restriction for suggestions of model."
     )
-
+    report_directory: Optional[str] = Field(
+        None, env="REPORT_DIRECTORY",
+        description="Path to the report directory."
+    )
     azure_api_key: Optional[str] = Field(
         None, env="AZURE_API_KEY",
         description="Azure API key"

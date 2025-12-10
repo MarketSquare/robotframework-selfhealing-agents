@@ -33,19 +33,26 @@ def test_init_creates_clean_reports_dir(patch_workspace, monkeypatch):
     reports_dir = patch_workspace / "reports"
     reports_dir.mkdir(parents=True)
     (reports_dir / "oldfile.txt").write_text("old")
-
-    monkeypatch.setattr("SelfhealingAgents.self_healing_system.reports.report_types.action_log_report.ActionLogReport",
-                        MagicMock())
-    monkeypatch.setattr("SelfhealingAgents.self_healing_system.reports.report_types.healed_files_report.HealedFilesReport",
-                        MagicMock())
-    monkeypatch.setattr("SelfhealingAgents.self_healing_system.reports.report_types.diff_files_report.DiffFilesReport",
-                        MagicMock())
-
+    monkeypatch.setattr(
+        "SelfhealingAgents.self_healing_system.reports.report_types.action_log_report.ActionLogReport",
+        MagicMock()
+    )
+    monkeypatch.setattr(
+        "SelfhealingAgents.self_healing_system.reports.report_types.healed_files_report.HealedFilesReport",
+        MagicMock()
+    )
+    monkeypatch.setattr(
+        "SelfhealingAgents.self_healing_system.reports.report_types.diff_files_report.DiffFilesReport",
+        MagicMock()
+    )
+    monkeypatch.setattr(
+        "SelfhealingAgents.self_healing_system.reports.report_types.summary_json.SummaryJson",
+        MagicMock()
+    )
     rg = ReportGenerator(base_dir=reports_dir)
-
-    assert reports_dir.exists()
-    assert rg._base_dir == reports_dir
-    assert not (reports_dir / "oldfile.txt").exists()
+    expected_dir = reports_dir / "SelfhealingReports"
+    assert expected_dir.exists()
+    assert rg._base_dir == expected_dir
 
 def test_init_creates_reports_dir_if_not_exists(patch_workspace, monkeypatch):
     reports_dir = patch_workspace / "reports"

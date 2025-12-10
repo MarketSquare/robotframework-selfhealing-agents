@@ -186,3 +186,4 @@ playwright-log*
 
 # Logs
 /logs
+/SelfhealingAgentsLogs
