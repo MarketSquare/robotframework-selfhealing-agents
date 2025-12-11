@@ -62,7 +62,7 @@ class SelfhealingAgents(ListenerV3):
             loaded_from = explicit_path
 
         if loaded_from is None:
-            envfile_path = Path(os.getcwd()) / ".env"
+            envfile_path = Path(os.getcwd()) / "envfile"
             if envfile_path.is_file():
                 load_dotenv(dotenv_path=str(envfile_path), override=False)
                 loaded_from = str(envfile_path)
