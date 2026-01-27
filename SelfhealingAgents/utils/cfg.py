@@ -62,6 +62,11 @@ class Cfg(BaseSettings):
         None, env="REPORT_DIRECTORY",
         description="Path to the report directory."
     )
+    is_rerun_activated: Optional[bool] = Field(
+        False, env="IS_RERUN_ACTIVATED",
+        description="Boolean if Rerun option is activated. If True, Report folder will not be deleted to avoid overwriting the initial run."
+    )
+
     azure_api_key: Optional[str] = Field(
         None, env="AZURE_API_KEY",
         description="Azure API key"
