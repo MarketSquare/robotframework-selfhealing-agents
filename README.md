@@ -181,6 +181,7 @@ LOCATOR_AGENT_MODEL="gpt-4o-mini"
 LOCATOR_AGNET_TEMPERATURE=0.1
 LOCATOR_TYPE="css"
 REPORT_DIRECTORY="full-path-for-output-files"
+IS_RERUN_ACTIVATED=False
 ```
 
 ### 📝 Configuration Parameters
@@ -206,6 +207,7 @@ REPORT_DIRECTORY="full-path-for-output-files"
 | **LOCATOR_AGENT_TEMPERATURE**      | `0.1`           | No                       | Locator model temperature.                                                 |
 | **LOCATOR_TYPE**                   | `'css'`         | No                       | Restricts the locator suggestions of the agent to the given type           |
 | **REPORT_DIRECTORY**               | cwd             | No                       | Full path for output files.                                                |
+| **IS_RERUN_ACTIVATED**             | False           | No                       | Set to True if Rerun of failed tests is activated (affects Reporting).     |
 
 > **Note:**  
 > Locator suggestions can be generated either by assembling strings from the DOM tree (with an LLM selecting the best option), or by having the LLM generate suggestions directly itself with the context given (DOM included). Set `USE_LLM_FOR_LOCATOR_GENERATION` to `True` to enable direct LLM generation (default is True).
