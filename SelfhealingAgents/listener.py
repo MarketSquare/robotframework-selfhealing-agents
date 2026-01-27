@@ -10,6 +10,13 @@ from SelfhealingAgents.utils.cfg import Cfg
 from SelfhealingAgents.self_healing_system.self_healing_engine import SelfHealingEngine
 from SelfhealingAgents.self_healing_system.reports.report_generator import ReportGenerator
 from SelfhealingAgents.self_healing_system.schemas.internal_state.listener_state import ListenerState
+from SelfhealingAgents.self_healing_system.reports.report_info_persistence import (
+    save_report_info,
+    load_report_info,
+    REPORT_INFO_FILE,
+    deduplicate_report_info,
+    sort_report_info
+)
 
 
 class SelfhealingAgents(ListenerV3):
@@ -136,14 +143,67 @@ class SelfhealingAgents(ListenerV3):
 
     def close(self) -> None:
         """Handles the closure of the test suite or all suites when scope is 'GLOBAL'.
-
-        Generates reports if report information is available and ensures closure is performed only once.
+        When rerun is activated (cfg.is_rerun_activated is True), report_info is persisted
+        as JSON in the current working directory (report_info.json).
+        - On the first run (no JSON exists yet), we create the JSON from the current report_info.
+        - On the rerun (JSON exists), we load previous report_info, append the current run's
+          entries, and use the combined list for report generation.
         """
         if self._closed:
             return
         self._closed = True
-        if self._state.report_info:
-            try:
-                self._report_generator.generate_reports(self._state.report_info)
-            except Exception as e:
-                rf_logger.warn(f"Report generation failed: {e}")
+
+        # case 1: No rerun activated
+        if not self._state.cfg.is_rerun_activated:
+            if self._state.report_info:
+                try:
+                    self._report_generator.generate_reports(self._state.report_info)
+                except Exception as e:
+                    rf_logger.warn(f"Report generation failed: {e}")
+            return
+
+        # case 2: Rerun activated -> json of report_info is created in cwd -> Rerun loads json of first run -> merge
+        json_path = Path.cwd() / REPORT_INFO_FILE.name
+        try:
+            if not json_path.exists():
+                if self._state.report_info:
+                    save_report_info(self._state.report_info, json_path)
+                    rf_logger.info(
+                        f"Initial run with rerun activated: persisted "
+                        f"{len(self._state.report_info)} report entries to {json_path}"
+                    )
+                else:
+                    rf_logger.info(
+                        "Initial run with rerun activated: no report_info to persist"
+                    )
+                if self._state.report_info:
+                    try:
+                        self._report_generator.generate_reports(self._state.report_info)
+                    except Exception as e:
+                        rf_logger.warn(f"Report generation failed on initial run: {e}")
+            else:
+                previous = load_report_info(json_path)
+                current = list(self._state.report_info)
+                combined = previous + current
+                deduped = deduplicate_report_info(combined)
+                ordered = sort_report_info(deduped)
+
+                rf_logger.info(
+                    "Rerun with rerun activated: loaded "
+                    f"{len(previous)} previous, {len(current)} current; "
+                    f"{len(combined)} total before dedup, {len(deduped)} after dedup; "
+                    f"sorted by file and lineno"
+                )
+                save_report_info(ordered, json_path)
+                if ordered:
+                    try:
+                        self._report_generator.generate_reports(ordered)
+                    except Exception as e:
+                        rf_logger.warn(f"Report generation failed on rerun: {e}")
+                try:
+                    json_path.unlink(missing_ok=True)
+                    rf_logger.info(f"Removed temporary report_info file: {json_path}")
+                except Exception as e:
+                    rf_logger.warn(f"Failed to remove temporary report_info file {json_path}: {e}")
+        except Exception as e:
+            rf_logger.warn(f"Error handling report_info persistence: {e}")
