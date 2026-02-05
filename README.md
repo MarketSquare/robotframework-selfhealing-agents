@@ -209,9 +209,63 @@ IS_RERUN_ACTIVATED=False
 | **REPORT_DIRECTORY**               | cwd             | No                       | Full path for output files.                                                |
 | **IS_RERUN_ACTIVATED**             | False           | No                       | Set to True if Rerun of failed tests is activated (affects Reporting).     |
 
-> **Note:**  
+> **Note:**
 > Locator suggestions can be generated either by assembling strings from the DOM tree (with an LLM selecting the best option), or by having the LLM generate suggestions directly itself with the context given (DOM included). Set `USE_LLM_FOR_LOCATOR_GENERATION` to `True` to enable direct LLM generation (default is True).
 
+---
+## 🔌 Provider Configuration (ADR-001)
+
+The self-healing system now supports multiple LLM providers with automatic optimization.
+
+### Supported Providers
+
+| Provider | Entry Point | Best For |
+|----------|-------------|----------|
+| `openai` | OpenAI API | Production (most reliable) |
+| `azure` | Azure OpenAI | Enterprise deployments |
+| `openrouter` | OpenRouter | Cost-effective, model variety |
+| `ollama` | Ollama | Local development, privacy |
+| `litellm` | LiteLLM | Multi-provider proxy |
+
+### Configuration Examples
+
+**OpenAI (Default)**
+```env
+LOCATOR_AGENT_PROVIDER=openai
+LOCATOR_AGENT_MODEL=gpt-4o-mini
+OPENAI_API_KEY=sk-...
+```
+
+**OpenRouter**
+```env
+LOCATOR_AGENT_PROVIDER=openrouter
+LOCATOR_AGENT_MODEL=mistralai/devstral-2512
+OPENAI_API_KEY=sk-or-v1-...
+```
+
+**Ollama (Local)**
+```env
+LOCATOR_AGENT_PROVIDER=ollama
+LOCATOR_AGENT_MODEL=qwen3:latest
+BASE_URL=http://localhost:11434/v1
+STRICT_TOOL_DEFINITIONS=false
+```
+
+### Additional Configuration Options
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `STRICT_TOOL_DEFINITIONS` | `true` | Enable strict JSON schema for tools. Set `false` for Ollama/vLLM. |
+| `OUTPUT_MODE` | `auto` | Output mode: `auto`, `native`, `tool`, `prompted` |
+
+### Output Modes
+
+- **auto**: Automatically selects best mode per provider
+- **native**: Uses `response_format: json_schema` (OpenAI/Azure)
+- **tool**: Uses tool-based output (OpenRouter, Ollama with tools)
+- **prompted**: Text-based JSON output (universal, lower quality)
+
+---
 ## 🔮 Outlook
 
 While SelfhealingAgents currently focuses on healing broken locators, its architecture is designed for much more. The introduced 

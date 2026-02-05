@@ -41,7 +41,7 @@ class KickoffMultiAgentSystem:
         *,
         cfg: Cfg,
         tried_locator_memory: List[str],
-    ) -> LocatorHealingResponse | str | NoHealingNeededResponse:
+    ) -> LocatorHealingResponse | NoHealingNeededResponse:
         """Instantiates the multi-agent system, retrieves context, and initiates the self-healing process.
 
         Args:
@@ -52,7 +52,11 @@ class KickoffMultiAgentSystem:
 
         Returns:
             A LocatorHealingResponse with suggestions for healing the current Robot Framework test,
-             a string message, or a NoHealingNeededResponse if no healing is required.
+            or a NoHealingNeededResponse if no healing is required.
+
+        Note:
+            The bare `str` return type was removed from this function's signature because token limit
+            errors are now raised as exceptions (UsageLimitExceeded) rather than returned as strings.
         """
         agent_type: str = _LIBRARY_MAPPING.get(result.owner, None)
         if agent_type is None:

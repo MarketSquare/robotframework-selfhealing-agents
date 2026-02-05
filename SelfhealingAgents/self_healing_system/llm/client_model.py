@@ -1,4 +1,4 @@
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 
 from SelfhealingAgents.utils.cfg import Cfg
 from SelfhealingAgents.utils.logging import log
@@ -6,7 +6,7 @@ from SelfhealingAgents.self_healing_system.llm.model_factory import ModelFactory
 
 
 @log
-def get_client_model(*, provider: str, model: str, cfg: Cfg) -> OpenAIModel | None:
+def get_client_model(*, provider: str, model: str, cfg: Cfg) -> OpenAIChatModel | None:
     """Creates and returns a language model client for the specified provider and model.
 
     Instantiates a ModelFactory and attempts to create a language model client
@@ -19,7 +19,7 @@ def get_client_model(*, provider: str, model: str, cfg: Cfg) -> OpenAIModel | No
         cfg: The configuration object containing provider-specific settings.
 
     Returns:
-        An instance of OpenAIModel if the provider is recognized; otherwise, None.
+        An instance of OpenAIChatModel if the provider is recognized; otherwise, None.
     """
     factory: ModelFactory = ModelFactory()
     try:

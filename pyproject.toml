@@ -38,4 +38,6 @@ mkdocs-material = "*"
 [project.entry-points."SelfhealingAgents.llm_model_providers"]
 openai = "SelfhealingAgents.self_healing_system.llm.providers.openai_builder:openai_builder"
 azure = "SelfhealingAgents.self_healing_system.llm.providers.azure_builder:azure_builder"
+openrouter = "SelfhealingAgents.self_healing_system.llm.providers.openrouter_builder:openrouter_builder"
+ollama = "SelfhealingAgents.self_healing_system.llm.providers.ollama_builder:ollama_builder"
 litellm = "SelfhealingAgents.self_healing_system.llm.providers.litellm_builder:litellm_builder"

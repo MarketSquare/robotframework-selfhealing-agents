@@ -1,3 +1,8 @@
+"""Tests for the refactored OrchestratorAgent using Programmatic Hand-Off.
+
+ADR-001d: Orchestrator no longer makes LLM calls. It uses deterministic routing
+and delegates directly to the locator agent.
+"""
 import asyncio
 import importlib
 import importlib.util
@@ -16,13 +21,8 @@ class _LoggerStub:
     def __init__(self) -> None:
         self.infos: List[str] = []
 
-    def info(self, msg: str) -> None:
+    def info(self, msg: str, also_console: bool = False) -> None:
         self.infos.append(msg)
-
-
-class _FakeAgentRunResult:
-    def __init__(self, output: str) -> None:
-        self.output: str = output
 
 
 class _FakeUsageLimits:
@@ -31,38 +31,9 @@ class _FakeUsageLimits:
         self.total_tokens_limit: int = total_tokens_limit
 
 
-class _FakeAgent:
-    instances: List["_FakeAgent"] = []
-
-    def __init__(
-        self, *, model: Any, system_prompt: str, deps_type: Any, output_type: Any
-    ) -> None:
-        self.model = model
-        self.system_prompt = system_prompt
-        self.deps_type = deps_type
-        self.output_type = output_type
-        self.run_calls: int = 0
-        self.run_result: _FakeAgentRunResult = _FakeAgentRunResult("default")
-        _FakeAgent.instances.append(self)
-
-    @classmethod
-    def __class_getitem__(cls, item: Any) -> "_FakeAgent":
-        return cls
-
-    async def run(
-        self, prompt: str, *, deps: Any, usage_limits: Any, model_settings: Any
-    ) -> _FakeAgentRunResult:
-        self.run_calls += 1
-        return self.run_result
-
-
-class _FakeModelRetry(Exception):
-    pass
-
-
-class _FakeRunContext:
-    def __init__(self, deps: Any = None) -> None:
-        self.deps: Any = deps
+class _FakeRunUsage:
+    def __init__(self) -> None:
+        self.total_tokens: int = 100
 
 
 def _ensure_module(name: str, builder: Callable[[], types.ModuleType]) -> None:
@@ -110,26 +81,13 @@ def _stub_robot_logger() -> _LoggerStub:
 
 
 def _install_stubs() -> _LoggerStub:
-    def build_pyd_ai() -> types.ModuleType:
-        m = types.ModuleType("pydantic_ai")
-        m.Agent = _FakeAgent
-        m.ModelRetry = _FakeModelRetry
-        m.RunContext = _FakeRunContext
-        return m
-
     def build_pyd_ai_usage() -> types.ModuleType:
         m = types.ModuleType("pydantic_ai.usage")
         m.UsageLimits = _FakeUsageLimits
+        m.RunUsage = _FakeRunUsage
         return m
 
-    def build_pyd_ai_agent() -> types.ModuleType:
-        m = types.ModuleType("pydantic_ai.agent")
-        m.AgentRunResult = _FakeAgentRunResult
-        return m
-
-    _ensure_module("pydantic_ai", build_pyd_ai)
     _ensure_module("pydantic_ai.usage", build_pyd_ai_usage)
-    _ensure_module("pydantic_ai.agent", build_pyd_ai_agent)
 
     try:
         spec = importlib.util.find_spec("SelfhealingAgents.utils.logging")
@@ -195,59 +153,70 @@ def _import_module_fresh() -> Any:
 
 
 @pytest.fixture()
-def orch_setup() -> Tuple[Any, Any, _LoggerStub, Any, Any]:
+def orch_setup() -> Tuple[Any, Any, _LoggerStub, Any, Any, Any]:
     logger = _install_stubs()
     mod = _import_module_fresh()
     OrchestratorAgent = getattr(mod, "OrchestratorAgent")
     locator_api = importlib.import_module(
         "SelfhealingAgents.self_healing_system.schemas.api.locator_healing"
     )
+    LocatorHealingResponse = getattr(locator_api, "LocatorHealingResponse")
     NoHealingNeededResponse = getattr(locator_api, "NoHealingNeededResponse")
     prompt_payload_mod = importlib.import_module(
         "SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload"
     )
     PromptPayload = getattr(prompt_payload_mod, "PromptPayload")
-    return mod, OrchestratorAgent, logger, NoHealingNeededResponse, PromptPayload
+    return mod, OrchestratorAgent, logger, LocatorHealingResponse, NoHealingNeededResponse, PromptPayload
 
 
 class _FakeLocatorAgent:
+    """Mock locator agent for testing orchestrator delegation."""
+
     def __init__(
         self,
         *,
         is_failed: bool,
-        heal_result: Optional[str] = None,
+        heal_result: Optional[Any] = None,
         raise_on_heal: bool = False,
     ) -> None:
         self._is_failed: bool = is_failed
-        self._heal_result: Optional[str] = heal_result
+        self._heal_result: Optional[Any] = heal_result
         self._raise: bool = raise_on_heal
+        self.heal_calls: int = 0
 
     def is_failed_locator_error(self, msg: str) -> bool:
         return self._is_failed
 
-    async def heal_async(self, ctx: Any) -> str:
+    async def heal_async(
+        self,
+        payload: Any,
+        *,
+        usage: Any = None,
+        usage_limits: Any = None,
+    ) -> Any:
+        """Matches the new heal_async signature from ADR-001d."""
+        self.heal_calls += 1
         if self._raise:
             raise RuntimeError("heal failed")
-        return self._heal_result or '{"suggestions":[]}'
+        return self._heal_result
 
 
 def _run(coro: Any) -> Any:
     return asyncio.run(coro)
 
 
-def test_run_async_returns_no_healing_when_not_failed(
-    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any],
-) -> None:
-    _, OrchestratorAgent, logger, NoHealingNeededResponse, PromptPayload = orch_setup
-    _FakeAgent.instances.clear()
-    logger.infos.clear()
+class FakeCfg:
+    """Minimal config for OrchestratorAgent."""
+    request_limit: int = 10
+    total_tokens_limit: int = 1000
 
-    class FakeCfg:
-        request_limit: int = 10
-        total_tokens_limit: int = 1000
-        orchestrator_agent_provider: str = "prov"
-        orchestrator_agent_model: str = "mod"
-        orchestrator_agent_temperature: float = 0.1
+
+def test_run_async_returns_no_healing_when_not_failed(
+    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any, Any],
+) -> None:
+    """When is_failed_locator_error returns False, return NoHealingNeededResponse."""
+    _, OrchestratorAgent, logger, _, NoHealingNeededResponse, PromptPayload = orch_setup
+    logger.infos.clear()
 
     orch = OrchestratorAgent(FakeCfg(), _FakeLocatorAgent(is_failed=False))
     payload = PromptPayload(
@@ -258,141 +227,98 @@ def test_run_async_returns_no_healing_when_not_failed(
         keyword_args=("css=#bad",),
         failed_locator="#bad",
         tried_locator_memory=[],
+        file_usage_ctx="TestSuite.robot",
     )
     out = _run(orch.run_async(payload))
     assert isinstance(out, NoHealingNeededResponse)
     assert out.message == "no failure"
-    assert (len(_FakeAgent.instances) == 0) or (_FakeAgent.instances[0].run_calls == 0)
-    assert logger.infos == []
 
 
-def test_run_async_calls_agent_and_logs_on_error(
-    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any],
+def test_run_async_delegates_to_locator_agent_on_failure(
+    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any, Any],
 ) -> None:
-    _, OrchestratorAgent, logger, _, PromptPayload = orch_setup
-    _FakeAgent.instances.clear()
+    """When is_failed_locator_error returns True, delegate to locator agent."""
+    _, OrchestratorAgent, logger, LocatorHealingResponse, _, PromptPayload = orch_setup
     logger.infos.clear()
 
-    class FakeCfg:
-        request_limit: int = 10
-        total_tokens_limit: int = 1000
-        orchestrator_agent_provider: str = "prov"
-        orchestrator_agent_model: str = "mod"
-        orchestrator_agent_temperature: float = 0.1
+    heal_response = LocatorHealingResponse(suggestions=["#healed"])
+    locator_agent = _FakeLocatorAgent(is_failed=True, heal_result=heal_response)
+    orch = OrchestratorAgent(FakeCfg(), locator_agent)
 
-    orch = OrchestratorAgent(FakeCfg(), _FakeLocatorAgent(is_failed=True))
     payload = PromptPayload(
         robot_code_line="Click  #bad",
-        error_msg="boom",
+        error_msg="element not found",
         dom_tree="<body></body>",
         keyword_name="Click",
         keyword_args=("css=#bad",),
         failed_locator="#bad",
         tried_locator_memory=[],
+        file_usage_ctx="TestSuite.robot",
     )
-    if _FakeAgent.instances:
-        _FakeAgent.instances[0].run_result = _FakeAgentRunResult("error: token limit")
-    else:
-
-        class StubAgent:
-            async def run(self, *args: Any, **kwargs: Any) -> _FakeAgentRunResult:
-                return _FakeAgentRunResult("error: token limit")
-
-        orch._agent = StubAgent()
     out = _run(orch.run_async(payload))
-    assert out == "error: token limit"
-    assert logger.infos == ["error: token limit"]
-    if _FakeAgent.instances:
-        assert _FakeAgent.instances[0].run_calls == 1
+
+    assert isinstance(out, LocatorHealingResponse)
+    assert out.suggestions == ["#healed"]
+    assert locator_agent.heal_calls == 1
+    # Should log total tokens
+    assert any("total tokens" in msg.lower() for msg in logger.infos)
 
 
-def test_run_async_calls_agent_no_log_when_ok(
-    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any],
+def test_run_async_logs_token_usage(
+    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any, Any],
 ) -> None:
-    _, OrchestratorAgent, logger, _, PromptPayload = orch_setup
-    _FakeAgent.instances.clear()
+    """After successful healing, log the total token usage."""
+    _, OrchestratorAgent, logger, LocatorHealingResponse, _, PromptPayload = orch_setup
     logger.infos.clear()
 
-    class FakeCfg:
-        request_limit: int = 10
-        total_tokens_limit: int = 1000
-        orchestrator_agent_provider: str = "prov"
-        orchestrator_agent_model: str = "mod"
-        orchestrator_agent_temperature: float = 0.1
+    heal_response = LocatorHealingResponse(suggestions=["#fixed"])
+    locator_agent = _FakeLocatorAgent(is_failed=True, heal_result=heal_response)
+    orch = OrchestratorAgent(FakeCfg(), locator_agent)
 
-    orch = OrchestratorAgent(FakeCfg(), _FakeLocatorAgent(is_failed=True))
     payload = PromptPayload(
         robot_code_line="Click  #bad",
-        error_msg="boom",
+        error_msg="element not found",
         dom_tree="<body></body>",
         keyword_name="Click",
         keyword_args=("css=#bad",),
         failed_locator="#bad",
         tried_locator_memory=[],
+        file_usage_ctx="TestSuite.robot",
     )
-    if _FakeAgent.instances:
-        _FakeAgent.instances[0].run_result = _FakeAgentRunResult("all good")
-    else:
+    _run(orch.run_async(payload))
 
-        class StubAgent:
-            async def run(self, *args: Any, **kwargs: Any) -> _FakeAgentRunResult:
-                return _FakeAgentRunResult("all good")
-
-        orch._agent = StubAgent()
-    out = _run(orch.run_async(payload))
-    assert out == "all good"
-    assert logger.infos == []
-    if _FakeAgent.instances:
-        assert _FakeAgent.instances[0].run_calls == 1
+    # Verify token usage is logged
+    token_logs = [msg for msg in logger.infos if "token" in msg.lower()]
+    assert len(token_logs) > 0
 
 
-def test_get_healed_locators_success(
-    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any],
+def test_orchestrator_uses_usage_limits_from_config(
+    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any, Any],
 ) -> None:
-    _, OrchestratorAgent, _, __, ___ = orch_setup
+    """Orchestrator should configure usage limits from cfg."""
+    _, OrchestratorAgent, _, _, _, _ = orch_setup
 
-    class FakeCfg:
-        request_limit: int = 10
-        total_tokens_limit: int = 1000
-        orchestrator_agent_provider: str = "prov"
-        orchestrator_agent_model: str = "mod"
-        orchestrator_agent_temperature: float = 0.1
+    class CustomCfg:
+        request_limit: int = 50
+        total_tokens_limit: int = 5000
 
-    orch = OrchestratorAgent(
-        FakeCfg(),
-        _FakeLocatorAgent(is_failed=True, heal_result='{"suggestions":["#ok"]}'),
-    )
-    out = _run(orch._get_healed_locators(_FakeRunContext(deps=None)))
-    assert out == '{"suggestions":["#ok"]}'
+    locator_agent = _FakeLocatorAgent(is_failed=False)
+    orch = OrchestratorAgent(CustomCfg(), locator_agent)
+
+    assert orch._usage_limits.request_limit == 50
+    assert orch._usage_limits.total_tokens_limit == 5000
 
 
-def test_get_healed_locators_raises_modelretry(
-    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any],
+def test_orchestrator_deterministic_routing_no_llm(
+    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any, Any],
 ) -> None:
-    _, OrchestratorAgent, _, __, ___ = orch_setup
-    ModelRetry = importlib.import_module("pydantic_ai").ModelRetry
+    """Verify orchestrator uses Programmatic Hand-Off, not LLM-based delegation."""
+    _, OrchestratorAgent, _, _, _, _ = orch_setup
 
-    class FakeCfg:
-        request_limit: int = 10
-        total_tokens_limit: int = 1000
-        orchestrator_agent_provider: str = "prov"
-        orchestrator_agent_model: str = "mod"
-        orchestrator_agent_temperature: float = 0.1
+    locator_agent = _FakeLocatorAgent(is_failed=False)
+    orch = OrchestratorAgent(FakeCfg(), locator_agent)
 
-    orch = OrchestratorAgent(
-        FakeCfg(), _FakeLocatorAgent(is_failed=True, raise_on_heal=True)
-    )
-    with pytest.raises(ModelRetry):
-        _run(orch._get_healed_locators(_FakeRunContext(deps=None)))
-
-
-def test_catch_token_limit_exceedance_logs(
-    orch_setup: Tuple[Any, Any, _LoggerStub, Any, Any],
-) -> None:
-    _, OrchestratorAgent, logger, __, ___ = orch_setup
-    logger.infos.clear()
-    OrchestratorAgent._catch_token_limit_exceedance("error: out of tokens")
-    assert logger.infos == ["error: out of tokens"]
-    logger.infos.clear()
-    OrchestratorAgent._catch_token_limit_exceedance("ok")
-    assert logger.infos == []
+    # The new orchestrator should NOT have an _agent attribute (no LLM agent)
+    assert not hasattr(orch, "_agent") or orch._agent is None if hasattr(orch, "_agent") else True
+    # It should have a _locator_agent instead
+    assert hasattr(orch, "_locator_agent")
