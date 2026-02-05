@@ -34,14 +34,22 @@ class _FakeUsageLimits:
         self.total_tokens_limit: int = total_tokens_limit
 
 
+class _FakeRunUsage:
+    """Stub for pydantic_ai.usage.RunUsage."""
+    def __init__(self) -> None:
+        self.total_tokens: int = 0
+
+
 class _FakeAgent:
     def __init__(
-        self, *, model: Any, system_prompt: str, deps_type: Any, output_type: Any
+        self, *, model: Any, system_prompt: str, deps_type: Any, output_type: Any,
+        prepare_tools: Optional[Callable[..., Any]] = None
     ) -> None:
         self.model = model
         self.system_prompt = system_prompt
         self.deps_type = deps_type
         self.output_type = output_type
+        self.prepare_tools = prepare_tools
         self.run_result: _FakeAgentRunResult = _FakeAgentRunResult(None)
         self.validator: Optional[Callable[..., Any]] = None
         self.run_calls: int = 0
@@ -109,6 +117,7 @@ def _install_stubs() -> _LoggerStub:
 
     pa_usage = types.ModuleType("pydantic_ai.usage")
     pa_usage.UsageLimits = _FakeUsageLimits
+    pa_usage.RunUsage = _FakeRunUsage
     _force_module("pydantic_ai.usage", pa_usage)
 
     pa_agent = types.ModuleType("pydantic_ai.agent")
@@ -178,6 +187,22 @@ def _install_stubs() -> _LoggerStub:
     client_model.get_client_model = get_client_model
     _force_module(
         "SelfhealingAgents.self_healing_system.llm.client_model", client_model
+    )
+
+    output_strategy = types.ModuleType(
+        "SelfhealingAgents.self_healing_system.llm.output_strategy"
+    )
+
+    def resolve_structured_output_type(schema_class: Any, cfg: Any, provider: str) -> Any:
+        return schema_class
+
+    def make_prepare_tools_hook(provider: str, cfg: Any) -> None:
+        return None
+
+    output_strategy.resolve_structured_output_type = resolve_structured_output_type
+    output_strategy.make_prepare_tools_hook = make_prepare_tools_hook
+    _force_module(
+        "SelfhealingAgents.self_healing_system.llm.output_strategy", output_strategy
     )
 
     loc_schema = types.ModuleType(
@@ -385,12 +410,12 @@ def test_heal_with_llm_success_and_type_check(
     inst.generation_agent.run_result = _FakeAgentRunResult(
         LocatorHealingResponse(["x"])
     )
-    out = _run(inst._heal_with_llm(_ctx(_payload(PromptPayload))))
+    out = _run(inst._heal_with_llm(_payload(PromptPayload)))
     assert isinstance(out, LocatorHealingResponse)
     assert out.suggestions == ["x"]
     inst.generation_agent.run_result = _FakeAgentRunResult("bad")
     with pytest.raises(_FakeModelRetry):
-        _run(inst._heal_with_llm(_ctx(_payload(PromptPayload))))
+        _run(inst._heal_with_llm(_payload(PromptPayload)))
 
 
 def test_heal_with_dom_utils_json_and_raw_selection(
@@ -406,13 +431,13 @@ def test_heal_with_dom_utils_json_and_raw_selection(
     inst = _ConcreteAgentFactory.make(BaseLocatorAgent, dom, use_llm=False)
     inst.selection_agent.run_result = _FakeAgentRunResult('{"suggestions":"#best"}')
     out = _run(
-        inst._heal_with_dom_utils(_ctx(_payload(PromptPayload, keyword="Click")))
+        inst._heal_with_dom_utils(_payload(PromptPayload, keyword="Click"))
     )
     assert isinstance(out, LocatorHealingResponse)
     assert out.suggestions == ["#best"]
     inst.selection_agent.run_result = _FakeAgentRunResult("#alt")
     out2 = _run(
-        inst._heal_with_dom_utils(_ctx(_payload(PromptPayload, keyword="Click")))
+        inst._heal_with_dom_utils(_payload(PromptPayload, keyword="Click"))
     )
     assert out2.suggestions == ["#alt"]
 
@@ -424,7 +449,7 @@ def test_heal_with_dom_utils_empty_proposals_raises(
     dom = _DomStub(proposals=[], valid=True)
     inst = _ConcreteAgentFactory.make(BaseLocatorAgent, dom, use_llm=False)
     with pytest.raises(_FakeModelRetry):
-        _run(inst._heal_with_dom_utils(_ctx(_payload(PromptPayload))))
+        _run(inst._heal_with_dom_utils(_payload(PromptPayload)))
 
 
 def test_is_locator_valid_unique_clickable_with_exceptions(

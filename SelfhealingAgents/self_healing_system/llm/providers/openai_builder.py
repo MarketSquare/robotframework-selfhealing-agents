@@ -1,26 +1,32 @@
-from pydantic_ai.models.openai import OpenAIModel
-from pydantic_ai.providers.openai import OpenAIProvider
+"""OpenAI provider builder with profile support.
 
+Updated for ADR-001a to use OpenAIChatModel (not deprecated OpenAIModel)
+and support strict_tool_definitions configuration.
+"""
+from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.profiles.openai import OpenAIModelProfile
 from SelfhealingAgents.utils.cfg import Cfg
 
 
-def openai_builder(model_name: str, cfg: Cfg) -> OpenAIModel:
-    """Creates an OpenAIModel instance using the specified model name and configuration.
-
-    Instantiates an OpenAIModel with the given model name and configuration settings,
-    including API key and base URL from the provided Cfg object.
+def openai_builder(model_name: str, cfg: Cfg) -> OpenAIChatModel:
+    """Build an OpenAI model with profile configuration.
 
     Args:
-        model_name: The name of the OpenAI model to use (e.g., 'gpt-4o-mini').
-        cfg: The configuration object containing OpenAI API credentials and settings.
+        model_name: The OpenAI model identifier (e.g., 'gpt-4o-mini').
+        cfg: Application configuration.
 
     Returns:
-        An instance of OpenAIModel configured with the specified model name and provider.
+        OpenAIChatModel with appropriate profile settings.
     """
-    return OpenAIModel(
+    profile = OpenAIModelProfile(
+        openai_supports_strict_tool_definition=cfg.strict_tool_definitions,
+    )
+    return OpenAIChatModel(
         model_name=model_name,
         provider=OpenAIProvider(
             api_key=cfg.openai_api_key,
             base_url=cfg.base_url,
         ),
+        profile=profile,
     )

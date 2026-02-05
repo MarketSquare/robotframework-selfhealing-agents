@@ -1,7 +1,7 @@
 from typing import Dict, Callable
 from importlib.metadata import entry_points, EntryPoints
 
-from pydantic_ai.models.openai import OpenAIModel
+from pydantic_ai.models.openai import OpenAIChatModel
 
 from SelfhealingAgents.utils.cfg import Cfg
 
@@ -13,7 +13,7 @@ class ModelFactory:
     of models by provider name, model name, and configuration.
 
     Attributes:
-        _builders (Dict[str, Callable[[str, Cfg], OpenAIModel]]):
+        _builders (Dict[str, Callable[[str, Cfg], OpenAIChatModel]]):
             Mapping of provider names to their builder callables, discovered from entry points.
     """
     def __init__(self) -> None:
@@ -23,12 +23,12 @@ class ModelFactory:
         group (set in pyproject.toml) and stores their builder callables for later use.
         """
         eps: EntryPoints = entry_points(group="SelfhealingAgents.llm_model_providers")
-        self._builders: Dict[str, Callable[[str, Cfg], OpenAIModel]] = {
+        self._builders: Dict[str, Callable[[str, Cfg], OpenAIChatModel]] = {
             ep.name: ep.load()
             for ep in eps
         }
 
-    def create_model(self, provider: str, model_name: str, cfg: Cfg) -> OpenAIModel:
+    def create_model(self, provider: str, model_name: str, cfg: Cfg) -> OpenAIChatModel:
         """Creates a language model instance for the specified provider and configuration.
 
         Args:
@@ -37,13 +37,13 @@ class ModelFactory:
             cfg: The configuration object containing provider-specific settings.
 
         Returns:
-            An instance of OpenAIModel for the specified provider and model.
+            An instance of OpenAIChatModel for the specified provider and model.
 
         Raises:
             ValueError: If the specified provider is not registered.
         """
         try:
-            builder: Callable[[str, Cfg], OpenAIModel] = self._builders[provider]
+            builder: Callable[[str, Cfg], OpenAIChatModel] = self._builders[provider]
         except KeyError:
             raise ValueError("Unknown LLM provider: %r" % provider)
         return builder(model_name, cfg)

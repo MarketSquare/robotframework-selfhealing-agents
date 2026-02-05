@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
+from types import SimpleNamespace
 from typing import Optional
 
 from pydantic_ai import Agent, ModelRetry, RunContext
 from pydantic_ai.agent import AgentRunResult
-from pydantic_ai.usage import UsageLimits
+from pydantic_ai.usage import RunUsage, UsageLimits
 from robot.api import logger as rf_logger
 
 from SelfhealingAgents.self_healing_system.agents.prompts.locator.prompts_locator import (
@@ -14,6 +15,10 @@ from SelfhealingAgents.self_healing_system.context_retrieving.library_dom_utils.
     BaseDomUtils,
 )
 from SelfhealingAgents.self_healing_system.llm.client_model import get_client_model
+from SelfhealingAgents.self_healing_system.llm.output_strategy import (
+    resolve_structured_output_type,
+    make_prepare_tools_hook,
+)
 from SelfhealingAgents.self_healing_system.schemas.api.locator_healing import (
     LocatorHealingResponse,
 )
@@ -22,6 +27,14 @@ from SelfhealingAgents.self_healing_system.schemas.internal_state.prompt_payload
 )
 from SelfhealingAgents.utils.cfg import Cfg
 from SelfhealingAgents.utils.logging import log
+
+
+def _make_run_context(payload: PromptPayload):
+    """Creates a minimal RunContext wrapper for prompt generation compatibility.
+
+    Bridge function during transition from Agent Delegation to Programmatic Hand-Off.
+    """
+    return SimpleNamespace(deps=payload)
 
 
 class BaseLocatorAgent(ABC):
@@ -61,6 +74,12 @@ class BaseLocatorAgent(ABC):
 
         # Only create LLM agent if LLM generation is enabled
         if self._use_llm_for_locator_generation:
+            output_type = resolve_structured_output_type(
+                LocatorHealingResponse, cfg, cfg.locator_agent_provider
+            )
+            prepare_tools_hook = make_prepare_tools_hook(
+                cfg.locator_agent_provider, cfg
+            )
             self.generation_agent = Agent[PromptPayload, LocatorHealingResponse](
                 model=get_client_model(
                     provider=cfg.locator_agent_provider,
@@ -71,7 +90,8 @@ class BaseLocatorAgent(ABC):
                     self._dom_utility
                 ),
                 deps_type=PromptPayload,
-                output_type=LocatorHealingResponse,
+                output_type=output_type,
+                prepare_tools=prepare_tools_hook,
             )
 
             # Set up output validation
@@ -180,32 +200,43 @@ class BaseLocatorAgent(ABC):
 
     @log
     async def heal_async(
-        self, ctx: RunContext[PromptPayload]
-    ) -> LocatorHealingResponse | str:
+        self,
+        payload: PromptPayload,
+        *,
+        usage: RunUsage | None = None,
+        usage_limits: UsageLimits | None = None,
+    ) -> LocatorHealingResponse:
         """Generates suggestions for fixing a broken locator.
 
         Args:
-            ctx (RunContext[PromptPayload]): PydanticAI context containing the prompt payload.
+            payload: The prompt payload containing error context.
+            usage: Optional shared RunUsage for cross-agent token tracking.
+            usage_limits: Optional usage limits for this agent run.
 
         Returns:
-            LocatorHealingResponse | str: List of repaired locator suggestions.
-
-        Raises:
-            ModelRetry: If the response is not of the expected type.
+            LocatorHealingResponse with healing suggestions.
         """
         if self._use_llm_for_locator_generation:
-            return await self._heal_with_llm(ctx)
+            return await self._heal_with_llm(
+                payload, usage=usage, usage_limits=usage_limits
+            )
         else:
-            return await self._heal_with_dom_utils(ctx)
+            return await self._heal_with_dom_utils(payload)
 
     @log
     async def _heal_with_llm(
-        self, ctx: RunContext[PromptPayload]
+        self,
+        payload: PromptPayload,
+        *,
+        usage: RunUsage | None = None,
+        usage_limits: UsageLimits | None = None,
     ) -> LocatorHealingResponse:
         """Generates locator suggestions using the LLM approach.
 
         Args:
-            ctx (RunContext[PromptPayload]): PydanticAI context containing the prompt payload.
+            payload: The prompt payload containing error context.
+            usage: Optional shared RunUsage for cross-agent token tracking.
+            usage_limits: Optional usage limits for this agent run.
 
         Returns:
             LocatorHealingResponse: List of repaired locator suggestions.
@@ -213,12 +244,16 @@ class BaseLocatorAgent(ABC):
         Raises:
             ModelRetry: If the response is not of the expected type.
         """
+        # Create synthetic context for prompt generation
+        ctx = _make_run_context(payload)
+
         response: AgentRunResult[
             LocatorHealingResponse
         ] = await self.generation_agent.run(
             PromptsLocatorGenerationAgent.get_user_msg(ctx),
-            deps=ctx.deps,
-            usage_limits=self._usage_limits,
+            deps=payload,
+            usage=usage,
+            usage_limits=usage_limits or self._usage_limits,
             model_settings={"temperature": self._cfg.locator_agent_temperature},
         )
         if not isinstance(response.output, LocatorHealingResponse):
@@ -229,12 +264,13 @@ class BaseLocatorAgent(ABC):
 
     @log
     async def _heal_with_dom_utils(
-        self, ctx: RunContext[PromptPayload]
+        self,
+        payload: PromptPayload,
     ) -> LocatorHealingResponse:
         """Generates locator suggestions using DOM utilities approach.
 
         Args:
-            ctx (RunContext[PromptPayload]): PydanticAI context containing the prompt payload.
+            payload: The prompt payload containing error context.
 
         Returns:
             LocatorHealingResponse: List of repaired locator suggestions.
@@ -243,8 +279,11 @@ class BaseLocatorAgent(ABC):
             ModelRetry: If locator proposals cannot be generated or selection fails.
         """
         try:
-            failed_locator = ctx.deps.failed_locator
-            keyword_name = ctx.deps.keyword_name
+            # Create synthetic context for prompt generation
+            ctx = _make_run_context(payload)
+
+            failed_locator = payload.failed_locator
+            keyword_name = payload.keyword_name
 
             metadata_list = []
 
@@ -319,7 +358,7 @@ class BaseLocatorAgent(ABC):
                     suggestions=sorted_proposals,
                     metadata=metadata_list,
                 ),
-                deps=ctx.deps,
+                deps=payload,
                 usage_limits=self._usage_limits,
                 model_settings={"temperature": self._cfg.locator_agent_temperature},
             )

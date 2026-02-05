@@ -26,14 +26,15 @@ class Cfg(BaseSettings):
     )
     orchestrator_agent_provider: str = Field(
         "openai", env="ORCHESTRATOR_AGENT_PROVIDER",
-        description="LLM Provider for Orchestrator agent - Options: 'openai', 'azure'."
+        description="DEPRECATED: No longer used. The orchestrator now uses programmatic routing instead of LLM-based delegation. Kept for backward compatibility with existing .env files. Will be removed in v2.0."
     )
     orchestrator_agent_model: str = Field(
         "gpt-4o-mini", env="ORCHESTRATOR_AGENT_MODEL",
-        description="Model selection for orchestrator agent."
+        description="DEPRECATED: No longer used. See orchestrator_agent_provider."
     )
     orchestrator_agent_temperature: float = Field(
-        0.1, gt=0, env="ORCHESTRATOR_AGENT_TEMPERATURE"
+        0.1, gt=0, env="ORCHESTRATOR_AGENT_TEMPERATURE",
+        description="DEPRECATED: No longer used. See orchestrator_agent_provider."
     )
     locator_agent_provider: str = Field(
         "openai", env="LOCATOR_AGENT_PROVIDER",
@@ -65,6 +66,34 @@ class Cfg(BaseSettings):
     is_rerun_activated: Optional[bool] = Field(
         False, env="IS_RERUN_ACTIVATED",
         description="Boolean if Rerun option is activated. If True, Report folder will not be deleted to avoid overwriting the initial run."
+    )
+
+    # --- New fields for non-OpenAI compatibility (ADR-001c) ---
+
+    strict_tool_definitions: bool = Field(
+        True, env="STRICT_TOOL_DEFINITIONS",
+        description=(
+            "Enable strict tool definitions (adds 'strict: true' and "
+            "'additionalProperties: false' to tool schemas). "
+            "Set to False for non-OpenAI models that reject or choke on strict mode. "
+            "Default True preserves current behavior for OpenAI users."
+        ),
+    )
+
+    output_mode: str = Field(
+        "auto", env="OUTPUT_MODE",
+        description=(
+            "Output mode for structured responses: "
+            "'tool' (ToolOutput -- tool-based, requires model tool support), "
+            "'native' (NativeOutput -- response_format json_schema, OpenAI/Azure only), "
+            "'prompted' (PromptedOutput -- text-based, universal compatibility), "
+            "'text' (TextOutput -- plain text parsed by function, reserved for future use), "
+            "'auto' (select best mode based on provider). "
+            "Default 'auto' uses NativeOutput for OpenAI/Azure, ToolOutput for "
+            "OpenRouter/Ollama-with-tools, and PromptedOutput for Ollama-without-tools. "
+            "Note: orchestrator uses Programmatic Hand-Off (no LLM), so output_mode "
+            "only affects locator agents."
+        ),
     )
 
     azure_api_key: Optional[str] = Field(
